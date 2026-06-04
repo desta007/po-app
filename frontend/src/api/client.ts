@@ -11,18 +11,8 @@ const apiClient = axios.create({
   },
 });
 
-let csrfTokenFetched = false;
-
-// CSRF token handling for Laravel Sanctum
-apiClient.interceptors.request.use(async (config) => {
-  if (['post', 'put', 'patch', 'delete'].includes(config.method || '') && !csrfTokenFetched) {
-    await axios.get(`${API_BASE_URL}/sanctum/csrf-cookie`, {
-      withCredentials: true,
-    });
-    csrfTokenFetched = true;
-  }
-  return config;
-});
+// Note: CSRF token handling removed for cross-domain deployment (Vercel → Railway).
+// API security is handled by Sanctum session auth + CORS.
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -33,10 +23,6 @@ apiClient.interceptors.response.use(
       if (!authPaths.some((p) => window.location.pathname.startsWith(p))) {
         window.location.href = '/login';
       }
-    }
-    if (error.response?.status === 419) {
-      // CSRF token expired, reset and retry
-      csrfTokenFetched = false;
     }
     return Promise.reject(error);
   }

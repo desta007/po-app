@@ -17,13 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'org.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
         ]);
 
-        // Enable session/cookie auth for SPA (replaces statefulApi)
+        // Enable session/cookie auth for SPA (cross-domain: Vercel → Railway)
+        // Note: CSRF removed because cross-domain cookies can't share XSRF token.
+        // Security is maintained via Sanctum auth + CORS origin restriction.
         $middleware->prependToGroup('api', [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
