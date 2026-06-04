@@ -1,6 +1,9 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 const apiClient = axios.create({
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -13,7 +16,7 @@ let csrfTokenFetched = false;
 // CSRF token handling for Laravel Sanctum
 apiClient.interceptors.request.use(async (config) => {
   if (['post', 'put', 'patch', 'delete'].includes(config.method || '') && !csrfTokenFetched) {
-    await axios.get('/sanctum/csrf-cookie', {
+    await axios.get(`${API_BASE_URL}/sanctum/csrf-cookie`, {
       withCredentials: true,
     });
     csrfTokenFetched = true;
