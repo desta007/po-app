@@ -3,10 +3,10 @@ import type { User, LoginCredentials, RegisterData } from '@/types/auth';
 
 export const authApi = {
   login: (data: LoginCredentials) =>
-    apiClient.post<{ user: User }>('/api/auth/login', data),
+    apiClient.post<{ user: User; token: string }>('/api/auth/login', data),
 
   register: (data: RegisterData) =>
-    apiClient.post<{ user: User }>('/api/auth/register', data),
+    apiClient.post<{ user: User; token: string }>('/api/auth/register', data),
 
   logout: () =>
     apiClient.post('/api/auth/logout'),

@@ -18,21 +18,22 @@ class LoginController extends Controller
             ], 401);
         }
 
-        $request->session()->regenerate();
-
         $user = Auth::user();
         $user->update(['last_login_at' => now()]);
 
+        // Create Sanctum API token
+        $token = $user->createToken('auth-token')->plainTextToken;
+
         return response()->json([
             'user' => $user->load('currentOrganization'),
+            'token' => $token,
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Delete the current access token
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Berhasil logout.']);
     }

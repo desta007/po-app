@@ -4,21 +4,27 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
 });
 
-// Note: CSRF token handling removed for cross-domain deployment (Vercel → Railway).
-// API security is handled by Sanctum session auth + CORS.
+// Interceptor: attach Bearer token from localStorage to every request
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Don't redirect if already on auth pages
+      // Token expired/invalid → clear and redirect
+      localStorage.removeItem('auth_token');
       const authPaths = ['/login', '/register', '/lupa-password', '/reset-password'];
       if (!authPaths.some((p) => window.location.pathname.startsWith(p))) {
         window.location.href = '/login';

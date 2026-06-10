@@ -23,16 +23,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.me();
       setUser(response.data.user);
     } catch {
+      localStorage.removeItem('auth_token');
       setUser(null);
     }
   }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
       try {
         const response = await authApi.me();
         setUser(response.data.user);
       } catch {
+        localStorage.removeItem('auth_token');
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -43,16 +51,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authApi.login(credentials);
+    localStorage.setItem('auth_token', response.data.token);
     setUser(response.data.user);
   };
 
   const register = async (data: RegisterData) => {
     const response = await authApi.register(data);
+    localStorage.setItem('auth_token', response.data.token);
     setUser(response.data.user);
   };
 
   const logout = async () => {
-    await authApi.logout();
+    try {
+      await authApi.logout();
+    } catch {
+      // Still clear token even if request fails
+    }
+    localStorage.removeItem('auth_token');
     setUser(null);
   };
 

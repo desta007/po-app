@@ -21,14 +21,14 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
     Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
-    Route::middleware('auth')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [LoginController::class, 'logout']);
         Route::get('/me', [LoginController::class, 'me']);
     });
 });
 
 // Protected routes
-Route::middleware(['auth', 'org.access'])->group(function () {
+Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     // Customers
     Route::apiResource('customers', CustomerController::class);
 

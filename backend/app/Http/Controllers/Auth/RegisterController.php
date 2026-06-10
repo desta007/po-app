@@ -8,7 +8,6 @@ use App\Models\Organization;
 use App\Models\OrganizationMember;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -48,11 +47,12 @@ class RegisterController extends Controller
             return $user;
         });
 
-        Auth::login($result);
-        request()->session()->regenerate();
+        // Create Sanctum API token
+        $token = $result->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'user' => $result->load('currentOrganization'),
+            'token' => $token,
         ], 201);
     }
 }
