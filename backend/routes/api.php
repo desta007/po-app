@@ -6,13 +6,21 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\OrganizationLogoController;
+use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\PublicCatalogController;
 use Illuminate\Support\Facades\Route;
+
+// Public routes (no auth)
+Route::get('catalog/{slug}', [PublicCatalogController::class, 'show']);
 
 // Authentication
 Route::prefix('auth')->group(function () {
@@ -27,6 +35,14 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+// Authenticated routes (no org required)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
+    Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead']);
+});
+
 // Protected routes
 Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     // Customers
@@ -34,6 +50,8 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
 
     // Products
     Route::apiResource('products', ProductController::class);
+    Route::post('products/{product}/image', [ProductImageController::class, 'store']);
+    Route::delete('products/{product}/image', [ProductImageController::class, 'destroy']);
 
     // Purchase Orders
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
@@ -58,14 +76,24 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::get('reports/revenue', [ReportController::class, 'revenue']);
     Route::get('reports/export-excel', [ReportController::class, 'exportExcel']);
 
-    // Notifications
-    Route::get('notifications', [NotificationController::class, 'index']);
-    Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
-    Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead']);
-
     // Settings
     Route::get('settings/organization', [SettingController::class, 'getOrganization']);
     Route::put('settings/organization', [SettingController::class, 'updateOrganization']);
     Route::put('settings/profile', [SettingController::class, 'updateProfile']);
     Route::put('settings/notifications', [SettingController::class, 'updateNotificationPrefs']);
+    Route::post('settings/organization/logo', [OrganizationLogoController::class, 'store']);
+    Route::delete('settings/organization/logo', [OrganizationLogoController::class, 'destroy']);
+
+    // Team Members (owner/admin only)
+    Route::middleware('role:owner,admin')->group(function () {
+        Route::apiResource('team-members', TeamMemberController::class)->except(['show']);
+    });
+});
+
+// Super Admin routes
+Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(function () {
+    Route::get('dashboard', [SuperAdminController::class, 'dashboard']);
+    Route::get('users', [SuperAdminController::class, 'users']);
+    Route::get('users/{id}', [SuperAdminController::class, 'userDetail']);
+    Route::get('organizations', [SuperAdminController::class, 'organizations']);
 });

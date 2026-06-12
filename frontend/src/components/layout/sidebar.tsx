@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, Settings, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, Settings, X, Shield, UsersRound, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
+import { useAuth } from '@/contexts/auth-context';
 
 const mainNav = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
@@ -22,6 +23,12 @@ const settingsNav = [
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings' },
 ];
 
+const adminNav = [
+  { to: ROUTES.ADMIN_DASHBOARD, icon: Shield, label: 'Admin Dashboard' },
+  { to: ROUTES.ADMIN_USERS, icon: UsersRound, label: 'Semua User' },
+  { to: ROUTES.ADMIN_ORGANIZATIONS, icon: Building2, label: 'Organisasi' },
+];
+
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -31,6 +38,7 @@ function NavItem({ to, icon: Icon, label, onClose }: { to: string; icon: any; la
   return (
     <NavLink
       to={to}
+      end={to === ROUTES.ADMIN_DASHBOARD}
       onClick={onClose}
       className={({ isActive }) => cn(
         'flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] text-[14px] font-medium transition-all duration-150 cursor-pointer',
@@ -46,6 +54,8 @@ function NavItem({ to, icon: Icon, label, onClose }: { to: string; icon: any; la
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
+  const { isSuperAdmin } = useAuth();
+
   return (
     <>
       {/* Mobile overlay */}
@@ -100,6 +110,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               ))}
             </div>
           </div>
+
+          {/* Super Admin Section */}
+          {isSuperAdmin && (
+            <div className="mt-5">
+              <div className="text-[11px] font-bold uppercase text-amber-500 tracking-[0.06em] px-3.5 mb-2">🛡️ Super Admin</div>
+              <div className="space-y-1">
+                {adminNav.map((item) => (
+                  <NavItem key={item.to} {...item} onClose={onClose} />
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
       </aside>
     </>

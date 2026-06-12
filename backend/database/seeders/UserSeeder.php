@@ -42,5 +42,14 @@ class UserSeeder extends Seeder
             'user_id' => $staff->id,
             'role' => 'staff',
         ]);
+
+        // Super Admin — platform-level administrator
+        User::create([
+            'name' => 'Super Admin',
+            'full_name' => 'Super Admin',
+            'email' => 'superadmin@poscheduler.com',
+            'password' => 'password123',
+            'is_super_admin' => true,
+        ]);
     }
 }

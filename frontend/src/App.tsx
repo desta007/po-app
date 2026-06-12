@@ -13,12 +13,21 @@ import DashboardPage from '@/pages/DashboardPage';
 import CalendarPage from '@/pages/CalendarPage';
 import PurchaseOrderListPage from '@/pages/po/PurchaseOrderListPage';
 import PurchaseOrderCreatePage from '@/pages/po/PurchaseOrderCreatePage';
+import PurchaseOrderEditPage from '@/pages/po/PurchaseOrderEditPage';
 import PurchaseOrderDetailPage from '@/pages/po/PurchaseOrderDetailPage';
 import CustomerListPage from '@/pages/customers/CustomerListPage';
 import CustomerDetailPage from '@/pages/customers/CustomerDetailPage';
 import ProductListPage from '@/pages/products/ProductListPage';
 import ReportPage from '@/pages/reports/ReportPage';
 import SettingsPage from '@/pages/settings/SettingsPage';
+
+// Admin pages
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
+import AdminUsersPage from '@/pages/admin/AdminUsersPage';
+import AdminOrganizationsPage from '@/pages/admin/AdminOrganizationsPage';
+
+// Public pages
+import CatalogPage from '@/pages/catalog/CatalogPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -41,6 +50,9 @@ export default function App() {
       <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
       <Route path="/lupa-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+      
+      {/* Public routes */}
+      <Route path="/katalog/:slug" element={<CatalogPage />} />
 
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
@@ -49,12 +61,18 @@ export default function App() {
         <Route path="kalender" element={<CalendarPage />} />
         <Route path="pesanan" element={<PurchaseOrderListPage />} />
         <Route path="pesanan/baru" element={<PurchaseOrderCreatePage />} />
+        <Route path="pesanan/:id/edit" element={<PurchaseOrderEditPage />} />
         <Route path="pesanan/:id" element={<PurchaseOrderDetailPage />} />
         <Route path="pelanggan" element={<CustomerListPage />} />
         <Route path="pelanggan/:id" element={<CustomerDetailPage />} />
         <Route path="produk" element={<ProductListPage />} />
         <Route path="laporan" element={<ReportPage />} />
         <Route path="pengaturan/*" element={<SettingsPage />} />
+
+        {/* Super Admin routes */}
+        <Route path="admin" element={<AdminDashboardPage />} />
+        <Route path="admin/users" element={<AdminUsersPage />} />
+        <Route path="admin/organizations" element={<AdminOrganizationsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

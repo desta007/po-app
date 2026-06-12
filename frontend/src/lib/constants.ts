@@ -33,8 +33,12 @@ export const ROUTES = {
   SETTINGS: '/pengaturan',
   SETTINGS_PROFILE: '/pengaturan/profil',
   SETTINGS_ORG: '/pengaturan/organisasi',
+  SETTINGS_TEAM: '/pengaturan/tim',
   SETTINGS_NOTIFICATIONS: '/pengaturan/notifikasi',
   SETTINGS_INTEGRATIONS: '/pengaturan/integrasi',
+  ADMIN_DASHBOARD: '/admin',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_ORGANIZATIONS: '/admin/organizations',
 } as const;
 
 export const UNITS = [

@@ -23,6 +23,7 @@ class User extends Authenticatable
         'phone',
         'avatar_url',
         'current_org_id',
+        'is_super_admin',
         'last_login_at',
     ];
 
@@ -36,6 +37,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_super_admin' => 'boolean',
             'last_login_at' => 'datetime',
         ];
     }

@@ -118,11 +118,13 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'payment_status' => ['required', 'in:unpaid,dp,paid'],
             'paid_amount' => ['required', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', 'string', 'max:100'],
         ]);
 
         $purchaseOrder->update([
             'payment_status' => $request->payment_status,
             'paid_amount' => $request->paid_amount,
+            'payment_method' => $request->payment_method,
         ]);
 
         return response()->json([

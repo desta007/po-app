@@ -7,6 +7,7 @@
         .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #1F4E79; padding-bottom: 15px; }
         .header h1 { color: #1F4E79; margin: 0; font-size: 24px; }
         .header .org-info { text-align: right; font-size: 11px; color: #666; }
+        .logo { max-height: 50px; max-width: 150px; margin-bottom: 5px; }
         .info-grid { display: table; width: 100%; margin-bottom: 20px; }
         .info-col { display: table-cell; width: 50%; vertical-align: top; }
         .info-label { font-weight: bold; color: #1F4E79; font-size: 10px; text-transform: uppercase; }
@@ -22,11 +23,16 @@
         .summary .total { font-size: 16px; font-weight: bold; color: #1F4E79; border-top: 2px solid #1F4E79; }
         .footer { margin-top: 40px; text-align: center; color: #888; font-size: 10px; border-top: 1px solid #e0e0e0; padding-top: 10px; }
         .notes { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 20px; font-size: 11px; }
+        .payment-info { background: #EBF5FB; border: 1px solid #AED6F1; padding: 12px; border-radius: 4px; margin-top: 20px; font-size: 11px; }
+        .payment-info strong { color: #1F4E79; }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
+            @if($organization->logo_url)
+            <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $organization->logo_url)) }}" class="logo" alt="Logo">
+            @endif
             <h1>INVOICE</h1>
             <p style="color: #666; margin: 5px 0 0;">{{ $po->po_number }}</p>
         </div>
@@ -52,6 +58,10 @@
             <p class="info-value">{{ $po->delivery_date->format('d M Y') }}</p>
             <p class="info-label">Status</p>
             <p class="info-value">{{ $po->status->label() }}</p>
+            @if($po->payment_method)
+            <p class="info-label">Metode Bayar</p>
+            <p class="info-value">{{ $po->payment_method }}</p>
+            @endif
         </div>
     </div>
 
@@ -83,11 +93,23 @@
             <tr><td>Subtotal</td><td class="text-right">Rp {{ number_format($po->subtotal, 0, ',', '.') }}</td></tr>
             @if($po->discount > 0)<tr><td>Diskon</td><td class="text-right">- Rp {{ number_format($po->discount, 0, ',', '.') }}</td></tr>@endif
             @if($po->tax > 0)<tr><td>Pajak</td><td class="text-right">Rp {{ number_format($po->tax, 0, ',', '.') }}</td></tr>@endif
+            @if($po->shipping_cost > 0)<tr><td>Ongkos Kirim</td><td class="text-right">Rp {{ number_format($po->shipping_cost, 0, ',', '.') }}</td></tr>@endif
             <tr class="total"><td><strong>Total</strong></td><td class="text-right"><strong>Rp {{ number_format($po->total, 0, ',', '.') }}</strong></td></tr>
         </table>
     </div>
 
     <div style="clear: both;"></div>
+
+    @php
+        $bankInfo = $organization->settings['bank_info'] ?? null;
+    @endphp
+    @if($bankInfo && !empty($bankInfo['bank_name']))
+    <div class="payment-info">
+        <strong>Pembayaran ke:</strong><br>
+        {{ $bankInfo['bank_name'] }} — {{ $bankInfo['account_number'] ?? '' }}<br>
+        a.n {{ $bankInfo['account_name'] ?? '' }}
+    </div>
+    @endif
 
     @if($po->notes)
     <div class="notes">

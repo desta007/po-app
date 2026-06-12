@@ -24,9 +24,16 @@ class LoginController extends Controller
         // Create Sanctum API token
         $token = $user->createToken('auth-token')->plainTextToken;
 
+        // Get role in current organization
+        $membership = $user->organizationMemberships()
+            ->where('organization_id', $user->current_org_id)
+            ->first();
+
         return response()->json([
             'user' => $user->load('currentOrganization'),
             'token' => $token,
+            'role' => $membership?->role?->value,
+            'is_super_admin' => (bool) $user->is_super_admin,
         ]);
     }
 
@@ -40,8 +47,17 @@ class LoginController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        // Get role in current organization
+        $membership = $user->organizationMemberships()
+            ->where('organization_id', $user->current_org_id)
+            ->first();
+
         return response()->json([
-            'user' => $request->user()->load('currentOrganization'),
+            'user' => $user->load('currentOrganization'),
+            'role' => $membership?->role?->value,
+            'is_super_admin' => (bool) $user->is_super_admin,
         ]);
     }
 }

@@ -42,6 +42,14 @@ export const productsApi = {
   delete: (id: string) =>
     apiClient.delete(`/api/products/${id}`),
 
+  uploadImage: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return apiClient.post<{ data: { image_url: string } }>(`/api/products/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   search: (query: string) =>
     apiClient.get<{ data: Product[] }>('/api/products/search', { params: { q: query } }),
 

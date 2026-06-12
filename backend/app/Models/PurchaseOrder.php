@@ -24,11 +24,13 @@ class PurchaseOrder extends Model
         'delivery_date',
         'status',
         'payment_status',
+        'payment_method',
         'dp_amount',
         'paid_amount',
         'subtotal',
         'discount',
         'tax',
+        'shipping_cost',
         'total',
         'notes',
         'created_by',
@@ -46,6 +48,7 @@ class PurchaseOrder extends Model
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
             'tax' => 'decimal:2',
+            'shipping_cost' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }

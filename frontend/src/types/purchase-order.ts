@@ -30,8 +30,10 @@ export interface PurchaseOrder {
   subtotal: number;
   discount: number;
   tax: number;
+  shipping_cost: number;
   total: number;
   notes: string | null;
+  payment_method: string | null;
   created_by: string;
   items?: PurchaseOrderItem[];
   status_history?: POStatusHistory[];

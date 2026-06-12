@@ -8,7 +8,7 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, MessageCircle, Check, X, DollarSign } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
@@ -26,6 +26,8 @@ export default function PurchaseOrderDetailPage() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<any>('unpaid');
   const [paidAmount, setPaidAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [customPaymentMethod, setCustomPaymentMethod] = useState('');
 
   const po = data?.data?.data;
 
@@ -33,6 +35,15 @@ export default function PurchaseOrderDetailPage() {
     if (po) {
       setPaymentStatus(po.payment_status);
       setPaidAmount(po.paid_amount || 0);
+      const method = po.payment_method || '';
+      const predefined = ['BCA', 'Mandiri', 'BRI', 'BNI', 'QRIS', 'Cash'];
+      if (method && !predefined.includes(method)) {
+        setPaymentMethod('other');
+        setCustomPaymentMethod(method);
+      } else {
+        setPaymentMethod(method);
+        setCustomPaymentMethod('');
+      }
     }
   }, [po]);
 
@@ -44,7 +55,7 @@ export default function PurchaseOrderDetailPage() {
   });
 
   const updatePayment = useMutation({
-    mutationFn: (payload: { payment_status: any; paid_amount: number }) =>
+    mutationFn: (payload: { payment_status: any; paid_amount: number; payment_method: string }) =>
       purchaseOrdersApi.updatePayment(id!, payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchase-order', id] }); toast.success('Status pembayaran diperbarui.'); setShowPaymentDialog(false); },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal.'),
@@ -88,6 +99,9 @@ export default function PurchaseOrderDetailPage() {
           <p className="text-[13px] text-gray-500">Dibuat {formatDate(po.order_date)} · Kirim {formatDate(po.delivery_date)}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Link to={`/pesanan/${id}/edit`}>
+            <Button variant="secondary"><Pencil size={15} /> Edit PO</Button>
+          </Link>
           <Button variant="secondary" onClick={() => setShowPaymentDialog(true)}><DollarSign size={15} /> Update Bayar</Button>
           <Button variant="secondary" onClick={handleDownloadPdf}><Download size={15} /> PDF</Button>
           <Button variant="accent"><MessageCircle size={15} /> Kirim WA</Button>
@@ -114,9 +128,12 @@ export default function PurchaseOrderDetailPage() {
             <div className="mt-3 pt-3 border-t border-gray-200 space-y-1">
               <div className="flex justify-between text-[13px]"><span>Subtotal</span><span className="font-semibold">{formatRupiah(po.subtotal)}</span></div>
               {po.discount > 0 && <div className="flex justify-between text-[13px]"><span>Diskon</span><span>-{formatRupiah(po.discount)}</span></div>}
+              {po.tax > 0 && <div className="flex justify-between text-[13px]"><span>Pajak</span><span>{formatRupiah(po.tax)}</span></div>}
+              {Number(po.shipping_cost) > 0 && <div className="flex justify-between text-[13px]"><span>Ongkos Kirim</span><span>{formatRupiah(po.shipping_cost)}</span></div>}
               <div className="flex justify-between pt-2 border-t border-gray-100 font-bold"><span>Total</span><span className="text-primary text-base">{formatRupiah(po.total)}</span></div>
             </div>
           </Card>
+          {po.payment_method && <Card><h3 className="text-[14px] font-bold mb-2">Info Pembayaran</h3><p className="text-[13px] text-gray-700">Metode: <strong>{po.payment_method}</strong></p></Card>}
           {po.notes && <Card><h3 className="text-[14px] font-bold mb-2">Catatan Internal</h3><p className="text-[13px] text-gray-700">{po.notes}</p></Card>}
         </div>
         <div className="space-y-4">
@@ -154,14 +171,42 @@ export default function PurchaseOrderDetailPage() {
               </select>
             </div>
             {paymentStatus !== 'unpaid' && (
-              <div className="space-y-2">
-                <label className="text-[13px] font-semibold text-gray-900">Nominal Dibayar (Rp)</label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-[10px] text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  value={paidAmount}
-                  onChange={(e) => setPaidAmount(Number(e.target.value))}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[13px] font-semibold text-gray-900">Metode Bayar (Opsional)</label>
+                  <select
+                    className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-[10px] text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    value={paymentMethod}
+                    onChange={(e) => { setPaymentMethod(e.target.value); if (e.target.value !== 'other') setCustomPaymentMethod(''); }}
+                  >
+                    <option value="">-- Pilih Metode --</option>
+                    <option value="BCA">Transfer BCA</option>
+                    <option value="Mandiri">Transfer Mandiri</option>
+                    <option value="BRI">Transfer BRI</option>
+                    <option value="BNI">Transfer BNI</option>
+                    <option value="QRIS">QRIS</option>
+                    <option value="Cash">Tunai (Cash)</option>
+                    <option value="other">Lainnya (Ketik Manual)</option>
+                  </select>
+                  {paymentMethod === 'other' && (
+                    <input
+                      type="text"
+                      placeholder="Contoh: Bank Mandiri, Dana, OVO, dll"
+                      className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-[10px] text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      value={customPaymentMethod}
+                      onChange={(e) => setCustomPaymentMethod(e.target.value)}
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[13px] font-semibold text-gray-900">Nominal Dibayar (Rp)</label>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-[10px] text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    value={paidAmount}
+                    onChange={(e) => setPaidAmount(Number(e.target.value))}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -172,6 +217,7 @@ export default function PurchaseOrderDetailPage() {
                 updatePayment.mutate({
                   payment_status: paymentStatus,
                   paid_amount: paymentStatus === 'unpaid' ? 0 : paymentStatus === 'paid' ? po.total : paidAmount,
+                  payment_method: paymentStatus === 'unpaid' ? '' : paymentMethod === 'other' ? customPaymentMethod : paymentMethod,
                 });
               }}
               loading={updatePayment.isPending}

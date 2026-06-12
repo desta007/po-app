@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
 import { customersApi } from '@/api/customers';
 import { productsApi } from '@/api/products';
@@ -12,30 +12,66 @@ import { ROUTES } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Plus, Trash2, Check } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
 
-export default function PurchaseOrderCreatePage() {
+export default function PurchaseOrderEditPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [step, setStep] = useState(0);
   const [customerId, setCustomerId] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-  const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [orderDate, setOrderDate] = useState('');
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [shippingCost, setShippingCost] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
-  const [items, setItems] = useState<ItemRow[]>([{ product_id: null, product_name: '', quantity: 1, unit_price: 0, notes: '' }]);
+  const [items, setItems] = useState<ItemRow[]>([]);
+
+  const { data: poData, isLoading: isLoadingPo } = useQuery({
+    queryKey: ['purchase-order', id],
+    queryFn: () => purchaseOrdersApi.show(id!),
+    enabled: !!id,
+  });
 
   const { data: customersData } = useQuery({ queryKey: ['customers-all'], queryFn: () => customersApi.list({ per_page: 100 }) });
   const { data: productsData } = useQuery({ queryKey: ['products-all'], queryFn: () => productsApi.list({ per_page: 100 }) });
   const customers = customersData?.data?.data || [];
   const products = productsData?.data?.data || [];
 
-  const createPO = useMutation({
-    mutationFn: (data: any) => purchaseOrdersApi.create(data),
-    onSuccess: (res) => { toast.success('PO berhasil dibuat!'); navigate(ROUTES.PO_DETAIL(res.data.data.id)); },
+  useEffect(() => {
+    if (poData?.data?.data) {
+      const po = poData.data.data;
+      setCustomerId(po.customer_id);
+      setOrderDate(po.order_date.slice(0, 10));
+      setDeliveryDate(po.delivery_date.slice(0, 10));
+      setDiscount(Number(po.discount));
+      setTax(Number(po.tax));
+      setShippingCost(Number(po.shipping_cost || 0));
+      setNotes(po.notes || '');
+
+      if (po.items && po.items.length > 0) {
+        setItems(po.items.map(it => ({
+          product_id: it.product_id,
+          product_name: it.product_name,
+          quantity: Number(it.quantity),
+          unit_price: Number(it.unit_price),
+          notes: it.notes || ''
+        })));
+      }
+    }
+  }, [poData]);
+
+  const updatePO = useMutation({
+    mutationFn: (data: any) => purchaseOrdersApi.update(id!, data),
+    onSuccess: () => { 
+      toast.success('PO berhasil diperbarui!'); 
+      queryClient.invalidateQueries({ queryKey: ['purchase-order', id] });
+      navigate(ROUTES.PO_DETAIL(id!)); 
+    },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal.'),
   });
 
@@ -50,13 +86,17 @@ export default function PurchaseOrderCreatePage() {
 
   const subtotal = items.reduce((sum, it) => sum + it.quantity * it.unit_price, 0);
   const total = subtotal - discount + tax + shippingCost;
-  const handleSubmit = () => { createPO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, notes, items }); };
+  const handleSubmit = () => { updatePO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, notes, items }); };
   const steps = ['Customer', 'Items', 'Jadwal & Bayar', 'Review'];
   const selectedCustomer = customers.find((c: any) => c.id === customerId);
 
+  if (isLoadingPo) {
+    return <div className="flex justify-center p-12"><LoadingSpinner size="lg" /></div>;
+  }
+
   return (
     <div>
-      <PageHeader title="Buat Purchase Order Baru" description="Isi detail pesanan dengan lengkap" />
+      <PageHeader title={`Edit PO: ${poData?.data?.data?.po_number || ''}`} description="Perbarui detail pesanan" />
 
       {/* Stepper */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto">
@@ -89,29 +129,58 @@ export default function PurchaseOrderCreatePage() {
               <Button variant="secondary" size="sm" onClick={() => setStep(0)}>Ganti</Button>
             </div>
           )}
-          <h3 className="text-base font-bold mb-3">Tambah Item Pesanan</h3>
+          <h3 className="text-base font-bold mb-3">Item Pesanan</h3>
           <div className="overflow-x-auto rounded-[10px] border border-gray-200 mb-4">
             <table className="w-full border-collapse">
               <thead className="bg-gray-50 border-b border-gray-200"><tr><th className="px-3 py-2.5 text-left text-[11px] font-bold text-gray-500 uppercase">Produk</th><th className="px-3 py-2.5 text-[11px] font-bold text-gray-500 uppercase w-[100px]">Qty</th><th className="px-3 py-2.5 text-[11px] font-bold text-gray-500 uppercase w-[140px]">Harga Satuan</th><th className="px-3 py-2.5 text-[11px] font-bold text-gray-500 uppercase w-[130px]">Subtotal</th><th className="w-10"></th></tr></thead>
               <tbody>
                 {items.map((item, i) => (
                   <tr key={i} className="border-b border-gray-100">
-                    <td className="px-3 py-2"><select className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.product_id || ''} onChange={(e) => updateItem(i, 'product_id', e.target.value || null)}><option value="" disabled>-- Pilih Produk --</option>{products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></td>
+                    <td className="px-3 py-2">
+                      {item.product_id ? (
+                         <div className="px-2 py-2 text-[13px] font-medium bg-gray-50 rounded-[6px] border border-gray-200">{item.product_name}</div>
+                      ) : (
+                         <input type="text" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" placeholder="Nama Produk Manual" value={item.product_name} onChange={(e) => updateItem(i, 'product_name', e.target.value)} />
+                      )}
+                    </td>
                     <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.quantity} onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))} min={1} /></td>
                     <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} /></td>
                     <td className="px-3 py-2 text-right font-semibold text-[13px] tabular-nums">{formatRupiah(item.quantity * item.unit_price)}</td>
-                    <td className="px-2">{items.length > 1 && <button onClick={() => removeItem(i)} className="text-danger p-1"><Trash2 size={14} /></button>}</td>
+                    <td className="px-2"><button onClick={() => removeItem(i)} className="text-danger p-1 hover:bg-red-50 rounded-md"><Trash2 size={14} /></button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <Button variant="secondary" fullWidth className="border-dashed mb-4" onClick={addItem}><Plus size={15} /> Tambah Item</Button>
+          <div className="flex gap-2 mb-4">
+            <select 
+              className="flex-1 border border-gray-300 rounded-[6px] px-3 py-2 text-[13px]"
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                const p = products.find((x: any) => x.id === val);
+                if (p) {
+                  setItems([...items, { product_id: p.id, product_name: p.name, quantity: 1, unit_price: p.price, notes: '' }]);
+                }
+                e.target.value = '';
+              }}
+            >
+              <option value="">+ Tambah Produk dari Katalog</option>
+              {products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <Button variant="secondary" onClick={addItem}><Plus size={15} /> Item Manual</Button>
+          </div>
           <div className="bg-primary-50 p-4 rounded-[10px] mb-4">
             <div className="flex justify-between text-[13px] mb-1"><span className="text-gray-700">Subtotal ({items.length} item)</span><span className="font-semibold">{formatRupiah(subtotal)}</span></div>
-            <div className="border-t border-primary-100 mt-2 pt-2 flex justify-between"><strong>Total</strong><strong className="text-primary text-lg">{formatRupiah(subtotal)}</strong></div>
+            <div className="border-t border-primary-100 mt-2 pt-2 flex justify-between"><strong>Total Item</strong><strong className="text-primary text-lg">{formatRupiah(subtotal)}</strong></div>
           </div>
-          <div className="flex justify-between"><Button variant="secondary" onClick={() => setStep(0)}>← Kembali</Button><div className="flex gap-2"><Button variant="secondary">Simpan Draft</Button><Button disabled={items.every(it => !it.product_name && !it.product_id)} onClick={() => setStep(2)}>Lanjut: Jadwal →</Button></div></div>
+          <div className="flex justify-between">
+            <Button variant="secondary" onClick={() => navigate(-1)}>Batal</Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setStep(0)}>← Customer</Button>
+              <Button disabled={items.length === 0 || items.every(it => !it.product_name)} onClick={() => setStep(2)}>Lanjut: Jadwal →</Button>
+            </div>
+          </div>
         </Card>
       )}
 
@@ -123,41 +192,29 @@ export default function PurchaseOrderCreatePage() {
             <Input label="Diskon (Rp)" type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
             <Input label="Pajak (Rp)" type="number" value={tax} onChange={(e) => setTax(Number(e.target.value))} />
             <Input label="Ongkos Kirim (Rp)" type="number" value={shippingCost} onChange={(e) => setShippingCost(Number(e.target.value))} />
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-gray-700">Metode Bayar (Opsional)</label>
-              <select className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] bg-white focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                <option value="">-- Pilih Metode --</option>
-                <option value="BCA">Transfer BCA</option>
-                <option value="Mandiri">Transfer Mandiri</option>
-                <option value="BRI">Transfer BRI</option>
-                <option value="BNI">Transfer BNI</option>
-                <option value="QRIS">QRIS</option>
-                <option value="Cash">Tunai (Cash)</option>
-              </select>
-            </div>
           </div>
           <div className="mb-4"><label className="block text-xs font-semibold text-gray-700 mb-1.5">Catatan (opsional)</label><textarea className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" placeholder="Cth: Bahan tanpa pengawet" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
-          <div className="flex justify-between"><Button variant="secondary" onClick={() => setStep(1)}>← Kembali</Button><Button onClick={() => setStep(3)}>Lanjut →</Button></div>
+          <div className="flex justify-between"><Button variant="secondary" onClick={() => setStep(1)}>← Items</Button><Button onClick={() => setStep(3)}>Review & Simpan →</Button></div>
         </Card>
       )}
 
       {step === 3 && (
         <Card className="max-w-xl mx-auto" padding="lg">
-          <h3 className="text-base font-bold mb-4">Review Pesanan</h3>
+          <h3 className="text-base font-bold mb-4">Review Perubahan PO</h3>
           <p className="text-[13px] mb-1"><strong>Customer:</strong> {selectedCustomer?.name}</p>
           <p className="text-[13px] mb-3"><strong>Kirim:</strong> {deliveryDate}</p>
           <div className="rounded-[10px] border border-gray-200 overflow-hidden mb-4">
             <table className="w-full border-collapse"><thead className="bg-gray-50 border-b border-gray-200"><tr><th className="p-2.5 text-left text-[11px] font-bold text-gray-500 uppercase">Produk</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Qty</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Harga</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Subtotal</th></tr></thead>
-            <tbody>{items.filter(it => it.product_name || it.product_id).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>
+            <tbody>{items.filter(it => it.product_name).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>
           </div>
           <div className="bg-primary-50 p-4 rounded-[10px] mb-4 space-y-1">
             <div className="flex justify-between text-[13px]"><span>Subtotal</span><span className="font-semibold">{formatRupiah(subtotal)}</span></div>
             {discount > 0 && <div className="flex justify-between text-[13px]"><span>Diskon</span><span>-{formatRupiah(discount)}</span></div>}
             {tax > 0 && <div className="flex justify-between text-[13px]"><span>Pajak</span><span>{formatRupiah(tax)}</span></div>}
             {shippingCost > 0 && <div className="flex justify-between text-[13px]"><span>Ongkos Kirim</span><span>{formatRupiah(shippingCost)}</span></div>}
-            <div className="border-t border-primary-100 mt-2 pt-2 flex justify-between font-bold"><span>Total</span><span className="text-primary text-lg">{formatRupiah(total)}</span></div>
+            <div className="border-t border-primary-100 mt-2 pt-2 flex justify-between font-bold"><span>Total Akhir</span><span className="text-primary text-lg">{formatRupiah(total)}</span></div>
           </div>
-          <div className="flex justify-between"><Button variant="secondary" onClick={() => setStep(2)}>← Kembali</Button><Button loading={createPO.isPending} onClick={handleSubmit}>Simpan PO</Button></div>
+          <div className="flex justify-between"><Button variant="secondary" onClick={() => setStep(2)}>← Jadwal</Button><Button loading={updatePO.isPending} onClick={handleSubmit}>Simpan Perubahan</Button></div>
         </Card>
       )}
     </div>

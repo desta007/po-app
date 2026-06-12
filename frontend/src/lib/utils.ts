@@ -54,3 +54,11 @@ export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
   return str.slice(0, length) + '...';
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+export function storageUrl(path: string | null | undefined): string {
+  if (!path) return '';
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  return `${API_BASE_URL}${path}`;
+}

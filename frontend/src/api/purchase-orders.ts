@@ -30,6 +30,7 @@ export interface CreatePOData {
   notes?: string;
   discount?: number;
   tax?: number;
+  shipping_cost?: number;
   dp_amount?: number;
   items: CreatePOItemData[];
 }
@@ -41,6 +42,7 @@ export interface UpdatePOData {
   notes?: string;
   discount?: number;
   tax?: number;
+  shipping_cost?: number;
   dp_amount?: number;
   items?: CreatePOItemData[];
 }
@@ -53,6 +55,7 @@ export interface UpdateStatusData {
 export interface UpdatePaymentData {
   payment_status: PaymentStatus;
   paid_amount: number;
+  payment_method?: string | null;
 }
 
 export const purchaseOrdersApi = {
