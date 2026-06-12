@@ -39,6 +39,7 @@ RUN composer run-script post-autoload-dump 2>/dev/null || true
 # Create storage directories and set permissions
 RUN mkdir -p storage/framework/{sessions,views,cache} \
     && mkdir -p storage/logs \
+    && mkdir -p storage/app/public \
     && mkdir -p bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
@@ -46,7 +47,8 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 EXPOSE 8080
 
 # Start: cache config with Railway env vars, run migrations, then serve
-CMD php artisan config:cache \
+CMD php artisan storage:link --force \
+    && php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache \
     && php artisan migrate --force \
