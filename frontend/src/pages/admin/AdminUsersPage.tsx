@@ -3,7 +3,6 @@ import { adminApi } from '@/api/admin';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Search, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { formatDate, getInitials } from '@/lib/utils';
@@ -74,7 +73,7 @@ export default function AdminUsersPage() {
 
           <div className="divide-y divide-gray-100">
             {users.map((u: any, i: number) => {
-              const roleStyle = ROLE_COLORS[u.role] || ROLE_COLORS.viewer;
+              const roleStyle = ROLE_COLORS[u.role] ?? { color: '#9CA3AF', bgColor: '#F9FAFB' };
               return (
                 <div key={u.id} className="grid md:grid-cols-[1fr_1fr_1fr_100px_120px] gap-2 md:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
                   {/* User */}

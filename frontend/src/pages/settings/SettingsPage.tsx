@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -67,16 +66,17 @@ export default function SettingsPage() {
     }
   });
   const org = orgData?.data?.data;
+  const orgSettings = org?.settings as { bank_info?: { bank_name?: string; account_number?: string; account_name?: string } } | undefined;
   if (org && !orgForm.name) {
-    setOrgForm({ 
-      name: org.name, 
-      phone: org.phone || '', 
+    setOrgForm({
+      name: org.name,
+      phone: org.phone || '',
       address: org.address || '',
       settings: {
         bank_info: {
-          bank_name: org.settings?.bank_info?.bank_name || '',
-          account_number: org.settings?.bank_info?.account_number || '',
-          account_name: org.settings?.bank_info?.account_name || ''
+          bank_name: orgSettings?.bank_info?.bank_name || '',
+          account_number: orgSettings?.bank_info?.account_number || '',
+          account_name: orgSettings?.bank_info?.account_name || ''
         }
       }
     });
@@ -147,7 +147,7 @@ export default function SettingsPage() {
 
   const updateRole = useMutation({
     mutationFn: ({ id, role }: { id: string; role: MemberRole }) => settingsApi.updateMemberRole(id, role),
-    onSuccess: (_, { role: newRole }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
       toast.success(`Role berhasil diubah.`);
     },
@@ -315,7 +315,7 @@ export default function SettingsPage() {
               <Card padding="none">
                 <div className="divide-y divide-gray-100">
                   {members.map((member) => {
-                    const config = ROLE_CONFIG[member.role] || ROLE_CONFIG.viewer;
+                    const config = ROLE_CONFIG[member.role] ?? { label: 'Viewer', color: '#9CA3AF', bgColor: '#F9FAFB', icon: Eye };
                     const isCurrentUser = member.user_id === user?.id?.toString();
                     const RoleIcon = config.icon;
 
