@@ -100,20 +100,20 @@
 
     <div style="clear: both;"></div>
 
+    @if($po->notes)
+    <div class="notes">
+        <strong>Catatan:</strong><br>{{ $po->notes }}
+    </div>
+    @endif
+
     @php
         $bankInfo = $organization->settings['bank_info'] ?? null;
     @endphp
     @if($bankInfo && !empty($bankInfo['bank_name']))
     <div class="payment-info">
-        <strong>Pembayaran ke:</strong><br>
-        {{ $bankInfo['bank_name'] }} — {{ $bankInfo['account_number'] ?? '' }}<br>
-        a.n {{ $bankInfo['account_name'] ?? '' }}
-    </div>
-    @endif
-
-    @if($po->notes)
-    <div class="notes">
-        <strong>Catatan:</strong><br>{{ $po->notes }}
+        Pembayaran dapat ditransfer ke rekening:<br>
+        <strong>{{ $bankInfo['bank_name'] }}</strong><br>
+        {{ $bankInfo['account_number'] ?? '' }} atas nama {{ $bankInfo['account_name'] ?? '' }}
     </div>
     @endif
 
