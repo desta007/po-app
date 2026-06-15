@@ -130,8 +130,10 @@ export default function SettingsPage() {
   };
 
   const handleEditPaymentMethod = (index: number) => {
+    const method = paymentMethods[index];
+    if (!method) return;
     setPmEditIndex(index);
-    setPmForm({ ...paymentMethods[index] });
+    setPmForm({ name: method.name, is_active: method.is_active });
     setPmEditOpen(true);
   };
 
@@ -140,33 +142,37 @@ export default function SettingsPage() {
       toast.error('Nama metode bayar tidak boleh kosong.');
       return;
     }
-    const updated = [...paymentMethods];
+    const updated: PaymentMethod[] = [...paymentMethods];
     if (pmEditIndex !== null) {
-      updated[pmEditIndex] = { ...pmForm };
+      updated[pmEditIndex] = { name: pmForm.name, is_active: pmForm.is_active };
     } else {
-      updated.push({ ...pmForm });
+      updated.push({ name: pmForm.name, is_active: pmForm.is_active });
     }
     updatePaymentMethods.mutate(updated);
     setPmEditOpen(false);
   };
 
   const handleDeletePaymentMethod = (index: number) => {
-    if (!window.confirm(`Hapus metode "${paymentMethods[index].name}"?`)) return;
+    const method = paymentMethods[index];
+    if (!method || !window.confirm(`Hapus metode "${method.name}"?`)) return;
     const updated = paymentMethods.filter((_, i) => i !== index);
     updatePaymentMethods.mutate(updated);
   };
 
   const handleTogglePaymentMethod = (index: number) => {
-    const updated = [...paymentMethods];
-    updated[index] = { ...updated[index], is_active: !updated[index].is_active };
+    const updated: PaymentMethod[] = paymentMethods.map((m, i) =>
+      i === index ? { name: m.name, is_active: !m.is_active } : m
+    );
     updatePaymentMethods.mutate(updated);
   };
 
   const handleMovePaymentMethod = (index: number, direction: 'up' | 'down') => {
-    const updated = [...paymentMethods];
+    const updated: PaymentMethod[] = [...paymentMethods];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= updated.length) return;
-    [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+    const temp = updated[index]!;
+    updated[index] = updated[targetIndex]!;
+    updated[targetIndex] = temp;
     updatePaymentMethods.mutate(updated);
   };
 
