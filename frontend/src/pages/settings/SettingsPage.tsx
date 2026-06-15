@@ -288,6 +288,37 @@ export default function SettingsPage() {
         {activeTab === 'organization' && (
           <div className="space-y-4">
             <Card>
+              <h3 className="text-[14px] font-bold text-gray-900 mb-1">🔗 Link Katalog Publik</h3>
+              <p className="text-[12px] text-gray-500 mb-3.5">Bagikan link ini kepada pelanggan Anda agar mereka dapat melihat daftar produk aktif Anda secara online.</p>
+              <div className="flex items-center gap-2 bg-gray-55 border border-gray-200 rounded-[10px] p-2">
+                <span className="text-[13px] text-gray-600 font-mono select-all truncate flex-1 pl-2">
+                  {org?.slug ? `${window.location.origin}/katalog/${org.slug}` : 'Generating link...'}
+                </span>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    if (org?.slug) {
+                      navigator.clipboard.writeText(`${window.location.origin}/katalog/${org.slug}`);
+                      toast.success('Link katalog disalin ke clipboard!');
+                    }
+                  }}
+                >
+                  Salin Link
+                </Button>
+                <a 
+                  href={org?.slug ? `/katalog/${org.slug}` : '#'} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center h-9 px-4 border border-gray-200 rounded-[8px] text-[13px] font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  Buka
+                </a>
+              </div>
+            </Card>
+
+            <Card>
               <h3 className="text-[14px] font-bold text-gray-900 mb-4">Informasi Organisasi / Bisnis</h3>
               <form onSubmit={(e) => { e.preventDefault(); updateOrg.mutate(orgForm); }} className="space-y-4">
                 
