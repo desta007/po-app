@@ -9,13 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image as ImageIcon } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image as ImageIcon, Plus, Pencil, CreditCard, GripVertical } from 'lucide-react';
 import { useRef } from 'react';
 import type { MemberRole, TeamMember } from '@/types/auth';
+
+interface PaymentMethod {
+  name: string;
+  is_active: boolean;
+}
 
 const TABS = [
   { id: 'profile', label: '👤 Profil', roles: ['owner', 'admin', 'staff', 'viewer'] as string[] },
   { id: 'organization', label: '🏢 Organisasi', roles: ['owner', 'admin', 'staff', 'viewer'] as string[] },
+  { id: 'payment-methods', label: '💳 Metode Bayar', roles: ['owner', 'admin'] as string[] },
   { id: 'team', label: '👥 Anggota Tim', roles: ['owner', 'admin'] as string[] },
 ];
 
@@ -94,6 +100,75 @@ export default function SettingsPage() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'staff' as MemberRole });
+
+  // Payment Methods
+  const { data: paymentMethodsData, isLoading: pmLoading } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: () => settingsApi.getPaymentMethods(),
+    enabled: role === 'owner' || role === 'admin',
+  });
+
+  const [pmEditOpen, setPmEditOpen] = useState(false);
+  const [pmEditIndex, setPmEditIndex] = useState<number | null>(null);
+  const [pmForm, setPmForm] = useState({ name: '', is_active: true });
+
+  const paymentMethods: PaymentMethod[] = paymentMethodsData?.data?.data || [];
+
+  const updatePaymentMethods = useMutation({
+    mutationFn: (methods: PaymentMethod[]) => settingsApi.updatePaymentMethods(methods),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
+      toast.success('Metode pembayaran berhasil diperbarui.');
+    },
+    onError: () => toast.error('Gagal memperbarui metode pembayaran.'),
+  });
+
+  const handleAddPaymentMethod = () => {
+    setPmEditIndex(null);
+    setPmForm({ name: '', is_active: true });
+    setPmEditOpen(true);
+  };
+
+  const handleEditPaymentMethod = (index: number) => {
+    setPmEditIndex(index);
+    setPmForm({ ...paymentMethods[index] });
+    setPmEditOpen(true);
+  };
+
+  const handleSavePaymentMethod = () => {
+    if (!pmForm.name.trim()) {
+      toast.error('Nama metode bayar tidak boleh kosong.');
+      return;
+    }
+    const updated = [...paymentMethods];
+    if (pmEditIndex !== null) {
+      updated[pmEditIndex] = { ...pmForm };
+    } else {
+      updated.push({ ...pmForm });
+    }
+    updatePaymentMethods.mutate(updated);
+    setPmEditOpen(false);
+  };
+
+  const handleDeletePaymentMethod = (index: number) => {
+    if (!window.confirm(`Hapus metode "${paymentMethods[index].name}"?`)) return;
+    const updated = paymentMethods.filter((_, i) => i !== index);
+    updatePaymentMethods.mutate(updated);
+  };
+
+  const handleTogglePaymentMethod = (index: number) => {
+    const updated = [...paymentMethods];
+    updated[index] = { ...updated[index], is_active: !updated[index].is_active };
+    updatePaymentMethods.mutate(updated);
+  };
+
+  const handleMovePaymentMethod = (index: number, direction: 'up' | 'down') => {
+    const updated = [...paymentMethods];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= updated.length) return;
+    [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+    updatePaymentMethods.mutate(updated);
+  };
 
   // Mutations
   const updateProfile = useMutation({
@@ -288,6 +363,119 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {/* Payment Methods Tab */}
+        {activeTab === 'payment-methods' && (role === 'owner' || role === 'admin') && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-[16px] font-bold text-gray-900">Metode Pembayaran</h3>
+                <p className="text-[13px] text-gray-500 mt-0.5">Kelola daftar metode pembayaran yang tampil saat update status pembayaran PO</p>
+              </div>
+              <Button onClick={handleAddPaymentMethod}>
+                <Plus size={15} /> Tambah Metode
+              </Button>
+            </div>
+
+            {pmLoading ? (
+              <Card><div className="animate-pulse space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 bg-gray-100 rounded-lg" />)}</div></Card>
+            ) : paymentMethods.length === 0 ? (
+              <Card>
+                <div className="text-center py-8 text-gray-500">
+                  <CreditCard size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="font-semibold">Belum ada metode pembayaran</p>
+                  <p className="text-[13px] mt-1">Tambahkan metode bayar seperti Transfer BCA, QRIS, Cash, dll.</p>
+                  <Button className="mt-4" onClick={handleAddPaymentMethod}>
+                    <Plus size={15} /> Tambah Metode Pertama
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <Card padding="none">
+                <div className="divide-y divide-gray-100">
+                  {paymentMethods.map((method, index) => (
+                    <div key={index} className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition-colors">
+                      {/* Reorder */}
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          onClick={() => handleMovePaymentMethod(index, 'up')}
+                          disabled={index === 0}
+                          className="p-0.5 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Pindah ke atas"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 3L10 7H2L6 3Z" fill="currentColor"/></svg>
+                        </button>
+                        <button
+                          onClick={() => handleMovePaymentMethod(index, 'down')}
+                          disabled={index === paymentMethods.length - 1}
+                          className="p-0.5 rounded text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Pindah ke bawah"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9L2 5H10L6 9Z" fill="currentColor"/></svg>
+                        </button>
+                      </div>
+
+                      {/* Icon */}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        method.is_active ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        <CreditCard size={18} />
+                      </div>
+
+                      {/* Name */}
+                      <div className="flex-1 min-w-0">
+                        <span className={`font-semibold text-[14px] ${method.is_active ? 'text-gray-900' : 'text-gray-400 line-through'}`}>{method.name}</span>
+                      </div>
+
+                      {/* Active Toggle */}
+                      <button
+                        onClick={() => handleTogglePaymentMethod(index)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          method.is_active ? 'bg-emerald-500' : 'bg-gray-300'
+                        }`}
+                        title={method.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                          method.is_active ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+
+                      {/* Edit */}
+                      <button
+                        onClick={() => handleEditPaymentMethod(index)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil size={15} />
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        onClick={() => handleDeletePaymentMethod(index)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Hapus"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            <Card>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3B82F6" strokeWidth="1.5"/><path d="M8 5v4M8 11h.01" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900">Tips</p>
+                  <p className="text-[12px] text-gray-500 mt-0.5">Metode bayar yang aktif akan muncul sebagai pilihan di dialog "Update Status Pembayaran" pada detail PO. Anda tetap bisa mengetik metode lain secara manual.</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {/* Team Tab */}
         {activeTab === 'team' && (role === 'owner' || role === 'admin') && (
           <div className="space-y-4">
@@ -426,6 +614,40 @@ export default function SettingsPage() {
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" type="button" onClick={() => setInviteOpen(false)}>Batal</Button>
               <Button type="submit" loading={inviteMember.isPending}>Tambahkan</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Edit Dialog */}
+      <Dialog open={pmEditOpen} onOpenChange={setPmEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{pmEditIndex !== null ? 'Edit Metode Bayar' : 'Tambah Metode Bayar'}</DialogTitle></DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleSavePaymentMethod(); }} className="space-y-4">
+            <Input
+              label="Nama Metode Bayar"
+              placeholder="Cth: Transfer BCA, QRIS, Cash, GoPay"
+              value={pmForm.name}
+              onChange={(e) => setPmForm({ ...pmForm, name: e.target.value })}
+              required
+            />
+            <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:border-gray-300 transition-colors">
+              <input
+                type="checkbox"
+                checked={pmForm.is_active}
+                onChange={(e) => setPmForm({ ...pmForm, is_active: e.target.checked })}
+                className="accent-primary w-4 h-4"
+              />
+              <div>
+                <span className="text-[13px] font-semibold text-gray-700">Aktif</span>
+                <p className="text-[11px] text-gray-500">Metode ini akan muncul di pilihan saat update pembayaran PO</p>
+              </div>
+            </label>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="secondary" type="button" onClick={() => setPmEditOpen(false)}>Batal</Button>
+              <Button type="submit" loading={updatePaymentMethods.isPending}>
+                {pmEditIndex !== null ? 'Simpan Perubahan' : 'Tambah Metode'}
+              </Button>
             </div>
           </form>
         </DialogContent>

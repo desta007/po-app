@@ -70,4 +70,38 @@ class SettingController extends Controller
 
         return response()->json(['data' => $org, 'message' => 'Preferensi notifikasi berhasil diperbarui.']);
     }
+
+    /**
+     * Get payment methods from organization settings.
+     */
+    public function getPaymentMethods(): JsonResponse
+    {
+        $org = auth()->user()->currentOrganization;
+        $settings = $org->settings ?? [];
+        $methods = $settings['payment_methods'] ?? [];
+
+        return response()->json(['data' => $methods]);
+    }
+
+    /**
+     * Update payment methods in organization settings.
+     */
+    public function updatePaymentMethods(Request $request): JsonResponse
+    {
+        $request->validate([
+            'payment_methods' => 'present|array',
+            'payment_methods.*.name' => 'required|string|max:100',
+            'payment_methods.*.is_active' => 'required|boolean',
+        ]);
+
+        $org = auth()->user()->currentOrganization;
+        $settings = $org->settings ?? [];
+        $settings['payment_methods'] = $request->input('payment_methods');
+        $org->update(['settings' => $settings]);
+
+        return response()->json([
+            'data' => $settings['payment_methods'],
+            'message' => 'Metode pembayaran berhasil diperbarui.',
+        ]);
+    }
 }

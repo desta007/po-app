@@ -68,4 +68,11 @@ export const settingsApi = {
 
   removeMember: (id: string) =>
     apiClient.delete(`/api/team-members/${id}`),
+
+  // Payment Methods
+  getPaymentMethods: () =>
+    apiClient.get<{ data: { name: string; is_active: boolean }[] }>('/api/settings/payment-methods'),
+
+  updatePaymentMethods: (methods: { name: string; is_active: boolean }[]) =>
+    apiClient.put<{ data: { name: string; is_active: boolean }[]; message: string }>('/api/settings/payment-methods', { payment_methods: methods }),
 };

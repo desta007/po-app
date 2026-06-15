@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
+import { settingsApi } from '@/api/settings';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,6 +30,14 @@ export default function PurchaseOrderDetailPage() {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
 
+  const { data: paymentMethodsData } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: () => settingsApi.getPaymentMethods(),
+  });
+
+  const configuredMethods: { name: string; is_active: boolean }[] = paymentMethodsData?.data?.data || [];
+  const activeMethods = configuredMethods.filter(m => m.is_active);
+
   const po = data?.data?.data;
 
   useEffect(() => {
@@ -36,8 +45,8 @@ export default function PurchaseOrderDetailPage() {
       setPaymentStatus(po.payment_status);
       setPaidAmount(po.paid_amount || 0);
       const method = po.payment_method || '';
-      const predefined = ['BCA', 'Mandiri', 'BRI', 'BNI', 'QRIS', 'Cash'];
-      if (method && !predefined.includes(method)) {
+      const predefinedNames = activeMethods.map(m => m.name);
+      if (method && !predefinedNames.includes(method)) {
         setPaymentMethod('other');
         setCustomPaymentMethod(method);
       } else {
@@ -45,7 +54,7 @@ export default function PurchaseOrderDetailPage() {
         setCustomPaymentMethod('');
       }
     }
-  }, [po]);
+  }, [po, activeMethods.length]);
 
   const updateStatus = useMutation({
     mutationFn: ({ status, reason }: { status: string; reason?: string }) =>
@@ -180,12 +189,9 @@ export default function PurchaseOrderDetailPage() {
                     onChange={(e) => { setPaymentMethod(e.target.value); if (e.target.value !== 'other') setCustomPaymentMethod(''); }}
                   >
                     <option value="">-- Pilih Metode --</option>
-                    <option value="BCA">Transfer BCA</option>
-                    <option value="Mandiri">Transfer Mandiri</option>
-                    <option value="BRI">Transfer BRI</option>
-                    <option value="BNI">Transfer BNI</option>
-                    <option value="QRIS">QRIS</option>
-                    <option value="Cash">Tunai (Cash)</option>
+                    {activeMethods.map((m) => (
+                      <option key={m.name} value={m.name}>{m.name}</option>
+                    ))}
                     <option value="other">Lainnya (Ketik Manual)</option>
                   </select>
                   {paymentMethod === 'other' && (

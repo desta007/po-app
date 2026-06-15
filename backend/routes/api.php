@@ -83,6 +83,8 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::put('settings/notifications', [SettingController::class, 'updateNotificationPrefs']);
     Route::post('settings/organization/logo', [OrganizationLogoController::class, 'store']);
     Route::delete('settings/organization/logo', [OrganizationLogoController::class, 'destroy']);
+    Route::get('settings/payment-methods', [SettingController::class, 'getPaymentMethods']);
+    Route::put('settings/payment-methods', [SettingController::class, 'updatePaymentMethods']);
 
     // Team Members (owner/admin only)
     Route::middleware('role:owner,admin')->group(function () {
