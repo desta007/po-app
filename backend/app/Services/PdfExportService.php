@@ -16,6 +16,6 @@ class PdfExportService
             'organization' => $po->organization,
             'customer' => $po->customer,
             'items' => $po->items,
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper([0, 0, 226.77, 841.89], 'portrait');
     }
 }

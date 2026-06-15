@@ -3,86 +3,81 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #333; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #1F4E79; padding-bottom: 15px; }
-        .header h1 { color: #1F4E79; margin: 0; font-size: 24px; }
-        .header .org-info { text-align: right; font-size: 11px; color: #666; }
-        .logo { max-height: 50px; max-width: 150px; margin-bottom: 5px; }
-        .info-grid { display: table; width: 100%; margin-bottom: 20px; }
-        .info-col { display: table-cell; width: 50%; vertical-align: top; }
-        .info-label { font-weight: bold; color: #1F4E79; font-size: 10px; text-transform: uppercase; }
-        .info-value { margin-bottom: 5px; }
-        table.items { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        table.items th { background: #1F4E79; color: white; padding: 8px 10px; text-align: left; font-size: 11px; }
-        table.items td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
-        table.items tr:nth-child(even) { background: #f8f9fa; }
+        @page { margin: 5mm; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #000; line-height: 1.4; margin: 0; padding: 0; }
+        .text-center { text-align: center; }
         .text-right { text-align: right; }
-        .summary { width: 300px; float: right; margin-top: 10px; }
-        .summary table { width: 100%; }
-        .summary td { padding: 5px 10px; }
-        .summary .total { font-size: 16px; font-weight: bold; color: #1F4E79; border-top: 2px solid #1F4E79; }
-        .footer { margin-top: 40px; text-align: center; color: #888; font-size: 10px; border-top: 1px solid #e0e0e0; padding-top: 10px; }
-        .notes { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 20px; font-size: 11px; }
-        .payment-info { background: #EBF5FB; border: 1px solid #AED6F1; padding: 12px; border-radius: 4px; margin-top: 20px; font-size: 11px; }
-        .payment-info strong { color: #1F4E79; }
+        .text-left { text-align: left; }
+        .font-bold { font-weight: bold; }
+        .border-bottom { border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px; }
+        .border-top { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
+        
+        .header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 16px; font-weight: bold; }
+        .header p { margin: 2px 0 0; }
+        .logo { max-height: 40px; max-width: 120px; margin-bottom: 5px; }
+        
+        .info { margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
+        .info table { width: 100%; font-size: 10px; }
+        .info td { vertical-align: top; padding: 1px 0; }
+        .info .label { width: 35%; font-weight: bold; }
+        
+        table.items { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        table.items th { font-weight: bold; text-align: left; padding: 2px 0; border-bottom: 1px dashed #000; }
+        table.items td { padding: 4px 0; vertical-align: top; }
+        table.items .item-name { font-weight: bold; display: block; margin-bottom: 2px; }
+        table.items .item-meta { color: #555; font-size: 9px; }
+        
+        .summary { width: 100%; margin-top: 10px; border-top: 1px dashed #000; padding-top: 5px; }
+        .summary table { width: 100%; font-size: 10px; }
+        .summary td { padding: 2px 0; }
+        .summary .total { font-weight: bold; font-size: 12px; }
+        
+        .notes, .payment-info { margin-top: 10px; padding: 5px 0; border-top: 1px dashed #000; text-align: center; }
+        .footer { margin-top: 15px; text-align: center; font-size: 9px; padding-top: 5px; border-top: 1px dashed #000; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div>
-            @if($organization->logo_url)
-            <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $organization->logo_url)) }}" class="logo" alt="Logo">
-            @endif
-            <h1>INVOICE</h1>
-            <p style="color: #666; margin: 5px 0 0;">{{ $po->po_number }}</p>
-        </div>
-        <div class="org-info">
-            <strong>{{ $organization->name }}</strong><br>
-            {{ $organization->address }}<br>
-            {{ $organization->phone }}
-        </div>
+        @if($organization->logo_url)
+        <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $organization->logo_url)) }}" class="logo" alt="Logo"><br>
+        @endif
+        <h1>{{ $organization->name }}</h1>
+        <p>{{ $organization->address }}</p>
+        <p>{{ $organization->phone }}</p>
     </div>
 
-    <div class="info-grid">
-        <div class="info-col">
-            <p class="info-label">Kepada</p>
-            <p class="info-value"><strong>{{ $customer->name }}</strong></p>
-            @if($customer->address)<p class="info-value">{{ $customer->address }}</p>@endif
-            @if($customer->phone)<p class="info-value">{{ $customer->phone }}</p>@endif
-            @if($customer->email)<p class="info-value">{{ $customer->email }}</p>@endif
-        </div>
-        <div class="info-col" style="text-align: right;">
-            <p class="info-label">Tanggal Order</p>
-            <p class="info-value">{{ $po->order_date->format('d M Y') }}</p>
-            <p class="info-label">Tanggal Kirim</p>
-            <p class="info-value">{{ $po->delivery_date->format('d M Y') }}</p>
-            <p class="info-label">Status</p>
-            <p class="info-value">{{ $po->status->label() }}</p>
-            @if($po->payment_method)
-            <p class="info-label">Metode Bayar</p>
-            <p class="info-value">{{ $po->payment_method }}</p>
-            @endif
-        </div>
+    <div class="info">
+        <div class="text-center font-bold" style="margin-bottom:5px; font-size: 12px;">INVOICE</div>
+        <div class="text-center" style="margin-bottom:10px;">{{ $po->po_number }}</div>
+        
+        <table>
+            <tr><td class="label">Tgl Order</td><td>: {{ $po->order_date->format('d M Y') }}</td></tr>
+            <tr><td class="label">Tgl Kirim</td><td>: {{ $po->delivery_date->format('d M Y') }}</td></tr>
+            <tr><td class="label">Kepada</td><td>: {{ $customer->name }}</td></tr>
+            @if($customer->phone)<tr><td class="label">No HP</td><td>: {{ $customer->phone }}</td></tr>@endif
+            @if($po->payment_method)<tr><td class="label">Pembayaran</td><td>: {{ $po->payment_method }}</td></tr>@endif
+        </table>
     </div>
 
     <table class="items">
         <thead>
             <tr>
-                <th style="width: 30px;">No</th>
-                <th>Produk</th>
-                <th class="text-right" style="width: 60px;">Qty</th>
-                <th class="text-right" style="width: 120px;">Harga Satuan</th>
-                <th class="text-right" style="width: 120px;">Subtotal</th>
+                <th>Item</th>
+                <th class="text-right">Total</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($items as $index => $item)
+            @foreach($items as $item)
             <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $item->product_name }}@if($item->notes) <br><small style="color:#888">{{ $item->notes }}</small>@endif</td>
-                <td class="text-right">{{ number_format($item->quantity, 0) }}</td>
-                <td class="text-right">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                <td colspan="2" style="padding-bottom:0;">
+                    <span class="item-name">{{ $item->product_name }}</span>
+                    @if($item->notes)<span class="item-meta">{{ $item->notes }}</span><br>@endif
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top:0;">{{ number_format($item->quantity, 0) }} x {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                <td class="text-right" style="padding-top:0;">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -90,15 +85,13 @@
 
     <div class="summary">
         <table>
-            <tr><td>Subtotal</td><td class="text-right">Rp {{ number_format($po->subtotal, 0, ',', '.') }}</td></tr>
-            @if($po->discount > 0)<tr><td>Diskon</td><td class="text-right">- Rp {{ number_format($po->discount, 0, ',', '.') }}</td></tr>@endif
-            @if($po->tax > 0)<tr><td>Pajak</td><td class="text-right">Rp {{ number_format($po->tax, 0, ',', '.') }}</td></tr>@endif
-            @if($po->shipping_cost > 0)<tr><td>Ongkos Kirim</td><td class="text-right">Rp {{ number_format($po->shipping_cost, 0, ',', '.') }}</td></tr>@endif
-            <tr class="total"><td><strong>Total</strong></td><td class="text-right"><strong>Rp {{ number_format($po->total, 0, ',', '.') }}</strong></td></tr>
+            <tr><td>Subtotal</td><td class="text-right">{{ number_format($po->subtotal, 0, ',', '.') }}</td></tr>
+            @if($po->discount > 0)<tr><td>Diskon</td><td class="text-right">-{{ number_format($po->discount, 0, ',', '.') }}</td></tr>@endif
+            @if($po->tax > 0)<tr><td>Pajak</td><td class="text-right">{{ number_format($po->tax, 0, ',', '.') }}</td></tr>@endif
+            @if($po->shipping_cost > 0)<tr><td>Ongkos Kirim</td><td class="text-right">{{ number_format($po->shipping_cost, 0, ',', '.') }}</td></tr>@endif
+            <tr class="border-top total"><td>TOTAL</td><td class="text-right">Rp {{ number_format($po->total, 0, ',', '.') }}</td></tr>
         </table>
     </div>
-
-    <div style="clear: both;"></div>
 
     @if($po->notes)
     <div class="notes">
@@ -111,14 +104,14 @@
     @endphp
     @if($bankInfo && !empty($bankInfo['bank_name']))
     <div class="payment-info">
-        Pembayaran dapat ditransfer ke rekening:<br>
+        Pembayaran ke rekening:<br>
         <strong>{{ $bankInfo['bank_name'] }}</strong><br>
-        {{ $bankInfo['account_number'] ?? '' }} atas nama {{ $bankInfo['account_name'] ?? '' }}
+        {{ $bankInfo['account_number'] ?? '' }} a.n {{ $bankInfo['account_name'] ?? '' }}
     </div>
     @endif
 
     <div class="footer">
-        Terima kasih atas pesanan Anda &mdash; {{ $organization->name }}
+        Terima kasih atas pesanan Anda.
     </div>
 </body>
 </html>
