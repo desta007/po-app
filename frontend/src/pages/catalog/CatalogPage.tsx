@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatRupiah, storageUrl } from '@/lib/utils';
-import { Package, Store } from 'lucide-react';
+import { Package, Store, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface CatalogData {
@@ -22,10 +22,64 @@ interface CatalogData {
   categories: string[];
 }
 
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
 export default function CatalogPage() {
   const { slug } = useParams<{ slug: string }>();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  const handleAddToCart = (product: Product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.product.id === product.id);
+      if (existing) {
+        return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+  };
+
+  const handleUpdateQuantity = (productId: string, delta: number) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.product.id === productId);
+      if (!existing) return prev;
+      
+      const newQty = existing.quantity + delta;
+      if (newQty <= 0) {
+        return prev.filter(item => item.product.id !== productId);
+      }
+      return prev.map(item => item.product.id === productId ? { ...item, quantity: newQty } : item);
+    });
+  };
+
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
+  const cartItemsCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+
+  const handleCheckoutWA = () => {
+    if (!catalog?.organization.phone) {
+      alert('Nomor WhatsApp toko tidak tersedia.');
+      return;
+    }
+
+    let text = `Halo ${catalog.organization.name}, saya ingin memesan:\n\n`;
+    cart.forEach((item, index) => {
+      text += `${index + 1}. ${item.product.name} (x${item.quantity}) - ${formatRupiah(item.product.price * item.quantity)}\n`;
+    });
+    text += `\nTotal: *${formatRupiah(cartTotal)}*\n\nMohon info ketersediaannya. Terima kasih.`;
+
+    const encodedText = encodeURIComponent(text);
+    // Format phone number: replace leading 0 with 62
+    let phone = catalog.organization.phone.replace(/[^0-9]/g, '');
+    if (phone.startsWith('0')) {
+      phone = '62' + phone.substring(1);
+    }
+    
+    window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
+  };
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['catalog', slug],
@@ -161,13 +215,41 @@ export default function CatalogPage() {
                   <p className="text-[12px] text-gray-500 mb-3 line-clamp-2 min-h-[36px]">
                     {product.description || '-'}
                   </p>
-                  <div className="flex items-end justify-between">
+                  <div className="flex flex-col gap-3 mt-1">
                     <div>
                       <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider block mb-0.5">Harga / {product.unit}</span>
                       <span className="font-extrabold text-primary text-[15px]">
                         {formatRupiah(product.price)}
                       </span>
                     </div>
+                    {cart.find(item => item.product.id === product.id) ? (
+                      <div className="flex items-center justify-between border border-primary rounded-[8px] overflow-hidden bg-primary-50">
+                        <button 
+                          className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary-100 transition-colors"
+                          onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(product.id, -1); }}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="text-[13px] font-bold text-primary w-8 text-center">
+                          {cart.find(item => item.product.id === product.id)?.quantity}
+                        </span>
+                        <button 
+                          className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary-100 transition-colors"
+                          onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(product.id, 1); }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="w-full text-[12px] h-8"
+                        onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}
+                      >
+                        <Plus size={14} className="mr-1" /> Tambah
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -192,13 +274,31 @@ export default function CatalogPage() {
       </main>
       
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6 mt-12">
+      <footer className={`bg-white border-t border-gray-200 py-6 mt-12 ${cart.length > 0 ? 'mb-20' : ''}`}>
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-[13px] text-gray-400 font-medium">
             Katalog didukung oleh <span className="font-bold text-gray-900">POScheduler</span>
           </p>
         </div>
       </footer>
+
+      {/* Floating Cart Bar */}
+      {cart.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 z-50 animate-in slide-in-from-bottom-5">
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-gray-900 text-white rounded-2xl shadow-2xl p-3 px-4 flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{cartItemsCount} Produk Terpilih</span>
+                <span className="text-[16px] font-bold">{formatRupiah(cartTotal)}</span>
+              </div>
+              <Button onClick={handleCheckoutWA} className="bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg shadow-green-500/20 border-0 h-11 px-5">
+                <ShoppingCart size={18} className="mr-2" />
+                Pesan via WA
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
