@@ -58,7 +58,7 @@ export default function CatalogPage() {
   };
 
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
-  const cartItemsCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+  const cartItemsCount = cart.length;
 
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
   const [customerName, setCustomerName] = useState('');

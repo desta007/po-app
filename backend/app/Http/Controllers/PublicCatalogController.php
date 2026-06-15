@@ -35,10 +35,13 @@ class PublicCatalogController extends Controller
             ->sort()
             ->values();
 
+        $owner = $org->users()->wherePivot('role', 'owner')->first();
+        $phone = $org->phone ?: $owner?->phone;
+
         return response()->json([
             'organization' => [
                 'name' => $org->name,
-                'phone' => $org->phone,
+                'phone' => $phone,
                 'address' => $org->address,
                 'logo_url' => $org->logo_url,
             ],
