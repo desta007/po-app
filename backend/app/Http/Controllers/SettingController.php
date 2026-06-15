@@ -21,10 +21,19 @@ class SettingController extends Controller
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
             'logo_url' => 'nullable|string',
+            'settings.bank_info' => 'nullable|array',
         ]);
 
         $org = auth()->user()->currentOrganization;
-        $org->update($request->only('name', 'phone', 'address', 'logo_url'));
+        $org->fill($request->only('name', 'phone', 'address', 'logo_url'));
+
+        if ($request->has('settings.bank_info')) {
+            $settings = $org->settings ?? [];
+            $settings['bank_info'] = $request->input('settings.bank_info');
+            $org->settings = $settings;
+        }
+
+        $org->save();
 
         return response()->json(['data' => $org, 'message' => 'Organisasi berhasil diperbarui.']);
     }
