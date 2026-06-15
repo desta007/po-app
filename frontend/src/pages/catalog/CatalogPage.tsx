@@ -29,11 +29,11 @@ export default function CatalogPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['catalog', slug],
-    queryFn: () => apiClient.get<{ data: CatalogData }>(`/api/catalog/${slug}`).then(res => res.data),
+    queryFn: () => apiClient.get<CatalogData>(`/api/catalog/${slug}`).then(res => res.data),
     retry: false,
   });
 
-  const catalog = data?.data;
+  const catalog = data;
 
   const filteredProducts = useMemo(() => {
     if (!catalog?.products) return [];
