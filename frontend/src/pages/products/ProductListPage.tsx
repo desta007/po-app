@@ -211,13 +211,13 @@ export default function ProductListPage() {
               const gradient = CATEGORY_GRADIENTS[cat] || CATEGORY_GRADIENTS['default'];
               const emoji = CATEGORY_EMOJIS[cat] || CATEGORY_EMOJIS['default'];
               return (
-                <Card key={p.id} padding="none" className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => openEdit(p)}>
+                <Card key={p.id} padding="none" className="group overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => openEdit(p)}>
                   <div
-                    className="h-[140px] flex items-center justify-center relative overflow-hidden"
+                    className="aspect-square flex items-center justify-center relative overflow-hidden"
                     style={{ background: gradient }}
                   >
                     {p.image_url ? (
-                      <img src={storageUrl(p.image_url)} alt={p.name} className="w-full h-full object-cover" />
+                      <img src={storageUrl(p.image_url)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <span className="text-5xl">{emoji}</span>
                     )}

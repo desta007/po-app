@@ -36,11 +36,7 @@ export default function PurchaseOrderDetailPage() {
     queryFn: () => settingsApi.getPaymentMethods(),
   });
 
-  const { data: orgData } = useQuery({
-    queryKey: ['organization'],
-    queryFn: () => settingsApi.getOrganization(),
-  });
-  const bankInfo = orgData?.data?.data?.settings?.bank_info as any;
+
 
   const configuredMethods: { name: string; is_active: boolean }[] = paymentMethodsData?.data?.data || [];
   const activeMethods = configuredMethods.filter(m => m.is_active);
@@ -145,15 +141,7 @@ export default function PurchaseOrderDetailPage() {
             </div>
           </Card>
           {po.payment_method && <Card><h3 className="text-[14px] font-bold mb-2">Info Pembayaran</h3><p className="text-[13px] text-gray-700">Metode: <strong>{po.payment_method}</strong></p></Card>}
-          {bankInfo && bankInfo.bank_name && (
-            <Card>
-              <h3 className="text-[14px] font-bold mb-2">Informasi Rekening</h3>
-              <p className="text-[13px] text-gray-700">
-                <strong>{bankInfo.bank_name}</strong><br />
-                {bankInfo.account_number} a.n {bankInfo.account_name}
-              </p>
-            </Card>
-          )}
+
           {po.notes && <Card><h3 className="text-[14px] font-bold mb-2">Catatan Internal</h3><p className="text-[13px] text-gray-700">{po.notes}</p></Card>}
         </div>
         <div className="space-y-4">
