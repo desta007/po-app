@@ -26,7 +26,6 @@ export default function PurchaseOrderCreatePage() {
   const [tax, setTax] = useState(0);
   const [shippingCost, setShippingCost] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
-  const [customPaymentMethod, setCustomPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<ItemRow[]>([{ product_id: null, product_name: '', quantity: 1, unit_price: 0, notes: '' }]);
 
@@ -55,7 +54,7 @@ export default function PurchaseOrderCreatePage() {
 
   const subtotal = items.reduce((sum, it) => sum + it.quantity * it.unit_price, 0);
   const total = subtotal - discount + tax + shippingCost;
-  const handleSubmit = () => { createPO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, payment_method: paymentMethod === 'other' ? customPaymentMethod : paymentMethod, notes, items }); };
+  const handleSubmit = () => { createPO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, payment_method: paymentMethod, notes, items }); };
   const steps = ['Customer', 'Items', 'Jadwal & Bayar', 'Review'];
   const selectedCustomer = customers.find((c: any) => c.id === customerId);
 
@@ -130,22 +129,12 @@ export default function PurchaseOrderCreatePage() {
             <Input label="Ongkos Kirim (Rp)" type="number" value={shippingCost} onChange={(e) => setShippingCost(Number(e.target.value))} />
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-gray-700">Metode Bayar (Opsional)</label>
-              <select className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] bg-white focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" value={paymentMethod} onChange={(e) => { setPaymentMethod(e.target.value); if (e.target.value !== 'other') setCustomPaymentMethod(''); }}>
+              <select className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] bg-white focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 <option value="">-- Pilih Metode --</option>
                 {activeMethods.map((m) => (
                   <option key={m.name} value={m.name}>{m.name}</option>
                 ))}
-                <option value="other">Lainnya (Ketik Manual)</option>
               </select>
-              {paymentMethod === 'other' && (
-                <input
-                  type="text"
-                  placeholder="Contoh: Dana, OVO, GoPay, dll"
-                  className="w-full mt-2 border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
-                  value={customPaymentMethod}
-                  onChange={(e) => setCustomPaymentMethod(e.target.value)}
-                />
-              )}
             </div>
           </div>
           <div className="mb-4"><label className="block text-xs font-semibold text-gray-700 mb-1.5">Catatan (opsional)</label><textarea className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" placeholder="Cth: Bahan tanpa pengawet" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>

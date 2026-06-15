@@ -24,11 +24,12 @@ export default function PurchaseOrderDetailPage() {
     enabled: !!id,
   });
 
+  const po = data?.data?.data;
+
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<any>('unpaid');
   const [paidAmount, setPaidAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
-  const [customPaymentMethod, setCustomPaymentMethod] = useState('');
 
   const { data: paymentMethodsData } = useQuery({
     queryKey: ['payment-methods'],
@@ -38,23 +39,18 @@ export default function PurchaseOrderDetailPage() {
   const configuredMethods: { name: string; is_active: boolean }[] = paymentMethodsData?.data?.data || [];
   const activeMethods = configuredMethods.filter(m => m.is_active);
 
-  const po = data?.data?.data;
+  const displayMethods = activeMethods.map(m => m.name);
+  if (po?.payment_method && !displayMethods.includes(po.payment_method)) {
+    displayMethods.push(po.payment_method);
+  }
 
   useEffect(() => {
     if (po) {
       setPaymentStatus(po.payment_status);
       setPaidAmount(po.paid_amount || 0);
-      const method = po.payment_method || '';
-      const predefinedNames = activeMethods.map(m => m.name);
-      if (method && !predefinedNames.includes(method)) {
-        setPaymentMethod('other');
-        setCustomPaymentMethod(method);
-      } else {
-        setPaymentMethod(method);
-        setCustomPaymentMethod('');
-      }
+      setPaymentMethod(po.payment_method || '');
     }
-  }, [po, activeMethods.length]);
+  }, [po]);
 
   const updateStatus = useMutation({
     mutationFn: ({ status, reason }: { status: string; reason?: string }) =>
@@ -186,23 +182,13 @@ export default function PurchaseOrderDetailPage() {
                   <select
                     className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-[10px] text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     value={paymentMethod}
-                    onChange={(e) => { setPaymentMethod(e.target.value); if (e.target.value !== 'other') setCustomPaymentMethod(''); }}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
                   >
                     <option value="">-- Pilih Metode --</option>
-                    {activeMethods.map((m) => (
-                      <option key={m.name} value={m.name}>{m.name}</option>
+                    {displayMethods.map((name) => (
+                      <option key={name} value={name}>{name}</option>
                     ))}
-                    <option value="other">Lainnya (Ketik Manual)</option>
                   </select>
-                  {paymentMethod === 'other' && (
-                    <input
-                      type="text"
-                      placeholder="Contoh: Bank Mandiri, Dana, OVO, dll"
-                      className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-[10px] text-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      value={customPaymentMethod}
-                      onChange={(e) => setCustomPaymentMethod(e.target.value)}
-                    />
-                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[13px] font-semibold text-gray-900">Nominal Dibayar (Rp)</label>
@@ -223,7 +209,7 @@ export default function PurchaseOrderDetailPage() {
                 updatePayment.mutate({
                   payment_status: paymentStatus,
                   paid_amount: paymentStatus === 'unpaid' ? 0 : paymentStatus === 'paid' ? po.total : paidAmount,
-                  payment_method: paymentStatus === 'unpaid' ? '' : paymentMethod === 'other' ? customPaymentMethod : paymentMethod,
+                  payment_method: paymentStatus === 'unpaid' ? '' : paymentMethod,
                 });
               }}
               loading={updatePayment.isPending}
