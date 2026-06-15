@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image as ImageIcon, Plus, Pencil, CreditCard, GripVertical } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image as ImageIcon, Plus, Pencil, CreditCard } from 'lucide-react';
 import { useRef } from 'react';
 import type { MemberRole, TeamMember } from '@/types/auth';
 
