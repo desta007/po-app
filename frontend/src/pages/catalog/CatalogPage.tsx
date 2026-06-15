@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatRupiah, storageUrl } from '@/lib/utils';
 import { Package, Store, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface CatalogData {
   organization: {
@@ -59,25 +60,44 @@ export default function CatalogPage() {
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
   const cartItemsCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
 
-  const handleCheckoutWA = () => {
+  const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+
+  const handleOpenCheckout = () => {
     if (!catalog?.organization.phone) {
       alert('Nomor WhatsApp toko tidak tersedia.');
       return;
     }
+    setShowCheckoutDialog(true);
+  };
 
-    let text = `Halo ${catalog.organization.name}, saya ingin memesan:\n\n`;
+  const handleSendOrder = () => {
+    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
+      alert('Mohon lengkapi Nama, No. HP, dan Alamat Pengiriman.');
+      return;
+    }
+
+    let text = `Halo ${catalog?.organization.name}, saya ingin memesan:\n\n`;
+    text += `*Data Pemesan*\n`;
+    text += `Nama: ${customerName}\n`;
+    text += `No. HP: ${customerPhone}\n`;
+    text += `Alamat: ${customerAddress}\n\n`;
+    
+    text += `*Detail Pesanan*\n`;
     cart.forEach((item, index) => {
       text += `${index + 1}. ${item.product.name} (x${item.quantity}) - ${formatRupiah(item.product.price * item.quantity)}\n`;
     });
     text += `\nTotal: *${formatRupiah(cartTotal)}*\n\nMohon info ketersediaannya. Terima kasih.`;
 
     const encodedText = encodeURIComponent(text);
-    // Format phone number: replace leading 0 with 62
-    let phone = catalog.organization.phone.replace(/[^0-9]/g, '');
+    let phone = catalog?.organization.phone?.replace(/[^0-9]/g, '') || '';
     if (phone.startsWith('0')) {
       phone = '62' + phone.substring(1);
     }
     
+    setShowCheckoutDialog(false);
     window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
   };
 
@@ -291,14 +311,77 @@ export default function CatalogPage() {
                 <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{cartItemsCount} Produk Terpilih</span>
                 <span className="text-[16px] font-bold">{formatRupiah(cartTotal)}</span>
               </div>
-              <Button onClick={handleCheckoutWA} className="bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg shadow-green-500/20 border-0 h-11 px-5">
+              <Button onClick={handleOpenCheckout} className="bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg shadow-green-500/20 border-0 h-11 px-5">
                 <ShoppingCart size={18} className="mr-2" />
-                Pesan via WA
+                Checkout Pesanan
               </Button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Checkout Dialog */}
+      <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
+        <DialogContent className="max-w-md w-full">
+          <DialogHeader>
+            <DialogTitle>Detail Pengiriman</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
+            <div className="space-y-3">
+              <Input 
+                label="Nama Lengkap" 
+                placeholder="Cth: Budi Santoso"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+              <Input 
+                label="No. WhatsApp" 
+                placeholder="Cth: 08123456789"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+              />
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Alamat Pengiriman</label>
+                <textarea 
+                  className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" 
+                  placeholder="Cth: Jl. Sudirman No. 12, RT 01/02, Jakarta"
+                  value={customerAddress}
+                  onChange={(e) => setCustomerAddress(e.target.value)} 
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 mt-2">
+              <h4 className="text-[13px] font-bold text-gray-900 mb-3">Ringkasan Pesanan</h4>
+              <div className="bg-gray-50 rounded-[10px] p-3 space-y-2">
+                {cart.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-[13px]">
+                    <div className="flex gap-2">
+                      <span className="font-medium text-gray-500">{item.quantity}x</span>
+                      <span className="text-gray-900 line-clamp-1">{item.product.name}</span>
+                    </div>
+                    <span className="font-semibold">{formatRupiah(item.product.price * item.quantity)}</span>
+                  </div>
+                ))}
+                <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between font-bold">
+                  <span>Total</span>
+                  <span className="text-primary">{formatRupiah(cartTotal)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="mt-2">
+            <Button variant="secondary" onClick={() => setShowCheckoutDialog(false)}>Batal</Button>
+            <Button 
+              onClick={handleSendOrder} 
+              className="bg-green-500 hover:bg-green-600 text-white border-0"
+              disabled={!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()}
+            >
+              Kirim ke WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
