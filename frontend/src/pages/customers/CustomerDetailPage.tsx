@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatRupiah, getInitials } from '@/lib/utils';
 import { MessageCircle, Edit, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,16 @@ export default function CustomerDetailPage() {
             <div className="text-[13px] text-gray-500">📱 {(c as any).phone || '-'} · ✉️ {(c as any).email || '-'} · 📍 {(c as any).address || '-'}</div>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary"><MessageCircle size={15} /> Kirim WA</Button>
+            <Button variant="secondary" onClick={() => {
+              const phoneStr = (c as any).phone;
+              if (phoneStr) {
+                let phone = phoneStr.replace(/[^0-9]/g, '');
+                if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+                window.open(`https://wa.me/${phone}`, '_blank');
+              } else {
+                toast.error('Nomor HP pelanggan tidak tersedia');
+              }
+            }}><MessageCircle size={15} /> Kirim WA</Button>
             <Button variant="secondary"><Edit size={15} /> Edit</Button>
             <Button onClick={() => navigate('/pesanan/baru')}><Plus size={15} /> PO Baru</Button>
           </div>
