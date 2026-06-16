@@ -111,7 +111,15 @@ export default function PurchaseOrderDetailPage() {
           </Link>
           <Button variant="secondary" onClick={() => setShowPaymentDialog(true)}><DollarSign size={15} /> Update Bayar</Button>
           <Button variant="secondary" onClick={handleDownloadPdf}><Download size={15} /> PDF</Button>
-          <Button variant="accent"><MessageCircle size={15} /> Kirim WA</Button>
+          <Button variant="accent" onClick={() => {
+            if (po.customer?.phone) {
+              let phone = po.customer.phone.replace(/[^0-9]/g, '');
+              if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+              window.open(`https://wa.me/${phone}`, '_blank');
+            } else {
+              toast.error('Nomor HP pelanggan tidak tersedia');
+            }
+          }}><MessageCircle size={15} /> Kirim WA</Button>
           {nextStatus && <Button onClick={() => updateStatus.mutate({ status: nextStatus })} loading={updateStatus.isPending}>{nextStatus === 'confirmed' ? 'Konfirmasi' : nextStatus === 'in_progress' ? 'Proses' : 'Selesai'} <Check size={15} /></Button>}
         </div>
       </div>
