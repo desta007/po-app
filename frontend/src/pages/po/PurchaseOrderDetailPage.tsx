@@ -9,7 +9,7 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil, Printer } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
@@ -85,6 +85,18 @@ export default function PurchaseOrderDetailPage() {
     }
   };
 
+  const handlePrintPdf = async () => {
+    try {
+      const response = await purchaseOrdersApi.exportPdf(id!) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      toast.error('Gagal mencetak PDF');
+    }
+  };
+
   if (isLoading) return <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-[10px]" />)}</div>;
   if (!po) return <p className="text-gray-500">PO tidak ditemukan.</p>;
 
@@ -110,6 +122,7 @@ export default function PurchaseOrderDetailPage() {
             <Button variant="secondary"><Pencil size={15} /> Edit PO</Button>
           </Link>
           <Button variant="secondary" onClick={() => setShowPaymentDialog(true)}><DollarSign size={15} /> Update Bayar</Button>
+          <Button variant="secondary" onClick={handlePrintPdf}><Printer size={15} /> Print Invoice</Button>
           <Button variant="secondary" onClick={handleDownloadPdf}><Download size={15} /> PDF</Button>
           <Button variant="accent" onClick={() => {
             if (po.customer?.phone) {
