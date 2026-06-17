@@ -1,15 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Printer, Pencil, XCircle, Trash2 } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { PurchaseOrder } from '@/types/purchase-order';
 
 export default function PurchaseOrderListPage() {
@@ -18,11 +20,53 @@ export default function PurchaseOrderListPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [searchParams] = useSearchParams();
   const page = Number(searchParams.get('page') || '1');
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-orders', { search, status: statusFilter, page }],
     queryFn: () => purchaseOrdersApi.list({ search, status: statusFilter as any, page }),
   });
+
+  const updateStatus = useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
+      purchaseOrdersApi.updateStatus(id, status, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      toast.success('Status PO berhasil diperbarui.');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal mengubah status PO.'),
+  });
+
+  const deletePo = useMutation({
+    mutationFn: (id: string) => purchaseOrdersApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      toast.success('PO berhasil dihapus.');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menghapus PO.'),
+  });
+
+  const handlePrintPdf = async (po: PurchaseOrder) => {
+    try {
+      const response = await purchaseOrdersApi.exportPdf(po.id) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      toast.error('Gagal mencetak PDF');
+    }
+  };
+
+  const handleKirimWA = (po: PurchaseOrder) => {
+    if (po.customer?.phone) {
+      let phone = po.customer.phone.replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+      window.open(`https://wa.me/${phone}`, '_blank');
+    } else {
+      toast.error('Nomor HP pelanggan tidak tersedia');
+    }
+  };
 
   const pos: PurchaseOrder[] = data?.data?.data || [];
   const meta: any = data?.data?.meta;
@@ -111,7 +155,50 @@ export default function PurchaseOrderListPage() {
                       </span>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Button variant="secondary" size="sm">⋯</Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="secondary" size="sm">⋯</Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => navigate(`/pesanan/${po.id}`)}>
+                            <Eye className="mr-2" /> Lihat Detail
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleKirimWA(po)}>
+                            <MessageCircle className="mr-2" /> Kirim WA
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintPdf(po)}>
+                            <Printer className="mr-2" /> Print Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/pesanan/${po.id}/edit`)}>
+                            <Pencil className="mr-2" /> Edit PO
+                          </DropdownMenuItem>
+                          {po.status !== 'cancelled' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-danger focus:text-danger focus:bg-red-50"
+                                onClick={() => {
+                                  const r = prompt('Alasan pembatalan:');
+                                  if (r !== null) updateStatus.mutate({ id: po.id, status: 'cancelled', reason: r });
+                                }}
+                              >
+                                <XCircle className="mr-2" /> Batalkan PO
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-danger focus:text-danger focus:bg-red-50"
+                            onClick={() => {
+                              if (window.confirm('Yakin ingin menghapus PO ini? Data tidak dapat dikembalikan.')) {
+                                deletePo.mutate(po.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="mr-2" /> Delete PO
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
