@@ -39,7 +39,7 @@ function NavItem({ to, icon: Icon, label, onClose }: { to: string; icon: any; la
   return (
     <NavLink
       to={to}
-      end={to === ROUTES.ADMIN_DASHBOARD}
+      end
       onClick={onClose}
       className={({ isActive }) => cn(
         'flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] text-[14px] font-medium transition-all duration-150 cursor-pointer',
