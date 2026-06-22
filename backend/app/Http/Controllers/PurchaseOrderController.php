@@ -24,7 +24,7 @@ class PurchaseOrderController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = PurchaseOrder::with('customer');
+        $query = PurchaseOrder::with('customer', 'items');
 
         if ($search = $request->input('search')) {
             $query->where('po_number', 'ilike', "%{$search}%");
