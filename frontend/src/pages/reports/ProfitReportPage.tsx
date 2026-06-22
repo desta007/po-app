@@ -140,9 +140,9 @@ export default function ProfitReportPage() {
                       tick={{ fontSize: 10, fill: '#737373' }}
                       tickFormatter={(v: string) => {
                         if (period === 'monthly' && v.length === 7) {
-                          const [y, m] = v.split('-');
+                          const parts = v.split('-');
                           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                          return `${months[parseInt(m) - 1]} ${y}`;
+                          return `${months[parseInt(parts[1] as string) - 1]} ${parts[0]}`;
                         }
                         return v;
                       }}
@@ -155,9 +155,9 @@ export default function ProfitReportPage() {
                       ]}
                       labelFormatter={(label: string) => {
                         if (period === 'monthly' && label.length === 7) {
-                          const [y, m] = label.split('-');
+                          const parts = label.split('-');
                           const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                          return `${months[parseInt(m) - 1]} ${y}`;
+                          return `${months[parseInt(parts[1] as string) - 1]} ${parts[0]}`;
                         }
                         return label;
                       }}
