@@ -19,6 +19,7 @@ import CustomerListPage from '@/pages/customers/CustomerListPage';
 import CustomerDetailPage from '@/pages/customers/CustomerDetailPage';
 import ProductListPage from '@/pages/products/ProductListPage';
 import ReportPage from '@/pages/reports/ReportPage';
+import ProfitReportPage from '@/pages/reports/ProfitReportPage';
 import SettingsPage from '@/pages/settings/SettingsPage';
 
 // Admin pages
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="pelanggan/:id" element={<CustomerDetailPage />} />
         <Route path="produk" element={<ProductListPage />} />
         <Route path="laporan" element={<ReportPage />} />
+        <Route path="laporan/laba" element={<ProfitReportPage />} />
         <Route path="pengaturan/*" element={<SettingsPage />} />
 
         {/* Super Admin routes */}

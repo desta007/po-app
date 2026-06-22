@@ -73,18 +73,46 @@ export default function CatalogPage() {
     setShowCheckoutDialog(true);
   };
 
-  const handleSendOrder = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSendOrder = async () => {
     if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
       alert('Mohon lengkapi Nama, No. HP, dan Alamat Pengiriman.');
       return;
     }
 
+    setIsSubmitting(true);
+
+    // Save order to database
+    let poNumber = '';
+    try {
+      const checkoutData = {
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim(),
+        items: cart.map(item => ({
+          product_id: item.product.id,
+          product_name: item.product.name,
+          quantity: item.quantity,
+          unit_price: item.product.price,
+        })),
+      };
+      const res = await apiClient.post(`/api/catalog/${slug}/checkout`, checkoutData);
+      poNumber = res.data?.po_number || '';
+    } catch {
+      // Graceful degradation: tetap kirim WA meskipun API gagal
+    }
+
+    // Build WhatsApp message
     let text = `Halo ${catalog?.organization.name}, saya ingin memesan:\n\n`;
+    if (poNumber) {
+      text += `*No. PO: ${poNumber}*\n\n`;
+    }
     text += `*Data Pemesan*\n`;
     text += `Nama: ${customerName}\n`;
     text += `No. HP: ${customerPhone}\n`;
     text += `Alamat: ${customerAddress}\n\n`;
-    
+
     text += `*Detail Pesanan*\n`;
     cart.forEach((item, index) => {
       text += `${index + 1}. ${item.product.name} (x${item.quantity}) - ${formatRupiah(item.product.price * item.quantity)}\n`;
@@ -96,7 +124,8 @@ export default function CatalogPage() {
     if (phone.startsWith('0')) {
       phone = '62' + phone.substring(1);
     }
-    
+
+    setIsSubmitting(false);
     setShowCheckoutDialog(false);
     window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
   };
@@ -237,7 +266,7 @@ export default function CatalogPage() {
                   </p>
                   <div className="flex flex-col gap-3 mt-1">
                     <div>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider block mb-0.5">Harga / {product.unit}</span>
+                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider block mb-0.5">Harga Jual / {product.unit}</span>
                       <span className="font-extrabold text-primary text-[15px]">
                         {formatRupiah(product.price)}
                       </span>
@@ -372,10 +401,11 @@ export default function CatalogPage() {
           </div>
           <DialogFooter className="mt-2">
             <Button variant="secondary" onClick={() => setShowCheckoutDialog(false)}>Batal</Button>
-            <Button 
-              onClick={handleSendOrder} 
+            <Button
+              onClick={handleSendOrder}
               className="bg-green-500 hover:bg-green-600 text-white border-0"
-              disabled={!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()}
+              disabled={!customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || isSubmitting}
+              loading={isSubmitting}
             >
               Kirim ke WhatsApp
             </Button>

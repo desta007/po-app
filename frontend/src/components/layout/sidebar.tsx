@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, Settings, X, Shield, UsersRound, Building2 } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, TrendingUp, Settings, X, Shield, UsersRound, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/auth-context';
@@ -17,6 +17,7 @@ const masterNav = [
 
 const analysisNav = [
   { to: ROUTES.REPORTS, icon: BarChart3, label: 'Laporan' },
+  { to: ROUTES.PROFIT_REPORT, icon: TrendingUp, label: 'Laba Rugi' },
 ];
 
 const settingsNav = [

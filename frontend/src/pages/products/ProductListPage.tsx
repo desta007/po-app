@@ -35,7 +35,7 @@ function getStockBadge(qty: number) {
   return <Badge variant="success" dot>Stock {qty}</Badge>;
 }
 
-const EMPTY_FORM = { name: '', sku: '', price: 0, unit: 'pcs', category: '', stock_qty: 0 };
+const EMPTY_FORM = { name: '', sku: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0 };
 
 export default function ProductListPage() {
   const queryClient = useQueryClient();
@@ -130,6 +130,7 @@ export default function ProductListPage() {
       name: product.name,
       sku: product.sku || '',
       price: product.price,
+      cost: product.cost ?? 0,
       unit: product.unit || 'pcs',
       category: product.category || '',
       stock_qty: product.stock_qty ?? 0,
@@ -228,7 +229,10 @@ export default function ProductListPage() {
                     </div>
                     <div className="font-bold text-[14px] text-gray-900 mt-1 mb-2">{p.name}</div>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-primary">{formatRupiah(p.price)}</span>
+                      <div>
+                        <div className="text-[10px] text-gray-400 font-medium">Harga Jual</div>
+                        <span className="font-bold text-primary">{formatRupiah(p.price)}</span>
+                      </div>
                       {getStockBadge(p.stock_qty ?? 0)}
                     </div>
                   </div>
@@ -255,7 +259,8 @@ export default function ProductListPage() {
           <form onSubmit={handleSubmit} className="space-y-3">
             <Input label="Nama Produk *" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} required />
             <Input label="SKU" value={form.sku} onChange={(e) => setForm({...form, sku: e.target.value})} />
-            <Input label="Harga *" type="number" value={form.price} onChange={(e) => setForm({...form, price: Number(e.target.value)})} required />
+            <Input label="Harga Pokok" type="number" value={form.cost} onChange={(e) => setForm({...form, cost: Number(e.target.value)})} />
+            <Input label="Harga Jual *" type="number" value={form.price} onChange={(e) => setForm({...form, price: Number(e.target.value)})} required />
             <Input label="Kategori" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} />
             <Input label="Stok" type="number" value={form.stock_qty} onChange={(e) => setForm({...form, stock_qty: Number(e.target.value)})} />
             

@@ -30,6 +30,7 @@ export const ROUTES = {
   CUSTOMER_DETAIL: (id: string) => `/pelanggan/${id}`,
   PRODUCTS: '/produk',
   REPORTS: '/laporan',
+  PROFIT_REPORT: '/laporan/laba',
   SETTINGS: '/pengaturan',
   SETTINGS_PROFILE: '/pengaturan/profil',
   SETTINGS_ORG: '/pengaturan/organisasi',

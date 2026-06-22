@@ -24,7 +24,7 @@ export default function PurchaseOrderListPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-orders', { search, status: statusFilter, page }],
-    queryFn: () => purchaseOrdersApi.list({ search, status: statusFilter as any, page }),
+    queryFn: () => purchaseOrdersApi.list({ search, status: statusFilter as any, page, per_page: 200 }),
   });
 
   const updateStatus = useMutation({

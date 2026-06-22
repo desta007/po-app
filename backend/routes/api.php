@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes (no auth)
 Route::get('catalog/{slug}', [PublicCatalogController::class, 'show']);
+Route::post('catalog/{slug}/checkout', [PublicCatalogController::class, 'checkout']);
 
 // Authentication
 Route::prefix('auth')->group(function () {
@@ -74,6 +75,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
 
     // Reports
     Route::get('reports/revenue', [ReportController::class, 'revenue']);
+    Route::get('reports/profit', [ReportController::class, 'profitReport']);
     Route::get('reports/export-excel', [ReportController::class, 'exportExcel']);
 
     // Settings

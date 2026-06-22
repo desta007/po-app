@@ -28,4 +28,7 @@ export const dashboardApi = {
 
   pendingPayments: () =>
     apiClient.get<{ data: PendingPayment }>('/api/dashboard/pending-payments'),
+
+  profitReport: (filters?: { period?: string; start?: string; end?: string }) =>
+    apiClient.get('/api/reports/profit', { params: filters }),
 };
