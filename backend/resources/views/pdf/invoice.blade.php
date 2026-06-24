@@ -3,8 +3,11 @@
 <head>
     <meta charset="utf-8">
     <style>
-        @page { margin: 5mm; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #000; line-height: 1.4; margin: 0; padding: 0; }
+        @page { margin: 5mm; size: auto; }
+        html, body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #000; line-height: 1.4; margin: 0; padding: 0 3mm; height: auto; overflow: hidden; }
+        * { page-break-inside: avoid; }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .text-left { text-align: left; }
@@ -34,7 +37,7 @@
         .summary .total { font-weight: bold; font-size: 12px; }
         
         .notes, .payment-info { margin-top: 10px; padding: 5px 0; border-top: 1px dashed #000; text-align: center; }
-        .footer { margin-top: 15px; text-align: center; font-size: 9px; padding-top: 5px; border-top: 1px dashed #000; }
+        .footer { margin-top: 8px; text-align: center; font-size: 9px; padding-top: 5px; border-top: 1px dashed #000; }
     </style>
 </head>
 <body>
