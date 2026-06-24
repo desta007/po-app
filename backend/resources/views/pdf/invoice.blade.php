@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <style>
         @page { margin: 5mm; size: auto; }
-        html, body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #000; line-height: 1.4; margin: 0; padding: 0 3mm; height: auto; overflow: hidden; }
+        html, body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #000; line-height: 1.4; margin: 0; padding: 0 3mm; height: auto; overflow: hidden; }
         * { page-break-inside: avoid; }
         table { page-break-inside: auto; }
         tr { page-break-inside: avoid; }
@@ -16,12 +16,12 @@
         .border-top { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
         
         .header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
-        .header h1 { margin: 0; font-size: 16px; font-weight: bold; }
+        .header h1 { margin: 0; font-size: 18px; font-weight: bold; }
         .header p { margin: 2px 0 0; }
         .logo { max-height: 40px; max-width: 120px; margin-bottom: 5px; }
         
         .info { margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
-        .info table { width: 100%; font-size: 10px; }
+        .info table { width: 100%; font-size: 12px; }
         .info td { vertical-align: top; padding: 1px 0; }
         .info .label { width: 35%; font-weight: bold; }
         
@@ -29,15 +29,15 @@
         table.items th { font-weight: bold; text-align: left; padding: 2px 0; border-bottom: 1px dashed #000; }
         table.items td { padding: 4px 0; vertical-align: top; }
         table.items .item-name { font-weight: bold; display: block; margin-bottom: 2px; }
-        table.items .item-meta { color: #555; font-size: 9px; }
+        table.items .item-meta { color: #555; font-size: 11px; }
         
         .summary { width: 100%; margin-top: 10px; border-top: 1px dashed #000; padding-top: 5px; }
-        .summary table { width: 100%; font-size: 10px; }
+        .summary table { width: 100%; font-size: 12px; }
         .summary td { padding: 2px 0; }
-        .summary .total { font-weight: bold; font-size: 12px; }
+        .summary .total { font-weight: bold; font-size: 14px; }
         
         .notes, .payment-info { margin-top: 10px; padding: 5px 0; border-top: 1px dashed #000; text-align: center; }
-        .footer { margin-top: 8px; text-align: center; font-size: 9px; padding-top: 5px; border-top: 1px dashed #000; }
+        .footer { margin-top: 8px; text-align: center; font-size: 11px; padding-top: 5px; border-top: 1px dashed #000; }
     </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
     </div>
 
     <div class="info">
-        <div class="text-center font-bold" style="margin-bottom:5px; font-size: 12px;">INVOICE</div>
+        <div class="text-center font-bold" style="margin-bottom:5px; font-size: 14px;">INVOICE</div>
         <div class="text-center" style="margin-bottom:10px;">{{ $po->po_number }}</div>
         
         <table>
