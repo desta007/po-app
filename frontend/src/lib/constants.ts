@@ -4,7 +4,7 @@ export const PO_STATUS_CONFIG: Record<POStatus, { label: string; color: string; 
   draft: { label: 'Draft', color: '#9CA3AF', bgColor: '#F3F4F6' },
   confirmed: { label: 'Dikonfirmasi', color: '#1F4E79', bgColor: '#DBEAFE' },
   in_progress: { label: 'Diproses', color: '#D97706', bgColor: '#FEF3C7' },
-  completed: { label: 'Selesai', color: '#70AD47', bgColor: '#D1FAE5' },
+  completed: { label: 'Selesai', color: '#C8A2C8', bgColor: '#F0E6F0' },
   cancelled: { label: 'Dibatalkan', color: '#C00000', bgColor: '#FEE2E2' },
 };
 

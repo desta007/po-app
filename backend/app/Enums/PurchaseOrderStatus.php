@@ -27,7 +27,7 @@ enum PurchaseOrderStatus: string
             self::DRAFT => '#9CA3AF',
             self::CONFIRMED => '#1F4E79',
             self::IN_PROGRESS => '#FFC000',
-            self::COMPLETED => '#70AD47',
+            self::COMPLETED => '#C8A2C8',
             self::CANCELLED => '#C00000',
         };
     }
