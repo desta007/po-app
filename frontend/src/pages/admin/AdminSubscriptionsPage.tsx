@@ -146,7 +146,7 @@ export default function AdminSubscriptionsPage() {
 
           <div className="divide-y divide-gray-100">
             {subscriptions.map((sub: any, i: number) => {
-              const statusStyle = STATUS_CONFIG[sub.status] ?? STATUS_CONFIG.pending;
+              const statusStyle = STATUS_CONFIG[sub.status as string] || { label: sub.status, color: '#9CA3AF', bgColor: '#F3F4F6' };
               return (
                 <div key={sub.id} className="grid lg:grid-cols-[1fr_1fr_100px_100px_100px_140px] gap-2 lg:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
                   {/* User / Org */}
