@@ -9,9 +9,8 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil, Printer, FileText } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
 
@@ -86,17 +85,7 @@ export default function PurchaseOrderDetailPage() {
     }
   };
 
-  const handlePrintCorporatePdf = async () => {
-    try {
-      const response = await purchaseOrdersApi.exportCorporatePdf(id!) as any;
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-    } catch (err) {
-      toast.error('Gagal mencetak PDF Corporate');
-    }
-  };
+
 
   const handleDownloadCorporatePdf = async () => {
     try {
