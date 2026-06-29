@@ -3,14 +3,14 @@
 <head>
     <meta charset="utf-8">
     <style>
-        @page { margin: 15mm 18mm; size: A4; }
+        @page { margin: 20mm 35mm; size: A4; }
         html, body {
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 11px;
             color: #1a1a1a;
             line-height: 1.5;
             margin: 0;
-            padding: 0;
+            padding: 0 3mm;
         }
 
         /* Header */
@@ -220,17 +220,8 @@
             <div class="info-value">{{ $po->order_date->format('d M Y') }}</div>
             <div class="info-label" style="margin-top:5px;">Tanggal Kirim</div>
             <div class="info-value">{{ $po->delivery_date->format('d M Y') }}</div>
-            @php
-                $statusLabels = [
-                    'draft' => 'Draft',
-                    'confirmed' => 'Dikonfirmasi',
-                    'in_progress' => 'Dalam Proses',
-                    'completed' => 'Selesai',
-                    'cancelled' => 'Dibatalkan',
-                ];
-            @endphp
             <div class="info-label" style="margin-top:5px;">Status</div>
-            <div class="info-value">{{ $statusLabels[$po->status] ?? ucfirst($po->status) }}</div>
+            <div class="info-value">{{ $po->status->label() }}</div>
         </div>
     </div>
 
