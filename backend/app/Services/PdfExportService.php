@@ -103,4 +103,31 @@ class PdfExportService
             'items' => $po->items,
         ])->setPaper('a4', 'portrait');
     }
+
+    /**
+     * Generate receipt-style invoice as PNG image.
+     */
+    public function generateInvoiceImage(PurchaseOrder $po): string
+    {
+        $pdf = $this->generateInvoice($po);
+        $pdfContent = $pdf->output();
+
+        if (!extension_loaded('imagick')) {
+            throw new \RuntimeException('Imagick extension is required for image export.');
+        }
+
+        $imagick = new \Imagick();
+        $imagick->setResolution(200, 200);
+        $imagick->readImageBlob($pdfContent);
+        $imagick->setImageFormat('png');
+        $imagick->setImageBackgroundColor('white');
+        $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
+        $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+
+        $imageBlob = $imagick->getImageBlob();
+        $imagick->clear();
+        $imagick->destroy();
+
+        return $imageBlob;
+    }
 }

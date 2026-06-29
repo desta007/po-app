@@ -176,4 +176,18 @@ class PurchaseOrderController extends Controller
 
         return $pdf->download("Invoice-{$purchaseOrder->po_number}.pdf");
     }
+
+    public function exportImage(PurchaseOrder $purchaseOrder)
+    {
+        try {
+            $imageBlob = $this->pdfService->generateInvoiceImage($purchaseOrder);
+
+            return response($imageBlob, 200, [
+                'Content-Type' => 'image/png',
+                'Content-Disposition' => "inline; filename=\"Invoice-{$purchaseOrder->po_number}.png\"",
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
 }

@@ -69,32 +69,40 @@ export default function PurchaseOrderDetailPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal.'),
   });
 
-  const handleDownloadPdf = async () => {
+  const handleDownloadImage = async () => {
     try {
-      const response = await purchaseOrdersApi.exportPdf(id!) as any;
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const response = await purchaseOrdersApi.exportImage(id!) as any;
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Invoice-${po?.po_number}.pdf`);
+      link.setAttribute('download', `Invoice-${po?.po_number}.png`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error('Gagal mengunduh PDF');
+      toast.error('Gagal mengunduh gambar invoice');
     }
   };
 
-  const handlePrintPdf = async () => {
+  const handlePrintImage = async () => {
     try {
-      const response = await purchaseOrdersApi.exportPdf(id!) as any;
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const response = await purchaseOrdersApi.exportImage(id!) as any;
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html><head><title>Invoice-${po?.po_number}</title>
+          <style>body{margin:0;display:flex;justify-content:center;}img{max-width:100%;height:auto;}</style>
+          </head><body><img src="${url}" onload="window.print();" /></body></html>
+        `);
+        printWindow.document.close();
+      }
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
     } catch (err) {
-      toast.error('Gagal mencetak PDF');
+      toast.error('Gagal mencetak gambar invoice');
     }
   };
 
@@ -157,8 +165,8 @@ export default function PurchaseOrderDetailPage() {
               <Button variant="secondary"><Printer size={15} /> Print Invoice</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={handlePrintPdf}>
-                <Printer className="mr-2" size={14} /> Invoice Biasa (Struk)
+              <DropdownMenuItem onClick={handlePrintImage}>
+                <Printer className="mr-2" size={14} /> Cetak Image (Struk)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handlePrintCorporatePdf}>
                 <FileText className="mr-2" size={14} /> Invoice Corporate (A4)
@@ -170,8 +178,8 @@ export default function PurchaseOrderDetailPage() {
               <Button variant="secondary"><Download size={15} /> PDF</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={handleDownloadPdf}>
-                <Download className="mr-2" size={14} /> Invoice Biasa (Struk)
+              <DropdownMenuItem onClick={handleDownloadImage}>
+                <Download className="mr-2" size={14} /> Download Image (Struk)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadCorporatePdf}>
                 <Download className="mr-2" size={14} /> Invoice Corporate (A4)
