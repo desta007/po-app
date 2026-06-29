@@ -190,4 +190,20 @@ class PurchaseOrderController extends Controller
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
+
+    public function exportHtml(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->load('items', 'customer', 'organization');
+        
+        // Pass a flag so the view can use URL instead of local path for the logo
+        $html = view('pdf.invoice', [
+            'po' => $purchaseOrder,
+            'organization' => $purchaseOrder->organization,
+            'customer' => $purchaseOrder->customer,
+            'items' => $purchaseOrder->items,
+            'is_html' => true,
+        ])->render();
+
+        return response($html);
+    }
 }

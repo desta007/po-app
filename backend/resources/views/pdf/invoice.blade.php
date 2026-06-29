@@ -43,7 +43,11 @@
 <body>
     <div class="header">
         @if($organization->logo_url)
+        @if(isset($is_html) && $is_html)
+        <img src="{{ asset(str_replace('/storage/', 'storage/', $organization->logo_url)) }}" class="logo" alt="Logo" crossorigin="anonymous"><br>
+        @else
         <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $organization->logo_url)) }}" class="logo" alt="Logo"><br>
+        @endif
         @endif
         <h1>{{ $organization->name }}</h1>
         <p>{{ $organization->address }}</p>

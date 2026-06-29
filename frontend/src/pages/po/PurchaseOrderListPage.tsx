@@ -58,23 +58,20 @@ export default function PurchaseOrderListPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menghapus PO.'),
   });
 
-  const handlePrintImage = async (po: PurchaseOrder) => {
+  const handleDownloadImage = async (po: PurchaseOrder) => {
     try {
       const response = await purchaseOrdersApi.exportImage(po.id) as any;
       const blob = new Blob([response.data], { type: 'image/png' });
       const url = window.URL.createObjectURL(blob);
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html><head><title>Invoice-${po.po_number}</title>
-          <style>body{margin:0;display:flex;justify-content:center;}img{max-width:100%;height:auto;}</style>
-          </head><body><img src="${url}" onload="window.print();" /></body></html>
-        `);
-        printWindow.document.close();
-      }
-      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Invoice-${po.po_number}.png`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      toast.error('Gagal mencetak gambar invoice');
+      toast.error('Gagal mengunduh gambar invoice');
     }
   };
 
@@ -298,8 +295,8 @@ export default function PurchaseOrderListPage() {
                           <DropdownMenuItem onClick={() => handleKirimWA(po)}>
                             <MessageCircle className="mr-2" /> Kirim WA
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handlePrintImage(po)}>
-                            <Printer className="mr-2" /> Cetak Image (Struk)
+                          <DropdownMenuItem onClick={() => handleDownloadImage(po)}>
+                            <Download className="mr-2" /> Download Image (Struk)
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handlePrintCorporatePdf(po)}>
                             <FileText className="mr-2" /> Invoice Corporate (A4)

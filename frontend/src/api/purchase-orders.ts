@@ -92,6 +92,9 @@ export const purchaseOrdersApi = {
   exportImage: (id: string) =>
     apiClient.get(`/api/purchase-orders/${id}/export-image`, { responseType: 'blob' }),
 
+  exportHtml: (id: string) =>
+    apiClient.get(`/api/purchase-orders/${id}/export-html`, { responseType: 'text' }),
+
   getItems: (id: string) =>
     apiClient.get<{ data: PurchaseOrderItem[] }>(`/api/purchase-orders/${id}/items`),
 };

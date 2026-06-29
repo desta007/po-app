@@ -63,6 +63,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::get('purchase-orders/{purchase_order}/export-pdf', [PurchaseOrderController::class, 'exportPdf']);
     Route::get('purchase-orders/{purchase_order}/export-corporate-pdf', [PurchaseOrderController::class, 'exportCorporatePdf']);
     Route::get('purchase-orders/{purchase_order}/export-image', [PurchaseOrderController::class, 'exportImage']);
+    Route::get('purchase-orders/{purchase_order}/export-html', [PurchaseOrderController::class, 'exportHtml']);
 
     // Calendar
     Route::get('calendar/events', [CalendarController::class, 'events']);

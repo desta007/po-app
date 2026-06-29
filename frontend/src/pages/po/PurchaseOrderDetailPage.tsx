@@ -86,26 +86,6 @@ export default function PurchaseOrderDetailPage() {
     }
   };
 
-  const handlePrintImage = async () => {
-    try {
-      const response = await purchaseOrdersApi.exportImage(id!) as any;
-      const blob = new Blob([response.data], { type: 'image/png' });
-      const url = window.URL.createObjectURL(blob);
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html><head><title>Invoice-${po?.po_number}</title>
-          <style>body{margin:0;display:flex;justify-content:center;}img{max-width:100%;height:auto;}</style>
-          </head><body><img src="${url}" onload="window.print();" /></body></html>
-        `);
-        printWindow.document.close();
-      }
-      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
-    } catch (err) {
-      toast.error('Gagal mencetak gambar invoice');
-    }
-  };
-
   const handlePrintCorporatePdf = async () => {
     try {
       const response = await purchaseOrdersApi.exportCorporatePdf(id!) as any;
@@ -160,32 +140,12 @@ export default function PurchaseOrderDetailPage() {
             <Button variant="secondary"><Pencil size={15} /> Edit PO</Button>
           </Link>
           <Button variant="secondary" onClick={() => setShowPaymentDialog(true)}><DollarSign size={15} /> Update Bayar</Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary"><Printer size={15} /> Print Invoice</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={handlePrintImage}>
-                <Printer className="mr-2" size={14} /> Cetak Image (Struk)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handlePrintCorporatePdf}>
-                <FileText className="mr-2" size={14} /> Invoice Corporate (A4)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary"><Download size={15} /> PDF</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={handleDownloadImage}>
-                <Download className="mr-2" size={14} /> Download Image (Struk)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDownloadCorporatePdf}>
-                <Download className="mr-2" size={14} /> Invoice Corporate (A4)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="secondary" onClick={handleDownloadImage}>
+            <Download size={15} /> Download Image (Struk)
+          </Button>
+          <Button variant="secondary" onClick={handleDownloadCorporatePdf}>
+            <Download size={15} /> Download PDF Corporate
+          </Button>
           <Button variant="accent" onClick={() => {
             if (po.customer?.phone) {
               let phone = po.customer.phone.replace(/[^0-9]/g, '');
