@@ -27,11 +27,24 @@ class PurchaseOrderController extends Controller
         $query = PurchaseOrder::with('customer', 'items');
 
         if ($search = $request->input('search')) {
-            $query->where('po_number', 'ilike', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('po_number', 'ilike', "%{$search}%")
+                  ->orWhereHas('customer', function ($cq) use ($search) {
+                      $cq->where('name', 'ilike', "%{$search}%")
+                         ->orWhere('phone', 'ilike', "%{$search}%");
+                  })
+                  ->orWhereHas('items', function ($iq) use ($search) {
+                      $iq->where('product_name', 'ilike', "%{$search}%");
+                  });
+            });
         }
 
         if ($status = $request->input('status')) {
             $query->where('status', $status);
+        }
+
+        if ($paymentStatus = $request->input('payment_status')) {
+            $query->where('payment_status', $paymentStatus);
         }
 
         if ($customerId = $request->input('customer_id')) {
@@ -46,8 +59,15 @@ class PurchaseOrderController extends Controller
             $query->where('delivery_date', '<=', $to);
         }
 
-        $pos = $query->orderByDesc('created_at')
-            ->paginate($request->input('per_page', 15));
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        $allowedSorts = ['created_at', 'delivery_date', 'order_date', 'po_number', 'total'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+
+        $pos = $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc')
+            ->paginate($request->input('per_page', 20));
 
         return PurchaseOrderResource::collection($pos);
     }

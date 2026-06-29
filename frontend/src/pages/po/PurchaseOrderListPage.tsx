@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Printer, Pencil, XCircle, Trash2 } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Printer, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { useState } from 'react';
@@ -16,15 +16,27 @@ import type { PurchaseOrder } from '@/types/purchase-order';
 
 export default function PurchaseOrderListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [searchParams] = useSearchParams();
+  const [paymentFilter, setPaymentFilter] = useState('');
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
   const page = Number(searchParams.get('page') || '1');
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['purchase-orders', { search, status: statusFilter, page }],
-    queryFn: () => purchaseOrdersApi.list({ search, status: statusFilter as any, page, per_page: 200 }),
+    queryKey: ['purchase-orders', { search, status: statusFilter, payment_status: paymentFilter, page, sort_by: sortBy, sort_dir: sortDir }],
+    queryFn: () => purchaseOrdersApi.list({
+      search,
+      status: statusFilter as any,
+      payment_status: paymentFilter as any,
+      page,
+      per_page: 20,
+      sort_by: sortBy,
+      sort_dir: sortDir,
+    }),
   });
 
   const updateStatus = useMutation({
@@ -68,8 +80,60 @@ export default function PurchaseOrderListPage() {
     }
   };
 
+  const goToPage = (p: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(p));
+    setSearchParams(params);
+  };
+
+  const toggleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDir(prev => prev === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(field);
+      setSortDir('desc');
+    }
+    // Reset to page 1 when sort changes
+    goToPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return <ArrowUpDown size={13} className="text-gray-400" />;
+    return sortDir === 'desc'
+      ? <ArrowDown size={13} className="text-primary" />
+      : <ArrowUp size={13} className="text-primary" />;
+  };
+
   const pos: PurchaseOrder[] = data?.data?.data || [];
   const meta: any = data?.data?.meta;
+
+  // Build pagination page numbers with ellipsis
+  const buildPageNumbers = () => {
+    if (!meta || meta.last_page <= 1) return [];
+    const pages: (number | 'ellipsis')[] = [];
+    const total = meta.last_page;
+    const current = meta.current_page;
+
+    // Always show first page
+    pages.push(1);
+
+    if (current > 3) pages.push('ellipsis');
+
+    // Pages around current
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i);
+    }
+
+    if (current < total - 2) pages.push('ellipsis');
+
+    // Always show last page (if > 1)
+    if (total > 1) pages.push(total);
+
+    return pages;
+  };
+
+  const sortLabel = sortBy === 'delivery_date' ? 'Tgl Kirim' : sortBy === 'order_date' ? 'Tgl Order' : 'Terbaru';
+  const sortDirLabel = sortDir === 'desc' ? 'Terbaru' : 'Terlama';
 
   return (
     <div>
@@ -92,19 +156,51 @@ export default function PurchaseOrderListPage() {
             className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-[6px] text-[14px] bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
             placeholder="Cari PO, customer, atau produk..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); goToPage(1); }}
           />
         </div>
         <select
           className="px-3 py-2.5 border border-gray-300 rounded-[6px] text-[14px] bg-white text-gray-900 focus:outline-none focus:border-primary"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); goToPage(1); }}
         >
           <option value="">Status: Semua</option>
           {Object.entries(PO_STATUS_CONFIG).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
           ))}
         </select>
+        <select
+          className="px-3 py-2.5 border border-gray-300 rounded-[6px] text-[14px] bg-white text-gray-900 focus:outline-none focus:border-primary"
+          value={paymentFilter}
+          onChange={(e) => { setPaymentFilter(e.target.value); goToPage(1); }}
+        >
+          <option value="">Bayar: Semua</option>
+          {Object.entries(PAYMENT_STATUS_CONFIG).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
+        </select>
+
+        {/* Sort control */}
+        <div className="flex items-center border border-gray-300 rounded-[6px] bg-white overflow-hidden">
+          <select
+            className="px-3 py-2.5 text-[14px] bg-transparent text-gray-900 focus:outline-none border-none"
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); goToPage(1); }}
+          >
+            <option value="created_at">Urut: Terbaru</option>
+            <option value="delivery_date">Urut: Tgl Kirim</option>
+            <option value="order_date">Urut: Tgl Order</option>
+          </select>
+          <button
+            type="button"
+            className="px-2.5 py-2.5 border-l border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1 text-[13px] font-medium text-gray-600"
+            onClick={() => setSortDir(prev => prev === 'desc' ? 'asc' : 'desc')}
+            title={sortDir === 'desc' ? 'Descending (terbaru/terbesar di atas)' : 'Ascending (terlama/terkecil di atas)'}
+          >
+            {sortDir === 'desc' ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
+            {sortDir === 'desc' ? 'DESC' : 'ASC'}
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -119,7 +215,24 @@ export default function PurchaseOrderListPage() {
                 <TableHead style={{ width: 30 }}><input type="checkbox" /></TableHead>
                 <TableHead>No. PO</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Tgl Kirim</TableHead>
+                <TableHead>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                    onClick={() => toggleSort('order_date')}
+                  >
+                    Tgl Order {getSortIcon('order_date')}
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                    onClick={() => toggleSort('delivery_date')}
+                  >
+                    Tgl Kirim {getSortIcon('delivery_date')}
+                  </button>
+                </TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead>Status</TableHead>
@@ -139,6 +252,7 @@ export default function PurchaseOrderListPage() {
                       <strong className="text-gray-900">{po.customer?.name}</strong>
                       {po.customer?.phone && <div className="text-[11px] text-gray-500">{po.customer.phone}</div>}
                     </TableCell>
+                    <TableCell>{formatDate(po.order_date)}</TableCell>
                     <TableCell>{formatDate(po.delivery_date)}</TableCell>
                     <TableCell>{po.items?.length ?? 0} item</TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">{formatRupiah(po.total)}</TableCell>
@@ -209,21 +323,45 @@ export default function PurchaseOrderListPage() {
           {/* Pagination */}
           {meta && meta.last_page > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <div className="text-xs text-gray-500">Menampilkan {meta.from}-{meta.to} dari {meta.total} PO</div>
-              <div className="flex gap-1">
-                {Array.from({ length: Math.min(meta.last_page, 5) }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => navigate(`?page=${i + 1}`)}
-                    className={`px-2.5 py-1.5 rounded-[10px] text-xs font-semibold ${
-                      meta.current_page === i + 1
-                        ? 'bg-primary text-white'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+              <div className="text-xs text-gray-500">
+                Menampilkan {meta.from}–{meta.to} dari {meta.total} PO
+              </div>
+              <div className="flex items-center gap-1">
+                {/* Previous */}
+                <button
+                  onClick={() => goToPage(Math.max(1, page - 1))}
+                  disabled={page <= 1}
+                  className="px-2 py-1.5 rounded-[6px] text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                {buildPageNumbers().map((p, idx) =>
+                  p === 'ellipsis' ? (
+                    <span key={`e-${idx}`} className="px-1.5 text-xs text-gray-400">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => goToPage(p)}
+                      className={`px-2.5 py-1.5 rounded-[6px] text-xs font-semibold ${
+                        meta.current_page === p
+                          ? 'bg-primary text-white'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                {/* Next */}
+                <button
+                  onClick={() => goToPage(Math.min(meta.last_page, page + 1))}
+                  disabled={page >= meta.last_page}
+                  className="px-2 py-1.5 rounded-[6px] text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ChevronRight size={14} />
+                </button>
               </div>
             </div>
           )}
