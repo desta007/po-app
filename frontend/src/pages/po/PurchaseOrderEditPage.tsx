@@ -11,8 +11,9 @@ import { Card } from '@/components/ui/card';
 import { ROUTES } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Plus, Trash2, Check } from 'lucide-react';
+import { Trash2, Check } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
 
@@ -75,7 +76,6 @@ export default function PurchaseOrderEditPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal.'),
   });
 
-  const addItem = () => setItems([...items, { product_id: null, product_name: '', quantity: 1, unit_price: 0, notes: '' }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: keyof ItemRow, value: any) => {
     const next = [...items];
@@ -112,10 +112,12 @@ export default function PurchaseOrderEditPage() {
       {step === 0 && (
         <Card className="max-w-xl mx-auto" padding="lg">
           <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Customer</label>
-          <select className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] bg-white focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-            <option value="">-- Pilih Customer --</option>
-            {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} — {c.phone || '-'}</option>)}
-          </select>
+          <SearchableSelect
+            options={customers.map((c: any) => ({ value: c.id, label: `${c.name} — ${c.phone || '-'}` }))}
+            value={customerId}
+            onChange={setCustomerId}
+            placeholder="-- Pilih Customer --"
+          />
           <div className="flex justify-end mt-6"><Button disabled={!customerId} onClick={() => setStep(1)}>Lanjut →</Button></div>
         </Card>
       )}
@@ -152,23 +154,19 @@ export default function PurchaseOrderEditPage() {
               </tbody>
             </table>
           </div>
-          <div className="flex gap-2 mb-4">
-            <select 
-              className="flex-1 border border-gray-300 rounded-[6px] px-3 py-2 text-[13px]"
-              onChange={(e) => {
-                const val = e.target.value;
+          <div className="mb-4">
+            <SearchableSelect
+              options={products.map((p: any) => ({ value: p.id, label: p.name }))}
+              value=""
+              onChange={(val) => {
                 if (!val) return;
                 const p = products.find((x: any) => x.id === val);
                 if (p) {
                   setItems([...items, { product_id: p.id, product_name: p.name, quantity: 1, unit_price: p.price, notes: '' }]);
                 }
-                e.target.value = '';
               }}
-            >
-              <option value="">+ Tambah Produk dari Katalog</option>
-              {products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <Button variant="secondary" onClick={addItem}><Plus size={15} /> Item Manual</Button>
+              placeholder="+ Tambah Produk dari Katalog"
+            />
           </div>
           <div className="bg-primary-50 p-4 rounded-[10px] mb-4">
             <div className="flex justify-between text-[13px] mb-1"><span className="text-gray-700">Subtotal ({items.length} item)</span><span className="font-semibold">{formatRupiah(subtotal)}</span></div>

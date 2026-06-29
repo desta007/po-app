@@ -13,6 +13,7 @@ import { ROUTES } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Plus, Trash2, Check } from 'lucide-react';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
 
@@ -76,10 +77,12 @@ export default function PurchaseOrderCreatePage() {
       {step === 0 && (
         <Card className="max-w-xl mx-auto" padding="lg">
           <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Customer</label>
-          <select className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] bg-white focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-            <option value="">-- Pilih Customer --</option>
-            {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name} — {c.phone || '-'}</option>)}
-          </select>
+          <SearchableSelect
+            options={customers.map((c: any) => ({ value: c.id, label: `${c.name} — ${c.phone || '-'}` }))}
+            value={customerId}
+            onChange={setCustomerId}
+            placeholder="-- Pilih Customer --"
+          />
           <div className="flex justify-end mt-6"><Button disabled={!customerId} onClick={() => setStep(1)}>Lanjut →</Button></div>
         </Card>
       )}
@@ -100,7 +103,7 @@ export default function PurchaseOrderCreatePage() {
               <tbody>
                 {items.map((item, i) => (
                   <tr key={i} className="border-b border-gray-100">
-                    <td className="px-3 py-2"><select className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.product_id || ''} onChange={(e) => updateItem(i, 'product_id', e.target.value || null)}><option value="" disabled>-- Pilih Produk --</option>{products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></td>
+                    <td className="px-3 py-2"><SearchableSelect options={products.map((p: any) => ({ value: p.id, label: p.name }))} value={item.product_id || ''} onChange={(val) => updateItem(i, 'product_id', val || null)} placeholder="-- Pilih Produk --" /></td>
                     <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.quantity} onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))} min={1} /></td>
                     <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} /></td>
                     <td className="px-3 py-2 text-right font-semibold text-[13px] tabular-nums">{formatRupiah(item.quantity * item.unit_price)}</td>
