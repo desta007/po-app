@@ -51,10 +51,10 @@ export function PremiumUpgradeModal() {
   const [step, setStep] = useState<ModalStep>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentNote, setPaymentNote] = useState('');
-  const { organizationPlan, refreshUser } = useAuth();
+  const { organizationPlan, isSuperAdmin, refreshUser } = useAuth();
 
   useEffect(() => {
-    if (organizationPlan === 'premium') return;
+    if (organizationPlan === 'premium' || isSuperAdmin) return;
 
     const alreadyShown = sessionStorage.getItem(SESSION_KEY);
     if (!alreadyShown) {
@@ -87,7 +87,7 @@ export function PremiumUpgradeModal() {
     }
   };
 
-  if (organizationPlan === 'premium') return null;
+  if (organizationPlan === 'premium' || isSuperAdmin) return null;
   if (!open) return null;
 
   return createPortal(
