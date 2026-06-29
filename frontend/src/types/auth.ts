@@ -1,4 +1,5 @@
 export type MemberRole = 'owner' | 'admin' | 'staff' | 'viewer';
+export type SubscriptionPlan = 'free' | 'premium';
 
 export interface User {
   id: string;
@@ -21,6 +22,7 @@ export interface Organization {
   address: string | null;
   logo_url: string | null;
   settings: Record<string, unknown>;
+  plan?: SubscriptionPlan;
 }
 
 export interface TeamMember {

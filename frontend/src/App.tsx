@@ -26,6 +26,7 @@ import SettingsPage from '@/pages/settings/SettingsPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminOrganizationsPage from '@/pages/admin/AdminOrganizationsPage';
+import AdminSubscriptionsPage from '@/pages/admin/AdminSubscriptionsPage';
 
 // Public pages
 import CatalogPage from '@/pages/catalog/CatalogPage';
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="admin" element={<AdminDashboardPage />} />
         <Route path="admin/users" element={<AdminUsersPage />} />
         <Route path="admin/organizations" element={<AdminOrganizationsPage />} />
+        <Route path="admin/subscriptions" element={<AdminSubscriptionsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

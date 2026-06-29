@@ -12,7 +12,7 @@ class ProductImageController extends Controller
     public function store(Request $request, Product $product): JsonResponse
     {
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ]);
 
         // Delete old image if exists

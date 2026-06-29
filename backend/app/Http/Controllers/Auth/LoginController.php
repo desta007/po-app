@@ -29,11 +29,14 @@ class LoginController extends Controller
             ->where('organization_id', $user->current_org_id)
             ->first();
 
+        $organization = $user->currentOrganization;
+
         return response()->json([
             'user' => $user->load('currentOrganization'),
             'token' => $token,
             'role' => $membership?->role?->value,
             'is_super_admin' => (bool) $user->is_super_admin,
+            'organization_plan' => $organization?->plan?->value ?? 'free',
         ]);
     }
 
@@ -54,10 +57,13 @@ class LoginController extends Controller
             ->where('organization_id', $user->current_org_id)
             ->first();
 
+        $organization = $user->currentOrganization;
+
         return response()->json([
             'user' => $user->load('currentOrganization'),
             'role' => $membership?->role?->value,
             'is_super_admin' => (bool) $user->is_super_admin,
+            'organization_plan' => $organization?->plan?->value ?? 'free',
         ]);
     }
 }

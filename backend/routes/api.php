@@ -16,6 +16,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\OrganizationLogoController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PublicCatalogController;
 use Illuminate\Support\Facades\Route;
 
@@ -95,6 +96,10 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::middleware('role:owner,admin')->group(function () {
         Route::apiResource('team-members', TeamMemberController::class)->except(['show']);
     });
+
+    // Subscription
+    Route::get('subscription/status', [SubscriptionController::class, 'status']);
+    Route::post('subscription/request', [SubscriptionController::class, 'requestUpgrade']);
 });
 
 // Super Admin routes
@@ -103,4 +108,9 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::get('users', [SuperAdminController::class, 'users']);
     Route::get('users/{id}', [SuperAdminController::class, 'userDetail']);
     Route::get('organizations', [SuperAdminController::class, 'organizations']);
+
+    // Subscription management
+    Route::get('subscriptions', [SubscriptionController::class, 'subscriptions']);
+    Route::patch('subscriptions/{id}/approve', [SubscriptionController::class, 'approveSubscription']);
+    Route::patch('subscriptions/{id}/reject', [SubscriptionController::class, 'rejectSubscription']);
 });

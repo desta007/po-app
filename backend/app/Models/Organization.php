@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SubscriptionPlan;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,12 +19,14 @@ class Organization extends Model
         'address',
         'logo_url',
         'settings',
+        'plan',
     ];
 
     protected function casts(): array
     {
         return [
             'settings' => 'array',
+            'plan' => SubscriptionPlan::class,
         ];
     }
 
@@ -51,5 +54,15 @@ class Organization extends Model
     public function purchaseOrders(): HasMany
     {
         return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function isPremium(): bool
+    {
+        return $this->plan === SubscriptionPlan::PREMIUM;
     }
 }

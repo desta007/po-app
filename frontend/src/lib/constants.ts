@@ -40,6 +40,7 @@ export const ROUTES = {
   ADMIN_DASHBOARD: '/admin',
   ADMIN_USERS: '/admin/users',
   ADMIN_ORGANIZATIONS: '/admin/organizations',
+  ADMIN_SUBSCRIPTIONS: '/admin/subscriptions',
 } as const;
 
 export const UNITS = [

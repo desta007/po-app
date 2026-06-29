@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { User, LoginCredentials, RegisterData, MemberRole } from '@/types/auth';
+import type { User, LoginCredentials, RegisterData, MemberRole, SubscriptionPlan } from '@/types/auth';
 import { authApi } from '@/api/auth';
 
 interface AuthContextType {
   user: User | null;
   role: MemberRole | null;
   isSuperAdmin: boolean;
+  organizationPlan: SubscriptionPlan;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<MemberRole | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [organizationPlan, setOrganizationPlan] = useState<SubscriptionPlan>('free');
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
@@ -28,11 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.data.user);
       setRole(response.data.role ?? null);
       setIsSuperAdmin(response.data.is_super_admin ?? false);
+      setOrganizationPlan(response.data.organization_plan ?? 'free');
     } catch {
       localStorage.removeItem('auth_token');
       setUser(null);
       setRole(null);
       setIsSuperAdmin(false);
+      setOrganizationPlan('free');
     }
   }, []);
 
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.data.user);
         setRole(response.data.role ?? null);
         setIsSuperAdmin(response.data.is_super_admin ?? false);
+        setOrganizationPlan(response.data.organization_plan ?? 'free');
       } catch {
         localStorage.removeItem('auth_token');
         setUser(null);
@@ -65,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(response.data.user);
     setRole(response.data.role ?? null);
     setIsSuperAdmin(response.data.is_super_admin ?? false);
+    setOrganizationPlan(response.data.organization_plan ?? 'free');
   };
 
   const register = async (data: RegisterData) => {
@@ -73,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(response.data.user);
     setRole(response.data.role ?? null);
     setIsSuperAdmin(false);
+    setOrganizationPlan('free');
   };
 
   const logout = async () => {
@@ -82,9 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Still clear token even if request fails
     }
     localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('premium_modal_shown');
     setUser(null);
     setRole(null);
     setIsSuperAdmin(false);
+    setOrganizationPlan('free');
   };
 
   return (
@@ -93,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         role,
         isSuperAdmin,
+        organizationPlan,
         isLoading,
         isAuthenticated: !!user,
         login,
