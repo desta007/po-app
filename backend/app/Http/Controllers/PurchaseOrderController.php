@@ -169,4 +169,11 @@ class PurchaseOrderController extends Controller
 
         return $pdf->download("Invoice-{$purchaseOrder->po_number}.pdf");
     }
+
+    public function exportCorporatePdf(PurchaseOrder $purchaseOrder)
+    {
+        $pdf = $this->pdfService->generateCorporateInvoice($purchaseOrder);
+
+        return $pdf->download("Invoice-{$purchaseOrder->po_number}.pdf");
+    }
 }

@@ -9,8 +9,9 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil, Printer } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil, Printer, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
 
@@ -97,6 +98,35 @@ export default function PurchaseOrderDetailPage() {
     }
   };
 
+  const handlePrintCorporatePdf = async () => {
+    try {
+      const response = await purchaseOrdersApi.exportCorporatePdf(id!) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      toast.error('Gagal mencetak PDF Corporate');
+    }
+  };
+
+  const handleDownloadCorporatePdf = async () => {
+    try {
+      const response = await purchaseOrdersApi.exportCorporatePdf(id!) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Invoice-${po?.po_number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('Gagal mengunduh PDF Corporate');
+    }
+  };
+
   if (isLoading) return <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-[10px]" />)}</div>;
   if (!po) return <p className="text-gray-500">PO tidak ditemukan.</p>;
 
@@ -122,8 +152,32 @@ export default function PurchaseOrderDetailPage() {
             <Button variant="secondary"><Pencil size={15} /> Edit PO</Button>
           </Link>
           <Button variant="secondary" onClick={() => setShowPaymentDialog(true)}><DollarSign size={15} /> Update Bayar</Button>
-          <Button variant="secondary" onClick={handlePrintPdf}><Printer size={15} /> Print Invoice</Button>
-          <Button variant="secondary" onClick={handleDownloadPdf}><Download size={15} /> PDF</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary"><Printer size={15} /> Print Invoice</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={handlePrintPdf}>
+                <Printer className="mr-2" size={14} /> Invoice Biasa (Struk)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handlePrintCorporatePdf}>
+                <FileText className="mr-2" size={14} /> Invoice Corporate (A4)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary"><Download size={15} /> PDF</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={handleDownloadPdf}>
+                <Download className="mr-2" size={14} /> Invoice Biasa (Struk)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadCorporatePdf}>
+                <Download className="mr-2" size={14} /> Invoice Corporate (A4)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="accent" onClick={() => {
             if (po.customer?.phone) {
               let phone = po.customer.phone.replace(/[^0-9]/g, '');

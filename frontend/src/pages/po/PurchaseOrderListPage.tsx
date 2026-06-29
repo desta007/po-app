@@ -70,6 +70,18 @@ export default function PurchaseOrderListPage() {
     }
   };
 
+  const handlePrintCorporatePdf = async (po: PurchaseOrder) => {
+    try {
+      const response = await purchaseOrdersApi.exportCorporatePdf(po.id) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      toast.error('Gagal mencetak PDF Corporate');
+    }
+  };
+
   const handleKirimWA = (po: PurchaseOrder) => {
     if (po.customer?.phone) {
       let phone = po.customer.phone.replace(/[^0-9]/g, '');
@@ -279,7 +291,10 @@ export default function PurchaseOrderListPage() {
                             <MessageCircle className="mr-2" /> Kirim WA
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handlePrintPdf(po)}>
-                            <Printer className="mr-2" /> Print Invoice
+                            <Printer className="mr-2" /> Invoice Biasa (Struk)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintCorporatePdf(po)}>
+                            <FileText className="mr-2" /> Invoice Corporate (A4)
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/pesanan/${po.id}/edit`)}>
                             <Pencil className="mr-2" /> Edit PO

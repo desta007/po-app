@@ -86,6 +86,9 @@ export const purchaseOrdersApi = {
   exportPdf: (id: string) =>
     apiClient.get(`/api/purchase-orders/${id}/export-pdf`, { responseType: 'blob' }),
 
+  exportCorporatePdf: (id: string) =>
+    apiClient.get(`/api/purchase-orders/${id}/export-corporate-pdf`, { responseType: 'blob' }),
+
   getItems: (id: string) =>
     apiClient.get<{ data: PurchaseOrderItem[] }>(`/api/purchase-orders/${id}/items`),
 };

@@ -88,4 +88,19 @@ class PdfExportService
 
         return round($totalMm * $mmToPoints, 2);
     }
+
+    /**
+     * Generate corporate-style invoice (A4 paper).
+     */
+    public function generateCorporateInvoice(PurchaseOrder $po): \Barryvdh\DomPDF\PDF
+    {
+        $po->load('items', 'customer', 'organization');
+
+        return Pdf::loadView('pdf.invoice-corporate', [
+            'po' => $po,
+            'organization' => $po->organization,
+            'customer' => $po->customer,
+            'items' => $po->items,
+        ])->setPaper('a4', 'portrait');
+    }
 }
