@@ -132,8 +132,6 @@ export default function PurchaseOrderListPage() {
     return pages;
   };
 
-  const sortLabel = sortBy === 'delivery_date' ? 'Tgl Kirim' : sortBy === 'order_date' ? 'Tgl Order' : 'Terbaru';
-  const sortDirLabel = sortDir === 'desc' ? 'Terbaru' : 'Terlama';
 
   return (
     <div>
