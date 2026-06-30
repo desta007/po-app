@@ -71,7 +71,7 @@ function Dialog({ open, onClose, onOpenChange, children, className, size = 'md' 
       {/* Dialog */}
       <div
         className={cn(
-          'relative w-full bg-white rounded-[10px] shadow-lg border border-gray-200',
+          'relative w-full bg-white rounded-[10px] shadow-lg border border-gray-200 max-h-[calc(100vh-2rem)] overflow-y-auto',
           'animate-in zoom-in-95 slide-in-from-bottom-2 duration-300',
           sizeClasses[size],
           className
