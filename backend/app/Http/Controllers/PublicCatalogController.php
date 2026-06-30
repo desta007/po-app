@@ -24,7 +24,8 @@ class PublicCatalogController extends Controller
         $org = Organization::where('slug', $slug)->firstOrFail();
 
         $query = Product::where('organization_id', $org->id)
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->where('show_in_catalog', true);
 
         if ($search = $request->input('search')) {
             $query->where('name', 'ilike', "%{$search}%");
@@ -38,6 +39,7 @@ class PublicCatalogController extends Controller
 
         $categories = Product::where('organization_id', $org->id)
             ->where('is_active', true)
+            ->where('show_in_catalog', true)
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category')

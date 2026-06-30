@@ -25,6 +25,7 @@ class Product extends Model
         'image_url',
         'stock_qty',
         'is_active',
+        'show_in_catalog',
     ];
 
     protected function casts(): array
@@ -33,6 +34,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'cost' => 'decimal:2',
             'is_active' => 'boolean',
+            'show_in_catalog' => 'boolean',
         ];
     }
 

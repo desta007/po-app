@@ -21,6 +21,7 @@ class StoreProductRequest extends FormRequest
             'image_url' => ['nullable', 'string'],
             'stock_qty' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
+            'show_in_catalog' => ['nullable', 'boolean'],
         ];
     }
 

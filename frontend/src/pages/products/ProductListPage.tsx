@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
+import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { formatRupiah, storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -35,7 +35,7 @@ function getStockBadge(qty: number) {
   return <Badge variant="success" dot>Stock {qty}</Badge>;
 }
 
-const EMPTY_FORM = { name: '', sku: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0 };
+const EMPTY_FORM = { name: '', sku: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, show_in_catalog: true };
 
 export default function ProductListPage() {
   const queryClient = useQueryClient();
@@ -134,6 +134,7 @@ export default function ProductListPage() {
       unit: product.unit || 'pcs',
       category: product.category || '',
       stock_qty: product.stock_qty ?? 0,
+      show_in_catalog: product.show_in_catalog ?? true,
     });
     setDialogOpen(true);
   }
@@ -222,6 +223,11 @@ export default function ProductListPage() {
                     ) : (
                       <span className="text-5xl">{emoji}</span>
                     )}
+                    {!p.show_in_catalog && (
+                      <div className="absolute top-2 right-2 bg-gray-800/75 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <Globe size={10} /> Tidak di katalog
+                      </div>
+                    )}
                   </div>
                   <div className="p-3.5">
                     <div className="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
@@ -264,6 +270,27 @@ export default function ProductListPage() {
             <Input label="Kategori" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} />
             <Input label="Stok" type="number" value={form.stock_qty} onChange={(e) => setForm({...form, stock_qty: Number(e.target.value)})} />
             
+            <div className="flex items-center justify-between py-2 px-3 rounded-[6px] bg-gray-50 border border-gray-200">
+              <div className="flex items-center gap-2">
+                <Globe size={15} className="text-gray-500" />
+                <div>
+                  <div className="text-[13px] font-semibold text-gray-700">Tampilkan di Katalog</div>
+                  <div className="text-[11px] text-gray-500">Produk ini akan muncul di katalog publik</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm({...form, show_in_catalog: !form.show_in_catalog})}
+                className={`relative w-10 h-5.5 rounded-full transition-colors ${form.show_in_catalog ? 'bg-primary' : 'bg-gray-300'}`}
+                style={{ width: 40, height: 22 }}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full bg-white shadow transition-transform"
+                  style={{ width: 18, height: 18, transform: form.show_in_catalog ? 'translateX(18px)' : 'translateX(0)' }}
+                />
+              </button>
+            </div>
+
             <div className="space-y-1.5 mt-2">
               <label className="block text-xs font-semibold text-gray-700">Gambar Produk</label>
               <div className="flex items-center gap-3">

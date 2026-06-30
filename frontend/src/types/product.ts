@@ -11,6 +11,7 @@ export interface Product {
   image_url: string | null;
   stock_qty: number;
   is_active: boolean;
+  show_in_catalog: boolean;
   created_at: string;
   updated_at: string;
 }

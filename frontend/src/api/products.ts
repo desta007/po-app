@@ -22,6 +22,7 @@ export interface CreateProductData {
   category?: string;
   stock_qty?: number;
   is_active?: boolean;
+  show_in_catalog?: boolean;
 }
 
 export type UpdateProductData = Partial<CreateProductData>;
