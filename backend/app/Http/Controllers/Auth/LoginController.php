@@ -31,12 +31,22 @@ class LoginController extends Controller
 
         $organization = $user->currentOrganization;
 
+        // Check and expire subscription if past due
+        $subscription = $organization?->checkSubscriptionExpiry();
+        $organization?->refresh();
+
         return response()->json([
             'user' => $user->load('currentOrganization'),
             'token' => $token,
             'role' => $membership?->role?->value,
             'is_super_admin' => (bool) $user->is_super_admin,
             'organization_plan' => $organization?->plan?->value ?? 'free',
+            'subscription' => $subscription ? [
+                'status' => $subscription->status->value,
+                'status_label' => $subscription->status->label(),
+                'starts_at' => $subscription->starts_at,
+                'expires_at' => $subscription->expires_at,
+            ] : null,
         ]);
     }
 
@@ -59,11 +69,21 @@ class LoginController extends Controller
 
         $organization = $user->currentOrganization;
 
+        // Check and expire subscription if past due
+        $subscription = $organization?->checkSubscriptionExpiry();
+        $organization?->refresh();
+
         return response()->json([
             'user' => $user->load('currentOrganization'),
             'role' => $membership?->role?->value,
             'is_super_admin' => (bool) $user->is_super_admin,
             'organization_plan' => $organization?->plan?->value ?? 'free',
+            'subscription' => $subscription ? [
+                'status' => $subscription->status->value,
+                'status_label' => $subscription->status->label(),
+                'starts_at' => $subscription->starts_at,
+                'expires_at' => $subscription->expires_at,
+            ] : null,
         ]);
     }
 }

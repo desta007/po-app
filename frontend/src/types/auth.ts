@@ -38,6 +38,13 @@ export interface TeamMember {
   joined_at: string;
 }
 
+export interface SubscriptionInfo {
+  status: 'active' | 'expired' | 'pending' | 'rejected';
+  status_label: string;
+  starts_at: string | null;
+  expires_at: string | null;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;

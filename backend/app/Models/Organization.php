@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SubscriptionPlan;
+use App\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -64,5 +65,29 @@ class Organization extends Model
     public function isPremium(): bool
     {
         return $this->plan === SubscriptionPlan::PREMIUM;
+    }
+
+    /**
+     * Check if active subscription has expired and downgrade to free if so.
+     * Returns the latest active/expired subscription info.
+     */
+    public function checkSubscriptionExpiry(): ?Subscription
+    {
+        $latestSubscription = $this->subscriptions()
+            ->whereIn('status', [SubscriptionStatus::ACTIVE, SubscriptionStatus::EXPIRED, SubscriptionStatus::PENDING])
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($latestSubscription
+            && $latestSubscription->status === SubscriptionStatus::ACTIVE
+            && $latestSubscription->expires_at
+            && $latestSubscription->expires_at->isPast()
+        ) {
+            $latestSubscription->update(['status' => SubscriptionStatus::EXPIRED]);
+            $this->update(['plan' => SubscriptionPlan::FREE]);
+            $latestSubscription->refresh();
+        }
+
+        return $latestSubscription;
     }
 }

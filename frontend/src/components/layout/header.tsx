@@ -1,4 +1,4 @@
-import { Menu, LogOut, User } from 'lucide-react';
+import { Menu, LogOut, User, Crown, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { getInitials } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
@@ -7,6 +7,45 @@ import { NotificationBell } from '@/components/notifications/notification-bell';
 
 interface HeaderProps {
   onMenuClick: () => void;
+}
+
+function SubscriptionBadge() {
+  const { organizationPlan, subscription, isSuperAdmin } = useAuth();
+
+  if (isSuperAdmin) return null;
+
+  if (organizationPlan === 'premium' && subscription?.status === 'active') {
+    const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
+    const now = new Date();
+    const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    return (
+      <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg">
+        <Crown size={14} className="text-amber-600" />
+        <span className="text-xs font-semibold text-amber-700">Premium</span>
+        {daysLeft !== null && (
+          <span className="text-xs text-amber-500">
+            {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini berakhir'}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  if (subscription?.status === 'pending') {
+    return (
+      <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 border border-orange-200 rounded-lg">
+        <Clock size={14} className="text-orange-500" />
+        <span className="text-xs font-semibold text-orange-600">Menunggu Verifikasi</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-lg">
+      <span className="text-xs font-semibold text-gray-500">Free</span>
+    </div>
+  );
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
@@ -39,6 +78,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        <SubscriptionBadge />
         <NotificationBell />
 
         <div className="relative" ref={menuRef}>
