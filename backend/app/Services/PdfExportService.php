@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
+use setasign\Fpdi\Fpdi;
 
 class PdfExportService
 {
@@ -102,6 +104,53 @@ class PdfExportService
             'customer' => $po->customer,
             'items' => $po->items,
         ])->setPaper('a4', 'portrait');
+    }
+
+    /**
+     * Generate merged PDF from multiple POs.
+     *
+     * @param Collection<int, PurchaseOrder> $purchaseOrders
+     * @param string $format 'receipt' or 'corporate'
+     * @return string PDF binary content
+     */
+    public function generateBulkPdf(Collection $purchaseOrders, string $format): string
+    {
+        $tempFiles = [];
+
+        try {
+            // Generate individual PDFs and save to temp files
+            foreach ($purchaseOrders as $po) {
+                $pdf = $format === 'corporate'
+                    ? $this->generateCorporateInvoice($po)
+                    : $this->generateInvoice($po);
+
+                $tempFile = tempnam(sys_get_temp_dir(), 'po_pdf_');
+                file_put_contents($tempFile, $pdf->output());
+                $tempFiles[] = $tempFile;
+            }
+
+            // Merge all PDFs using FPDI
+            $merger = new Fpdi();
+
+            foreach ($tempFiles as $file) {
+                $pageCount = $merger->setSourceFile($file);
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $templateId = $merger->importPage($i);
+                    $size = $merger->getTemplateSize($templateId);
+                    $merger->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                    $merger->useTemplate($templateId);
+                }
+            }
+
+            return $merger->Output('S');
+        } finally {
+            // Clean up temp files
+            foreach ($tempFiles as $file) {
+                if (file_exists($file)) {
+                    @unlink($file);
+                }
+            }
+        }
     }
 
     /**

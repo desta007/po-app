@@ -83,6 +83,9 @@ export const purchaseOrdersApi = {
   duplicate: (id: string) =>
     apiClient.post<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}/duplicate`),
 
+  bulkExportPdf: (ids: string[], format: 'receipt' | 'corporate') =>
+    apiClient.post('/api/purchase-orders/bulk-export-pdf', { ids, format }, { responseType: 'blob' }),
+
   exportPdf: (id: string) =>
     apiClient.get(`/api/purchase-orders/${id}/export-pdf`, { responseType: 'blob' }),
 

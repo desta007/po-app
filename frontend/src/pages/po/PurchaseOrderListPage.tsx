@@ -7,10 +7,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2 } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { PurchaseOrder } from '@/types/purchase-order';
 
@@ -22,6 +22,8 @@ export default function PurchaseOrderListPage() {
   const [paymentFilter, setPaymentFilter] = useState('');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkPrinting, setBulkPrinting] = useState(false);
 
   const page = Number(searchParams.get('page') || '1');
   const queryClient = useQueryClient();
@@ -119,6 +121,47 @@ export default function PurchaseOrderListPage() {
     return sortDir === 'desc'
       ? <ArrowDown size={13} className="text-primary" />
       : <ArrowUp size={13} className="text-primary" />;
+  };
+
+  // Clear selection when filters, sort, or page changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, statusFilter, paymentFilter, page, sortBy, sortDir]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === pos.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pos.map((po) => po.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkPrint = async (format: 'receipt' | 'corporate') => {
+    if (selectedIds.size === 0) return;
+    setBulkPrinting(true);
+    try {
+      const response = await purchaseOrdersApi.bulkExportPdf(Array.from(selectedIds), format) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Gagal mencetak PDF');
+    } finally {
+      setBulkPrinting(false);
+    }
   };
 
   const pos: PurchaseOrder[] = data?.data?.data || [];
@@ -227,7 +270,14 @@ export default function PurchaseOrderListPage() {
           <Table>
             <TableHeader>
               <tr>
-                <TableHead style={{ width: 30 }}><input type="checkbox" /></TableHead>
+                <TableHead style={{ width: 30 }}>
+                  <input
+                    type="checkbox"
+                    checked={pos.length > 0 && selectedIds.size === pos.length}
+                    ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < pos.length; }}
+                    onChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>No. PO</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>
@@ -261,7 +311,13 @@ export default function PurchaseOrderListPage() {
                 const pc = PAYMENT_STATUS_CONFIG[po.payment_status as keyof typeof PAYMENT_STATUS_CONFIG];
                 return (
                   <TableRow key={po.id} className="cursor-pointer" onClick={() => navigate(`/pesanan/${po.id}`)}>
-                    <TableCell onClick={(e) => e.stopPropagation()}><input type="checkbox" /></TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(po.id)}
+                        onChange={() => toggleSelect(po.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono-po text-xs text-primary font-semibold">{po.po_number}</TableCell>
                     <TableCell>
                       <strong className="text-gray-900">{po.customer?.name}</strong>
@@ -384,6 +440,44 @@ export default function PurchaseOrderListPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-200">
+          <span className="text-sm font-medium whitespace-nowrap">
+            {selectedIds.size} PO dipilih
+          </span>
+          <div className="w-px h-6 bg-gray-600" />
+          <Button
+            variant="secondary"
+            size="sm"
+            className="bg-white/10 hover:bg-white/20 text-white border-0"
+            disabled={bulkPrinting}
+            onClick={() => handleBulkPrint('receipt')}
+          >
+            {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+            Print Struk
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="bg-white/10 hover:bg-white/20 text-white border-0"
+            disabled={bulkPrinting}
+            onClick={() => handleBulkPrint('corporate')}
+          >
+            {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+            Print Corporate (A4)
+          </Button>
+          <div className="w-px h-6 bg-gray-600" />
+          <button
+            className="text-gray-400 hover:text-white transition-colors"
+            onClick={() => setSelectedIds(new Set())}
+            title="Batal pilih"
+          >
+            <X size={18} />
+          </button>
+        </div>
       )}
     </div>
   );

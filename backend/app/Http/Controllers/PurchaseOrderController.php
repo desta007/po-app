@@ -163,6 +163,37 @@ class PurchaseOrderController extends Controller
         ], 201);
     }
 
+    public function bulkExportPdf(Request $request)
+    {
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:50'],
+            'ids.*' => ['required', 'uuid'],
+            'format' => ['required', 'in:receipt,corporate'],
+        ]);
+
+        $pos = PurchaseOrder::whereIn('id', $request->ids)
+            ->with('items', 'customer', 'organization')
+            ->get();
+
+        if ($pos->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada PO yang ditemukan.'], 404);
+        }
+
+        // Maintain the order from request
+        $ordered = collect($request->ids)
+            ->map(fn($id) => $pos->firstWhere('id', $id))
+            ->filter();
+
+        $pdfContent = $this->pdfService->generateBulkPdf($ordered, $request->format);
+
+        $filename = 'Bulk-Invoice-' . now()->format('Ymd-His') . '.pdf';
+
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+        ]);
+    }
+
     public function exportPdf(PurchaseOrder $purchaseOrder)
     {
         $pdf = $this->pdfService->generateInvoice($purchaseOrder);

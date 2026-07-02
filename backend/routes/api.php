@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::delete('products/{product}/image', [ProductImageController::class, 'destroy']);
 
     // Purchase Orders
+    Route::post('purchase-orders/bulk-export-pdf', [PurchaseOrderController::class, 'bulkExportPdf']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::patch('purchase-orders/{purchase_order}/status', [PurchaseOrderController::class, 'updateStatus']);
     Route::patch('purchase-orders/{purchase_order}/payment', [PurchaseOrderController::class, 'updatePayment']);
