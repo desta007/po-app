@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
 
     // Purchase Orders
     Route::post('purchase-orders/bulk-export-pdf', [PurchaseOrderController::class, 'bulkExportPdf']);
+    Route::post('purchase-orders/bulk-export-labels', [PurchaseOrderController::class, 'bulkExportLabels']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::patch('purchase-orders/{purchase_order}/status', [PurchaseOrderController::class, 'updateStatus']);
     Route::patch('purchase-orders/{purchase_order}/payment', [PurchaseOrderController::class, 'updatePayment']);

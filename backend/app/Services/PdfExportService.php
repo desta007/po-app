@@ -154,6 +154,45 @@ class PdfExportService
     }
 
     /**
+     * Generate product labels PDF from multiple POs.
+     *
+     * @param Collection<int, PurchaseOrder> $purchaseOrders
+     * @param string $size '40x20' or '50x20'
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function generateLabels(Collection $purchaseOrders, string $size): \Barryvdh\DomPDF\PDF
+    {
+        $dimensionsMap = [
+            '30x20' => ['width' => 30, 'height' => 20],
+            '40x20' => ['width' => 40, 'height' => 20],
+            '50x20' => ['width' => 50, 'height' => 20],
+        ];
+        $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['40x20'];
+
+        // Build flat list of labels: one per product item per PO
+        $labels = [];
+        foreach ($purchaseOrders as $po) {
+            $po->load('items', 'customer');
+            $orderDate = \Carbon\Carbon::parse($po->order_date)->translatedFormat('d M y');
+
+            foreach ($po->items as $item) {
+                $labels[] = [
+                    'po_number' => $po->po_number,
+                    'order_date' => $orderDate,
+                    'customer' => $po->customer->name ?? '-',
+                    'product' => $item->product_name,
+                ];
+            }
+        }
+
+        return Pdf::loadView('pdf.labels', [
+            'labels' => $labels,
+            'labelWidth' => $dimensions['width'],
+            'labelHeight' => $dimensions['height'],
+        ])->setPaper('a4', 'portrait');
+    }
+
+    /**
      * Generate receipt-style invoice as PNG image.
      */
     public function generateInvoiceImage(PurchaseOrder $po): string

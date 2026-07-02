@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2 } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -159,6 +159,22 @@ export default function PurchaseOrderListPage() {
       setTimeout(() => window.URL.revokeObjectURL(url), 5000);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Gagal mencetak PDF');
+    } finally {
+      setBulkPrinting(false);
+    }
+  };
+
+  const handleBulkPrintLabels = async (size: '30x20' | '40x20' | '50x20') => {
+    if (selectedIds.size === 0) return;
+    setBulkPrinting(true);
+    try {
+      const response = await purchaseOrdersApi.bulkExportLabels(Array.from(selectedIds), size) as any;
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Gagal mencetak label');
     } finally {
       setBulkPrinting(false);
     }
@@ -469,6 +485,31 @@ export default function PurchaseOrderListPage() {
             {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
             Print Corporate (A4)
           </Button>
+          <div className="w-px h-6 bg-gray-600" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/10 hover:bg-white/20 text-white border-0"
+                disabled={bulkPrinting}
+              >
+                {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <Tag size={14} />}
+                Print Label
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" side="top" className="w-44">
+              <DropdownMenuItem onClick={() => handleBulkPrintLabels('30x20')}>
+                <Tag className="mr-2" size={14} /> Label 30 x 20 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkPrintLabels('40x20')}>
+                <Tag className="mr-2" size={14} /> Label 40 x 20 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkPrintLabels('50x20')}>
+                <Tag className="mr-2" size={14} /> Label 50 x 20 mm
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="w-px h-6 bg-gray-600" />
           <button
             className="text-gray-400 hover:text-white transition-colors"
