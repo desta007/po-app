@@ -31,7 +31,7 @@ class ProductController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $products = $query->orderBy('name')->paginate($request->input('per_page', 15));
+        $products = $query->orderBy('name')->paginate($request->input('per_page', 50));
 
         return ProductResource::collection($products);
     }

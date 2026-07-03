@@ -233,7 +233,7 @@ export default function ProductListPage() {
                     <div className="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
                       {p.category || 'Tanpa kategori'}
                     </div>
-                    <div className="font-bold text-[14px] text-gray-900 mt-1 mb-2">{p.name}</div>
+                    <div className="font-bold text-[14px] text-gray-900 mt-1 mb-2 break-words whitespace-normal">{p.name}</div>
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-[10px] text-gray-400 font-medium">Harga Jual</div>

@@ -163,11 +163,11 @@ class PdfExportService
     public function generateLabels(Collection $purchaseOrders, string $size): \Barryvdh\DomPDF\PDF
     {
         $dimensionsMap = [
+            '25x15' => ['width' => 25, 'height' => 15],
+            '30x15' => ['width' => 30, 'height' => 15],
             '30x20' => ['width' => 30, 'height' => 20],
-            '40x20' => ['width' => 40, 'height' => 20],
-            '50x20' => ['width' => 50, 'height' => 20],
         ];
-        $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['40x20'];
+        $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['30x20'];
 
         // Build flat list of labels: one per product item per PO
         $labels = [];
