@@ -169,27 +169,44 @@ class PdfExportService
         ];
         $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['30x20'];
 
-        // Build flat list of labels: one per product item per PO
+        // Build flat list of labels: one per quantity unit per product item per PO
         $labels = [];
         foreach ($purchaseOrders as $po) {
             $po->load('items', 'customer');
             $orderDate = \Carbon\Carbon::parse($po->order_date)->translatedFormat('d M y');
 
             foreach ($po->items as $item) {
-                $labels[] = [
-                    'po_number' => $po->po_number,
-                    'order_date' => $orderDate,
-                    'customer' => $po->customer->name ?? '-',
-                    'product' => $item->product_name,
-                ];
+                $qty = max(1, (int) $item->quantity);
+                for ($i = 0; $i < $qty; $i++) {
+                    $labels[] = [
+                        'po_number' => $po->po_number,
+                        'order_date' => $orderDate,
+                        'customer' => $po->customer->name ?? '-',
+                        'product' => $item->product_name,
+                    ];
+                }
             }
         }
 
+        $labelWidth = $dimensions['width'];
+        $labelHeight = $dimensions['height'];
+
+        // Paper size = single column strip: width matches label, height = all labels stacked
+        $paperWidth = $labelWidth;
+        $paperHeight = $labelHeight * count($labels);
+
+        // Convert mm to points (1mm = 2.835pt)
+        $mmToPt = 2.835;
+        $paperWidthPt = round($paperWidth * $mmToPt, 2);
+        $paperHeightPt = round($paperHeight * $mmToPt, 2);
+
         return Pdf::loadView('pdf.labels', [
             'labels' => $labels,
-            'labelWidth' => $dimensions['width'],
-            'labelHeight' => $dimensions['height'],
-        ])->setPaper('a4', 'portrait');
+            'labelWidth' => $labelWidth,
+            'labelHeight' => $labelHeight,
+            'paperWidth' => $paperWidth,
+            'paperHeight' => $paperHeight,
+        ])->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderStatusHistory;
+use App\Services\NotificationService;
 use App\Services\PurchaseOrderNumberGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class PublicCatalogController extends Controller
 {
     public function __construct(
         private PurchaseOrderNumberGenerator $numberGenerator,
+        private NotificationService $notificationService,
     ) {}
 
     public function show(Request $request, string $slug): JsonResponse
@@ -141,6 +143,20 @@ class PublicCatalogController extends Controller
                 'changed_by' => $owner?->id,
                 'changed_at' => now(),
             ]);
+
+            // Send in-app notification to the org owner
+            if ($owner) {
+                $itemCount = count($items);
+                $totalFormatted = number_format($subtotal, 0, ',', '.');
+
+                $this->notificationService->createInAppNotification(
+                    userId: $owner->id,
+                    title: "Pesanan baru dari katalog — {$poNumber}",
+                    message: "{$customer->name} memesan {$itemCount} produk senilai Rp{$totalFormatted} melalui katalog online.",
+                    poId: $po->id,
+                    orgId: $org->id,
+                );
+            }
 
             return response()->json([
                 'message' => 'Pesanan berhasil dibuat.',
