@@ -24,6 +24,7 @@ export default function PurchaseOrderListPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkPrinting, setBulkPrinting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const page = Number(searchParams.get('page') || '1');
   const queryClient = useQueryClient();
@@ -180,6 +181,33 @@ export default function PurchaseOrderListPage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    setExporting(true);
+    try {
+      const response = await purchaseOrdersApi.exportExcel({
+        search: search || undefined,
+        status: (statusFilter || undefined) as any,
+        payment_status: (paymentFilter || undefined) as any,
+        sort_by: sortBy,
+        sort_dir: sortDir,
+      }) as any;
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `PurchaseOrders-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Export Excel berhasil!');
+    } catch (err) {
+      toast.error('Gagal export Excel');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const pos: PurchaseOrder[] = data?.data?.data || [];
   const meta: any = data?.data?.meta;
 
@@ -216,7 +244,9 @@ export default function PurchaseOrderListPage() {
         description={meta ? `${meta.total} PO · Total ${formatRupiah(pos.reduce((s, p) => s + (p.total || 0), 0))}` : 'Kelola semua purchase order'}
         actions={
           <div className="flex gap-2">
-            <Button variant="secondary"><Download size={15} /> Export</Button>
+            <Button variant="secondary" onClick={handleExportExcel} disabled={exporting}>
+              {exporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Export
+            </Button>
             <Button onClick={() => navigate('/pesanan/baru')}>+ PO Baru</Button>
           </div>
         }

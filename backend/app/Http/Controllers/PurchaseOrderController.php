@@ -9,11 +9,13 @@ use App\Http\Requests\PurchaseOrder\UpdatePurchaseOrderRequest;
 use App\Http\Requests\PurchaseOrder\UpdateStatusRequest;
 use App\Http\Resources\PurchaseOrderResource;
 use App\Models\PurchaseOrder;
+use App\Exports\PurchaseOrdersExport;
 use App\Services\PdfExportService;
 use App\Services\PurchaseOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseOrderController extends Controller
 {
@@ -252,7 +254,7 @@ class PurchaseOrderController extends Controller
     public function exportHtml(PurchaseOrder $purchaseOrder)
     {
         $purchaseOrder->load('items', 'customer', 'organization');
-        
+
         // Pass a flag so the view can use URL instead of local path for the logo
         $html = view('pdf.invoice', [
             'po' => $purchaseOrder,
@@ -263,5 +265,44 @@ class PurchaseOrderController extends Controller
         ])->render();
 
         return response($html);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $query = PurchaseOrder::with('customer', 'items');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('po_number', 'ilike', "%{$search}%")
+                  ->orWhereHas('customer', function ($cq) use ($search) {
+                      $cq->where('name', 'ilike', "%{$search}%")
+                         ->orWhere('phone', 'ilike', "%{$search}%");
+                  })
+                  ->orWhereHas('items', function ($iq) use ($search) {
+                      $iq->where('product_name', 'ilike', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($paymentStatus = $request->input('payment_status')) {
+            $query->where('payment_status', $paymentStatus);
+        }
+
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+        $allowedSorts = ['created_at', 'delivery_date', 'order_date', 'po_number', 'total'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+
+        $pos = $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc')->get();
+
+        $filename = 'PurchaseOrders-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(new PurchaseOrdersExport($pos), $filename);
     }
 }

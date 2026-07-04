@@ -101,6 +101,9 @@ export const purchaseOrdersApi = {
   exportHtml: (id: string) =>
     apiClient.get(`/api/purchase-orders/${id}/export-html`, { responseType: 'text' }),
 
+  exportExcel: (filters?: Pick<POFilters, 'search' | 'status' | 'payment_status' | 'sort_by' | 'sort_dir'>) =>
+    apiClient.get('/api/purchase-orders/export-excel', { params: filters, responseType: 'blob' }),
+
   getItems: (id: string) =>
     apiClient.get<{ data: PurchaseOrderItem[] }>(`/api/purchase-orders/${id}/items`),
 };
