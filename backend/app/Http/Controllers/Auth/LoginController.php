@@ -66,6 +66,22 @@ class LoginController extends Controller
         return response()->json(['message' => 'Berhasil logout.']);
     }
 
+    public function refresh(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Delete the current token
+        $user->currentAccessToken()->delete();
+
+        // Issue a new token
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'message' => 'Token berhasil diperbarui.',
+        ]);
+    }
+
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();

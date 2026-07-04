@@ -26,13 +26,14 @@ Route::post('catalog/{slug}/checkout', [PublicCatalogController::class, 'checkou
 
 // Authentication
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [RegisterController::class, 'register']);
-    Route::post('/login', [LoginController::class, 'login']);
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
-    Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+    Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:register');
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:login');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:password-reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->middleware('throttle:password-reset');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [LoginController::class, 'logout']);
+        Route::post('/refresh', [LoginController::class, 'refresh']);
         Route::get('/me', [LoginController::class, 'me']);
     });
 });
