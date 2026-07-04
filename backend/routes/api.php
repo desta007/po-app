@@ -103,6 +103,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     // Subscription
     Route::get('subscription/status', [SubscriptionController::class, 'status']);
     Route::post('subscription/request', [SubscriptionController::class, 'requestUpgrade']);
+    Route::get('subscription/{id}/invoice', [SubscriptionController::class, 'exportInvoice']);
 });
 
 // Super Admin routes
@@ -116,4 +117,5 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::get('subscriptions', [SubscriptionController::class, 'subscriptions']);
     Route::patch('subscriptions/{id}/approve', [SubscriptionController::class, 'approveSubscription']);
     Route::patch('subscriptions/{id}/reject', [SubscriptionController::class, 'rejectSubscription']);
+    Route::get('subscriptions/{id}/invoice', [SubscriptionController::class, 'exportInvoice']);
 });

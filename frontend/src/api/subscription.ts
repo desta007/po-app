@@ -6,4 +6,7 @@ export const subscriptionApi = {
 
   requestUpgrade: (data?: { payment_proof_note?: string }) =>
     apiClient.post('/api/subscription/request', data),
+
+  downloadInvoice: (id: string) =>
+    apiClient.get(`/api/subscription/${id}/invoice`, { responseType: 'blob' }),
 };

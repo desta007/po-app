@@ -3,7 +3,7 @@ import { adminApi } from '@/api/admin';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, ArrowLeft, Check, X, Crown, MessageCircle, Loader2 } from 'lucide-react';
+import { Search, ArrowLeft, Check, X, Crown, MessageCircle, Loader2, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { formatDate, getInitials } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -84,6 +84,23 @@ export default function AdminSubscriptionsPage() {
   const handleRejectSubmit = () => {
     if (!rejectModalId || !rejectReason.trim()) return;
     rejectMutation.mutate({ id: rejectModalId, reject_reason: rejectReason });
+  };
+
+  const handleDownloadInvoice = async (id: string) => {
+    try {
+      const response = await adminApi.downloadSubscriptionInvoice(id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-subscription-${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Gagal mengunduh invoice.');
+    }
   };
 
   return (
@@ -232,9 +249,19 @@ export default function AdminSubscriptionsPage() {
                       </a>
                     )}
                     {sub.status === 'active' && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-600">
-                        <Crown size={12} /> Premium
-                      </span>
+                      <>
+                        <button
+                          onClick={() => handleDownloadInvoice(sub.id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
+                          title="Download Invoice"
+                        >
+                          <FileText size={12} />
+                          Invoice
+                        </button>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-600">
+                          <Crown size={12} /> Premium
+                        </span>
+                      </>
                     )}
                   </div>
 

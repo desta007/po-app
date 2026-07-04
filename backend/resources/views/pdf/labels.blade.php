@@ -16,7 +16,6 @@
         .label {
             display: block;
             width: {{ $labelWidth }}mm;
-            height: {{ $labelHeight }}mm;
             box-sizing: border-box;
             padding: 1mm 2mm;
             overflow: hidden;
@@ -27,7 +26,7 @@
             page-break-after: auto;
         }
         .label-row {
-            font-size: 6pt;
+            font-size: {{ $labelHeight >= 20 ? '6' : '5' }}pt;
             line-height: 1.2;
             white-space: nowrap;
             overflow: hidden;

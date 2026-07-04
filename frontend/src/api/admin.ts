@@ -21,4 +21,7 @@ export const adminApi = {
 
   rejectSubscription: (id: string, data: { reject_reason: string }) =>
     apiClient.patch(`/api/admin/subscriptions/${id}/reject`, data),
+
+  downloadSubscriptionInvoice: (id: string) =>
+    apiClient.get(`/api/admin/subscriptions/${id}/invoice`, { responseType: 'blob' }),
 };

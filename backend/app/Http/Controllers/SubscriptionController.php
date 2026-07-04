@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Enums\SubscriptionPlan;
 use App\Enums\SubscriptionStatus;
 use App\Models\Subscription;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class SubscriptionController extends Controller
 {
@@ -194,5 +196,28 @@ class SubscriptionController extends Controller
         return response()->json([
             'message' => 'Subscription ditolak.',
         ]);
+    }
+
+    /**
+     * Export subscription invoice as PDF.
+     */
+    public function exportInvoice(string $id): Response
+    {
+        $subscription = Subscription::with(['organization', 'requester', 'approver'])->findOrFail($id);
+
+        if ($subscription->status !== SubscriptionStatus::ACTIVE) {
+            return response()->json(['message' => 'Invoice hanya tersedia untuk subscription yang aktif.'], 422);
+        }
+
+        $invoiceNumber = 'INV-SUB-' . $subscription->starts_at->format('Ymd') . '-' . strtoupper(substr($subscription->id, 0, 8));
+
+        $pdf = Pdf::loadView('pdf.subscription-invoice', [
+            'subscription' => $subscription,
+            'invoiceNumber' => $invoiceNumber,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'invoice-subscription-' . $subscription->starts_at->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }
