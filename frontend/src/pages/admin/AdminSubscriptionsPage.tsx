@@ -92,7 +92,8 @@ export default function AdminSubscriptionsPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const contentDisposition = response.headers['content-disposition'];
       const filenameMatch = contentDisposition?.match(/filename="?([^";\n]+)"?/);
-      const filename = filenameMatch?.[1] || `INV-SUB-${id}.pdf`;
+      const shortId = id.replace(/-/g, '').substring(0, 8).toUpperCase();
+      const filename = filenameMatch?.[1] || `INV-SUB-${shortId}.pdf`;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
