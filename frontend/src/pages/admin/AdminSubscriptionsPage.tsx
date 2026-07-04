@@ -90,10 +90,13 @@ export default function AdminSubscriptionsPage() {
     try {
       const response = await adminApi.downloadSubscriptionInvoice(id);
       const blob = new Blob([response.data], { type: 'application/pdf' });
+      const contentDisposition = response.headers['content-disposition'];
+      const filenameMatch = contentDisposition?.match(/filename="?([^";\n]+)"?/);
+      const filename = filenameMatch?.[1] || `INV-SUB-${id}.pdf`;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `invoice-subscription-${id}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

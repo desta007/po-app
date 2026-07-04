@@ -216,7 +216,7 @@ class SubscriptionController extends Controller
             'invoiceNumber' => $invoiceNumber,
         ])->setPaper('a4', 'portrait');
 
-        $filename = 'invoice-subscription-' . $subscription->starts_at->format('Y-m-d') . '.pdf';
+        $filename = $invoiceNumber . '.pdf';
 
         return $pdf->download($filename);
     }
