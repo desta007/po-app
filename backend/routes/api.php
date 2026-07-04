@@ -111,6 +111,7 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::get('dashboard', [SuperAdminController::class, 'dashboard']);
     Route::get('users', [SuperAdminController::class, 'users']);
     Route::get('users/{id}', [SuperAdminController::class, 'userDetail']);
+    Route::patch('users/{id}/toggle-status', [SuperAdminController::class, 'toggleUserStatus']);
     Route::get('organizations', [SuperAdminController::class, 'organizations']);
 
     // Subscription management

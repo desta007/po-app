@@ -1,13 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/api/admin';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, ArrowLeft } from 'lucide-react';
+import { Search, ArrowLeft, ShieldCheck, ShieldOff } from 'lucide-react';
 import { useState } from 'react';
 import { formatDate, getInitials } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants';
+import { toast } from 'sonner';
 
 const ROLE_COLORS: Record<string, { color: string; bgColor: string }> = {
   owner: { color: '#1F4E79', bgColor: '#DBEAFE' },
@@ -21,11 +22,30 @@ const AVATAR_COLORS = ['#1F4E79', '#70AD47', '#D97706', '#8B5CF6', '#E74C3C', '#
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'users', search, page],
     queryFn: () => adminApi.users({ search, page, per_page: 20 }),
   });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: (id: string) => adminApi.toggleUserStatus(id),
+    onSuccess: (res) => {
+      toast.success(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Gagal mengubah status user.');
+    },
+  });
+
+  const handleToggleStatus = (id: string, name: string, isActive: boolean) => {
+    const action = isActive ? 'menonaktifkan' : 'mengaktifkan';
+    if (window.confirm(`Apakah Anda yakin ingin ${action} user "${name}"?${isActive ? '\n\nUser tidak akan bisa login setelah dinonaktifkan.' : ''}`)) {
+      toggleStatusMutation.mutate(id);
+    }
+  };
 
   const users = data?.data?.data || [];
   const meta = data?.data?.meta || data?.data;
@@ -63,19 +83,21 @@ export default function AdminUsersPage() {
       ) : (
         <Card padding="none">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_100px_120px] gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 rounded-t-[10px]">
+          <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_80px_100px_110px_80px] gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 rounded-t-[10px]">
             <span className="text-[11px] font-bold text-gray-500 uppercase">User</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Organisasi</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Email</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Role</span>
-            <span className="text-[11px] font-bold text-gray-500 uppercase">Terdaftar</span>
+            <span className="text-[11px] font-bold text-gray-500 uppercase">Login Terakhir</span>
+            <span className="text-[11px] font-bold text-gray-500 uppercase">Status</span>
+            <span className="text-[11px] font-bold text-gray-500 uppercase text-center">Aksi</span>
           </div>
 
           <div className="divide-y divide-gray-100">
             {users.map((u: any, i: number) => {
               const roleStyle = ROLE_COLORS[u.role] ?? { color: '#9CA3AF', bgColor: '#F9FAFB' };
               return (
-                <div key={u.id} className="grid md:grid-cols-[1fr_1fr_1fr_100px_120px] gap-2 md:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
+                <div key={u.id} className="grid md:grid-cols-[1fr_1fr_1fr_80px_100px_110px_80px] gap-2 md:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
                   {/* User */}
                   <div className="flex items-center gap-3">
                     <div
@@ -108,10 +130,41 @@ export default function AdminUsersPage() {
                     <span className="text-[11px] text-gray-300">—</span>
                   )}
 
-                  {/* Date */}
-                  <span className="text-[12px] text-gray-400 hidden md:block">
-                    {u.created_at ? formatDate(u.created_at) : '-'}
+                  {/* Last Login */}
+                  <span className="text-[11px] text-gray-400 hidden md:block">
+                    {u.last_login_at ? formatDate(u.last_login_at, 'relative') : 'Belum pernah'}
                   </span>
+
+                  {/* Status */}
+                  <div className="hidden md:block">
+                    {u.is_active ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-green-50 text-green-700">
+                        <ShieldCheck size={11} />
+                        Aktif
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-50 text-red-600">
+                        <ShieldOff size={11} />
+                        Nonaktif
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => handleToggleStatus(u.id, u.name, u.is_active)}
+                      disabled={toggleStatusMutation.isPending}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors disabled:opacity-50 ${
+                        u.is_active
+                          ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                          : 'bg-green-50 text-green-700 hover:bg-green-100'
+                      }`}
+                      title={u.is_active ? 'Nonaktifkan user' : 'Aktifkan user'}
+                    >
+                      {u.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                  </div>
                 </div>
               );
             })}

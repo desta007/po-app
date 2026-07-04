@@ -24,6 +24,7 @@ class User extends Authenticatable
         'avatar_url',
         'current_org_id',
         'is_super_admin',
+        'is_active',
         'last_login_at',
     ];
 
@@ -38,6 +39,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
+            'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
     }

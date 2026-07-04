@@ -101,6 +101,7 @@ class SuperAdminController extends Controller
                 'phone' => $user->phone,
                 'organization' => $user->currentOrganization?->name,
                 'role' => $currentMembership?->role?->value,
+                'is_active' => (bool) $user->is_active,
                 'last_login_at' => $user->last_login_at,
                 'created_at' => $user->created_at,
             ];
@@ -131,6 +132,25 @@ class SuperAdminController extends Controller
                     'joined_at' => $m->joined_at,
                 ]),
             ],
+        ]);
+    }
+
+    public function toggleUserStatus(int $id): JsonResponse
+    {
+        $user = User::where('is_super_admin', false)->findOrFail($id);
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        // Revoke all tokens when deactivating user
+        if (!$user->is_active) {
+            $user->tokens()->delete();
+        }
+
+        return response()->json([
+            'message' => $user->is_active
+                ? 'User berhasil diaktifkan.'
+                : 'User berhasil dinonaktifkan.',
+            'is_active' => (bool) $user->is_active,
         ]);
     }
 

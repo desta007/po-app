@@ -11,6 +11,7 @@ import { formatRupiah, storageUrl } from '@/lib/utils';
 import { Package, Store, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface CatalogData {
   organization: {
@@ -128,6 +129,20 @@ export default function CatalogPage() {
     setIsSubmitting(false);
     setShowCheckoutDialog(false);
     window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
+
+    // Reset cart dan form setelah checkout berhasil
+    setCart([]);
+    setCustomerName('');
+    setCustomerPhone('');
+    setCustomerAddress('');
+
+    // Tampilkan notifikasi sukses
+    toast.success(
+      poNumber
+        ? `Pesanan ${poNumber} berhasil dikirim! Silakan lanjutkan percakapan di WhatsApp.`
+        : 'Pesanan berhasil dikirim! Silakan lanjutkan percakapan di WhatsApp.',
+      { duration: 5000 }
+    );
   };
 
   const { data, isLoading, isError } = useQuery({

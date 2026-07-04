@@ -10,6 +10,9 @@ export const adminApi = {
   userDetail: (id: string) =>
     apiClient.get(`/api/admin/users/${id}`),
 
+  toggleUserStatus: (id: string) =>
+    apiClient.patch(`/api/admin/users/${id}/toggle-status`),
+
   organizations: (params?: { search?: string; page?: number; per_page?: number }) =>
     apiClient.get('/api/admin/organizations', { params }),
 

@@ -19,6 +19,14 @@ class LoginController extends Controller
         }
 
         $user = Auth::user();
+
+        if (!$user->is_active) {
+            Auth::guard('web')->logout();
+            return response()->json([
+                'message' => 'Akun Anda telah dinonaktifkan. Hubungi administrator untuk informasi lebih lanjut.',
+            ], 403);
+        }
+
         $user->update(['last_login_at' => now()]);
 
         // Create Sanctum API token
