@@ -191,21 +191,15 @@ class PdfExportService
         $labelWidth = $dimensions['width'];
         $labelHeight = $dimensions['height'];
 
-        // Paper size = single column strip: width matches label, height = all labels stacked
-        $paperWidth = $labelWidth;
-        $paperHeight = $labelHeight * count($labels);
-
         // Convert mm to points (1mm = 2.835pt)
         $mmToPt = 2.835;
-        $paperWidthPt = round($paperWidth * $mmToPt, 2);
-        $paperHeightPt = round($paperHeight * $mmToPt, 2);
+        $paperWidthPt = round($labelWidth * $mmToPt, 2);
+        $paperHeightPt = round($labelHeight * $mmToPt, 2);
 
         return Pdf::loadView('pdf.labels', [
             'labels' => $labels,
             'labelWidth' => $labelWidth,
             'labelHeight' => $labelHeight,
-            'paperWidth' => $paperWidth,
-            'paperHeight' => $paperHeight,
         ])->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
     }
 
