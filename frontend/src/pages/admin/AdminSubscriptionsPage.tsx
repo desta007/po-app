@@ -152,7 +152,7 @@ export default function AdminSubscriptionsPage() {
       ) : (
         <Card padding="none">
           {/* Table Header */}
-          <div className="hidden lg:grid grid-cols-[1fr_1fr_100px_100px_100px_140px] gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 rounded-t-[10px]">
+          <div className="hidden lg:grid grid-cols-[1fr_1fr_100px_100px_100px_200px] gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 rounded-t-[10px]">
             <span className="text-[11px] font-bold text-gray-500 uppercase">User / Organisasi</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Catatan</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Nominal</span>
@@ -165,7 +165,7 @@ export default function AdminSubscriptionsPage() {
             {subscriptions.map((sub: any, i: number) => {
               const statusStyle = STATUS_CONFIG[sub.status as string] || { label: sub.status, color: '#9CA3AF', bgColor: '#F3F4F6' };
               return (
-                <div key={sub.id} className="grid lg:grid-cols-[1fr_1fr_100px_100px_100px_140px] gap-2 lg:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
+                <div key={sub.id} className="grid lg:grid-cols-[1fr_1fr_100px_100px_100px_200px] gap-2 lg:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
                   {/* User / Org */}
                   <div className="flex items-center gap-3">
                     <div
@@ -216,7 +216,7 @@ export default function AdminSubscriptionsPage() {
                   </span>
 
                   {/* Actions */}
-                  <div className="flex gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
                     {sub.status === 'pending' && (
                       <>
                         <button
