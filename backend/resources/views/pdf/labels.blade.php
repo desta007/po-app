@@ -41,7 +41,7 @@
     @foreach($labels as $label)
         <div class="label">
             <div class="label-row bold">{{ $label['po_number'] }}</div>
-            <div class="label-row">{{ $label['order_date'] }}</div>
+            <div class="label-row">{{ $label['delivery_date'] }}</div>
             <div class="label-row">{{ $label['customer'] }}</div>
             <div class="label-row bold">{{ $label['product'] }}</div>
         </div>

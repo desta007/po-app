@@ -173,14 +173,14 @@ class PdfExportService
         $labels = [];
         foreach ($purchaseOrders as $po) {
             $po->load('items', 'customer');
-            $orderDate = \Carbon\Carbon::parse($po->order_date)->translatedFormat('d M y');
+            $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M y') : '-';
 
             foreach ($po->items as $item) {
                 $qty = max(1, (int) $item->quantity);
                 for ($i = 0; $i < $qty; $i++) {
                     $labels[] = [
                         'po_number' => $po->po_number,
-                        'order_date' => $orderDate,
+                        'delivery_date' => $deliveryDate,
                         'customer' => $po->customer->name ?? '-',
                         'product' => $item->product_name,
                     ];
