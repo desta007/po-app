@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image as ImageIcon, Plus, Pencil, CreditCard } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image as ImageIcon, Plus, Pencil, CreditCard, AlertTriangle } from 'lucide-react';
+import { useQuota } from '@/hooks/use-quota';
 import { useRef } from 'react';
 import type { MemberRole, TeamMember } from '@/types/auth';
 
@@ -45,6 +46,7 @@ function getInitials(name: string) {
 export default function SettingsPage() {
   const { user, role, refreshUser } = useAuth();
   const queryClient = useQueryClient();
+  const { teamUsage, isPremiumOrAdmin } = useQuota();
   const [activeTab, setActiveTab] = useState('profile');
 
   // Profile form
@@ -219,6 +221,7 @@ export default function SettingsPage() {
     mutationFn: (data: { email: string; role: MemberRole }) => settingsApi.inviteTeamMember(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      queryClient.invalidateQueries({ queryKey: ['quota-usage'] });
       setInviteOpen(false);
       setInviteForm({ email: '', role: 'staff' });
       toast.success('Anggota berhasil ditambahkan.');
@@ -525,6 +528,20 @@ export default function SettingsPage() {
                 <UserPlus size={15} /> Tambah Anggota
               </Button>
             </div>
+
+            {/* Quota banner for free users */}
+            {!isPremiumOrAdmin && teamUsage && (
+              <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                <span className="text-sm text-amber-800">
+                  Anggota tim: <strong>{teamUsage.current}/{teamUsage.limit}</strong>
+                </span>
+                {teamUsage.current >= (teamUsage.limit ?? Infinity) && (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    <Crown size={12} /> Upgrade Premium
+                  </span>
+                )}
+              </div>
+            )}
 
             {teamLoading ? (
               <Card><div className="animate-pulse space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 bg-gray-100 rounded-lg" />)}</div></Card>

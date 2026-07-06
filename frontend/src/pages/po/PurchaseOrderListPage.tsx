@@ -12,10 +12,13 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useQuota } from '@/hooks/use-quota';
+import { Crown } from 'lucide-react';
 import type { PurchaseOrder } from '@/types/purchase-order';
 
 export default function PurchaseOrderListPage() {
   const navigate = useNavigate();
+  const { poUsage, isPremiumOrAdmin } = useQuota();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -251,6 +254,20 @@ export default function PurchaseOrderListPage() {
           </div>
         }
       />
+
+      {/* Quota banner for free users */}
+      {!isPremiumOrAdmin && poUsage && (
+        <div className="mb-4 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <span className="text-sm text-amber-800">
+            PO bulan ini: <strong>{poUsage.current}/{poUsage.limit}</strong>
+          </span>
+          {poUsage.current >= (poUsage.limit ?? Infinity) && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+              <Crown size={12} /> Upgrade Premium
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex gap-2.5 mb-4 flex-wrap">

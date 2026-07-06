@@ -11,6 +11,8 @@ import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Gl
 import { useState, useRef } from 'react';
 import { formatRupiah, storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useQuota } from '@/hooks/use-quota';
+import { Crown } from 'lucide-react';
 import type { Product } from '@/types/product';
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
@@ -39,6 +41,7 @@ const EMPTY_FORM = { name: '', sku: '', price: 0, cost: 0, unit: 'pcs', category
 
 export default function ProductListPage() {
   const queryClient = useQueryClient();
+  const { productUsage, isPremiumOrAdmin } = useQuota();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,6 +69,7 @@ export default function ProductListPage() {
         }
       }
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['quota-usage'] });
       closeDialog();
       toast.success('Produk berhasil ditambahkan.');
     },
@@ -180,6 +184,20 @@ export default function ProductListPage() {
           </div>
         }
       />
+
+      {/* Quota banner for free users */}
+      {!isPremiumOrAdmin && productUsage && (
+        <div className="mb-4 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <span className="text-sm text-amber-800">
+            Produk: <strong>{productUsage.current}/{productUsage.limit}</strong>
+          </span>
+          {productUsage.current >= (productUsage.limit ?? Infinity) && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+              <Crown size={12} /> Upgrade Premium
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex gap-2.5 mb-5 flex-wrap">

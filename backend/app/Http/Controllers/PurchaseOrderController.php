@@ -10,6 +10,7 @@ use App\Http\Requests\PurchaseOrder\UpdateStatusRequest;
 use App\Http\Resources\PurchaseOrderResource;
 use App\Models\PurchaseOrder;
 use App\Exports\PurchaseOrdersExport;
+use App\Services\FreeTierLimitService;
 use App\Services\PdfExportService;
 use App\Services\PurchaseOrderService;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class PurchaseOrderController extends Controller
     public function __construct(
         private PurchaseOrderService $poService,
         private PdfExportService $pdfService,
+        private FreeTierLimitService $limitService,
     ) {}
 
     public function index(Request $request): AnonymousResourceCollection
@@ -76,6 +78,14 @@ class PurchaseOrderController extends Controller
 
     public function store(StorePurchaseOrderRequest $request): JsonResponse
     {
+        $user = $request->user();
+        $org = $user->currentOrganization;
+        if (!$this->limitService->canBypass($org, $user)) {
+            if ($response = $this->limitService->checkPoLimit($user->current_org_id)) {
+                return $response;
+            }
+        }
+
         $data = $request->except('items');
         $items = $request->input('items');
 
@@ -157,6 +167,14 @@ class PurchaseOrderController extends Controller
 
     public function duplicate(PurchaseOrder $purchaseOrder): JsonResponse
     {
+        $user = auth()->user();
+        $org = $user->currentOrganization;
+        if (!$this->limitService->canBypass($org, $user)) {
+            if ($response = $this->limitService->checkPoLimit($user->current_org_id)) {
+                return $response;
+            }
+        }
+
         $newPo = $this->poService->duplicate($purchaseOrder);
 
         return response()->json([

@@ -3,6 +3,8 @@ import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { BottomNav } from './bottom-nav';
 import { PremiumUpgradeModal, WA_NUMBER, WA_MESSAGE } from '@/components/premium-upgrade-modal';
+import { UpgradeLimitModal } from '@/components/upgrade-limit-modal';
+import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 import { useState, useRef, useCallback } from 'react';
 
 function DraggableWhatsAppButton() {
@@ -77,6 +79,7 @@ function DraggableWhatsAppButton() {
 
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { promptData, dismiss } = useUpgradePrompt();
 
   return (
     <div className="flex min-h-screen">
@@ -99,6 +102,9 @@ export function AppShell() {
 
       {/* Premium upgrade modal */}
       <PremiumUpgradeModal />
+
+      {/* Upgrade limit modal (shown when free tier limit is hit) */}
+      <UpgradeLimitModal data={promptData} onDismiss={dismiss} />
     </div>
   );
 }

@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Enums\MemberRole;
 use App\Models\OrganizationMember;
 use App\Models\User;
+use App\Services\FreeTierLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class TeamMemberController extends Controller
 {
+    public function __construct(
+        private FreeTierLimitService $limitService,
+    ) {}
+
     public function index(): JsonResponse
     {
         $orgId = auth()->user()->current_org_id;
@@ -41,6 +46,15 @@ class TeamMemberController extends Controller
             'email' => 'required|email',
             'role' => ['required', Rule::in(['admin', 'staff', 'viewer'])],
         ]);
+
+        // Free tier check
+        $authUser = auth()->user();
+        $org = $authUser->currentOrganization;
+        if (!$this->limitService->canBypass($org, $authUser)) {
+            if ($response = $this->limitService->checkTeamMemberLimit($authUser->current_org_id)) {
+                return $response;
+            }
+        }
 
         $user = User::where('email', $request->email)->first();
 

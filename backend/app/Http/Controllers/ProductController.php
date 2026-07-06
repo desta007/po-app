@@ -6,12 +6,17 @@ use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Services\FreeTierLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private FreeTierLimitService $limitService,
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = Product::query();
@@ -38,6 +43,14 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): JsonResponse
     {
+        $user = $request->user();
+        $org = $user->currentOrganization;
+        if (!$this->limitService->canBypass($org, $user)) {
+            if ($response = $this->limitService->checkProductLimit($user->current_org_id)) {
+                return $response;
+            }
+        }
+
         $product = Product::create($request->validated());
 
         return response()->json([

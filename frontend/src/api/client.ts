@@ -96,6 +96,20 @@ apiClient.interceptors.response.use(
       }
     }
 
+    // Handle 403 upgrade_required
+    if (error.response?.status === 403) {
+      const data = error.response.data as Record<string, unknown>;
+      if (data?.upgrade_required) {
+        window.dispatchEvent(new CustomEvent('upgrade-required', {
+          detail: {
+            message: data.message as string,
+            resource: data.resource as string,
+            usage: data.usage as { current: number; limit: number } | undefined,
+          },
+        }));
+      }
+    }
+
     // Non-401 errors or already retried
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');

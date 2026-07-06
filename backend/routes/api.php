@@ -18,6 +18,7 @@ use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PublicCatalogController;
+use App\Http\Controllers\QuotaController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes (no auth)
@@ -105,6 +106,9 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::get('subscription/status', [SubscriptionController::class, 'status']);
     Route::post('subscription/request', [SubscriptionController::class, 'requestUpgrade']);
     Route::get('subscription/{id}/invoice', [SubscriptionController::class, 'exportInvoice']);
+
+    // Quota / usage
+    Route::get('quota/usage', [QuotaController::class, 'usage']);
 });
 
 // Super Admin routes
