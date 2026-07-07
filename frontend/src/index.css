@@ -59,6 +59,10 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: var(--font-sans);
     background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);

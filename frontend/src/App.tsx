@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { AppShell } from '@/components/layout/app-shell';
@@ -28,8 +29,9 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminOrganizationsPage from '@/pages/admin/AdminOrganizationsPage';
 import AdminSubscriptionsPage from '@/pages/admin/AdminSubscriptionsPage';
 
-// Public pages
-import CatalogPage from '@/pages/catalog/CatalogPage';
+// Public pages (lazy-loaded — standalone entry points, kept out of the main app bundle)
+const CatalogPage = lazy(() => import('@/pages/catalog/CatalogPage'));
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,8 +47,16 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function LandingRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <LandingPage />;
+}
+
 export default function App() {
   return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>}>
     <Routes>
       {/* Guest routes */}
       <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
@@ -54,11 +64,11 @@ export default function App() {
       <Route path="/lupa-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
       
       {/* Public routes */}
+      <Route path="/" element={<LandingRoute />} />
       <Route path="/katalog/:slug" element={<CatalogPage />} />
 
       {/* Protected routes */}
-      <Route path="/" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="kalender" element={<CalendarPage />} />
         <Route path="pesanan" element={<PurchaseOrderListPage />} />
@@ -81,5 +91,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </Suspense>
   );
 }
