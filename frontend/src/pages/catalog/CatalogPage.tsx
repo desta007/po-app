@@ -265,7 +265,7 @@ export default function CatalogPage() {
                     <img
                       src={storageUrl(product.image_url)}
                       alt={product.name}
-                      className={`w-full h-full object-cover transition-transform duration-300 ${isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-105'}`}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${isOutOfStock ? '' : 'group-hover:scale-105'}`}
                     />
                   ) : (
                     <Package className="w-12 h-12 text-gray-300" />
