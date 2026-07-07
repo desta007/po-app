@@ -23,6 +23,7 @@ class Product extends Model
         'cost',
         'category',
         'image_url',
+        'images',
         'stock_qty',
         'is_active',
         'show_in_catalog',
@@ -33,6 +34,7 @@ class Product extends Model
         return [
             'price' => 'decimal:2',
             'cost' => 'decimal:2',
+            'images' => 'array',
             'is_active' => 'boolean',
             'show_in_catalog' => 'boolean',
         ];

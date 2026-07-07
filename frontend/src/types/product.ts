@@ -9,6 +9,7 @@ export interface Product {
   cost: number | null;
   category: string | null;
   image_url: string | null;
+  images: string[];
   stock_qty: number;
   is_active: boolean;
   show_in_catalog: boolean;

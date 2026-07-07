@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe } from 'lucide-react';
+import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { formatRupiah, storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ function getStockBadge(qty: number) {
   return <Badge variant="success" dot>Stock {qty}</Badge>;
 }
 
-const EMPTY_FORM = { name: '', sku: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, show_in_catalog: true };
+const EMPTY_FORM = { name: '', sku: '', description: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, show_in_catalog: true };
 
 export default function ProductListPage() {
   const queryClient = useQueryClient();
@@ -48,8 +48,8 @@ export default function ProductListPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
-  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
+  const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
+  const [pendingImagePreviews, setPendingImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
@@ -61,9 +61,9 @@ export default function ProductListPage() {
     mutationFn: (data: any) => productsApi.create(data),
     onSuccess: async (res) => {
       const newProduct = res.data?.data;
-      if (pendingImageFile && newProduct?.id) {
+      if (pendingImageFiles.length > 0 && newProduct?.id) {
         try {
-          await productsApi.uploadImage(newProduct.id, pendingImageFile);
+          await productsApi.uploadImages(newProduct.id, pendingImageFiles);
         } catch {
           toast.error('Produk dibuat, tapi gagal upload gambar.');
         }
@@ -97,17 +97,21 @@ export default function ProductListPage() {
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
 
     if (editingProduct) {
       // Edit mode: upload langsung ke server
       setUploadingImage(true);
       try {
-        await productsApi.uploadImage(editingProduct.id, file);
+        const res = await productsApi.uploadImages(editingProduct.id, files);
         queryClient.invalidateQueries({ queryKey: ['products'] });
-        setEditingProduct({ ...editingProduct, image_url: URL.createObjectURL(file) });
-        toast.success('Gambar berhasil diupload.');
+        setEditingProduct({
+          ...editingProduct,
+          image_url: res.data.data.image_url,
+          images: res.data.data.images,
+        });
+        toast.success(files.length > 1 ? `${files.length} gambar berhasil diupload.` : 'Gambar berhasil diupload.');
       } catch (err: any) {
         toast.error(err.response?.data?.message || 'Gagal upload gambar.');
       } finally {
@@ -116,10 +120,35 @@ export default function ProductListPage() {
       }
     } else {
       // Create mode: simpan file, upload setelah produk dibuat
-      setPendingImageFile(file);
-      setPendingImagePreview(URL.createObjectURL(file));
+      setPendingImageFiles(prev => [...prev, ...files]);
+      setPendingImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleRemoveExistingImage = async (imageUrl: string) => {
+    if (!editingProduct) return;
+    try {
+      const res = await productsApi.deleteImage(editingProduct.id, imageUrl);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setEditingProduct({
+        ...editingProduct,
+        image_url: res.data.data.image_url,
+        images: res.data.data.images,
+      });
+      toast.success('Gambar berhasil dihapus.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Gagal menghapus gambar.');
+    }
+  };
+
+  const handleRemovePendingImage = (index: number) => {
+    setPendingImagePreviews(prev => {
+      const preview = prev[index];
+      if (preview) URL.revokeObjectURL(preview);
+      return prev.filter((_, i) => i !== index);
+    });
+    setPendingImageFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   function openCreate() {
@@ -133,6 +162,7 @@ export default function ProductListPage() {
     setForm({
       name: product.name,
       sku: product.sku || '',
+      description: product.description || '',
       price: product.price,
       cost: product.cost ?? 0,
       unit: product.unit || 'pcs',
@@ -147,9 +177,9 @@ export default function ProductListPage() {
     setDialogOpen(false);
     setEditingProduct(null);
     setForm(EMPTY_FORM);
-    if (pendingImagePreview) URL.revokeObjectURL(pendingImagePreview);
-    setPendingImageFile(null);
-    setPendingImagePreview(null);
+    pendingImagePreviews.forEach(url => URL.revokeObjectURL(url));
+    setPendingImageFiles([]);
+    setPendingImagePreviews([]);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -246,6 +276,11 @@ export default function ProductListPage() {
                         <Globe size={10} /> Tidak di katalog
                       </div>
                     )}
+                    {p.images && p.images.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <ImageIcon size={10} /> {p.images.length}
+                      </div>
+                    )}
                   </div>
                   <div className="p-3.5">
                     <div className="text-[11px] text-gray-500 uppercase font-semibold tracking-wider">
@@ -283,6 +318,15 @@ export default function ProductListPage() {
           <form onSubmit={handleSubmit} className="space-y-3">
             <Input label="Nama Produk *" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} required />
             <Input label="SKU" value={form.sku} onChange={(e) => setForm({...form, sku: e.target.value})} />
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Keterangan</label>
+              <textarea
+                className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[72px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
+                placeholder="Cth: Kue coklat lembut dengan topping keju, cocok untuk acara ulang tahun."
+                value={form.description}
+                onChange={(e) => setForm({...form, description: e.target.value})}
+              />
+            </div>
             <Input label="Harga Pokok" type="number" value={form.cost} onChange={(e) => setForm({...form, cost: Number(e.target.value)})} />
             <Input label="Harga Jual *" type="number" value={form.price} onChange={(e) => setForm({...form, price: Number(e.target.value)})} required />
             <Input label="Kategori" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} />
@@ -311,36 +355,64 @@ export default function ProductListPage() {
 
             <div className="space-y-1.5 mt-2">
               <label className="block text-xs font-semibold text-gray-700">Gambar Produk</label>
-              <div className="flex items-center gap-3">
-                {editingProduct?.image_url ? (
-                  <img src={storageUrl(editingProduct.image_url)} alt="Preview" className="w-12 h-12 rounded-[6px] object-cover border border-gray-200" />
-                ) : pendingImagePreview ? (
-                  <img src={pendingImagePreview} alt="Preview" className="w-12 h-12 rounded-[6px] object-cover border border-gray-200" />
-                ) : (
-                  <div className="w-12 h-12 rounded-[6px] bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
-                    <ImageIcon size={20} />
+              <p className="text-[11px] text-gray-500">Bisa upload lebih dari 1 gambar. Gambar pertama menjadi gambar utama.</p>
+              <div className="flex flex-wrap gap-2">
+                {/* Existing images (edit mode) */}
+                {editingProduct?.images?.map((img, idx) => (
+                  <div key={img} className="relative w-16 h-16 group/thumb">
+                    <img src={storageUrl(img)} alt={`Gambar ${idx + 1}`} className="w-16 h-16 rounded-[6px] object-cover border border-gray-200" />
+                    {idx === 0 && (
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] text-center py-0.5 rounded-b-[6px]">Utama</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(img)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow hover:bg-red-600 transition-colors"
+                      title="Hapus gambar"
+                    >
+                      <X size={12} />
+                    </button>
                   </div>
-                )}
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg, image/webp"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    loading={uploadingImage}
-                  >
-                    <Upload size={14} className="mr-1.5" /> {pendingImagePreview ? 'Ganti Gambar' : 'Upload Gambar'}
-                  </Button>
-                  {pendingImageFile && <span className="ml-2 text-[11px] text-gray-500">{pendingImageFile.name}</span>}
-                </div>
+                ))}
+
+                {/* Pending previews (create mode) */}
+                {!editingProduct && pendingImagePreviews.map((preview, idx) => (
+                  <div key={preview} className="relative w-16 h-16 group/thumb">
+                    <img src={preview} alt={`Gambar ${idx + 1}`} className="w-16 h-16 rounded-[6px] object-cover border border-gray-200" />
+                    {idx === 0 && (
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] text-center py-0.5 rounded-b-[6px]">Utama</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingImage(idx)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow hover:bg-red-600 transition-colors"
+                      title="Hapus gambar"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Upload trigger */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="w-16 h-16 rounded-[6px] bg-gray-50 border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-500 transition-colors disabled:opacity-60"
+                  title="Upload gambar"
+                >
+                  {uploadingImage ? <Upload size={18} className="animate-pulse" /> : <ImageIcon size={18} />}
+                  <span className="text-[9px] mt-0.5 font-medium">Upload</span>
+                </button>
               </div>
+              <input
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                multiple
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+              />
             </div>
             
             <div className="flex items-center justify-between pt-2">

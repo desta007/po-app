@@ -46,10 +46,23 @@ export const productsApi = {
   uploadImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('image', file);
-    return apiClient.post<{ data: { image_url: string } }>(`/api/products/${id}/image`, formData, {
+    return apiClient.post<{ data: { image_url: string; images: string[] } }>(`/api/products/${id}/image`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  uploadImages: (id: string, files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('images[]', file));
+    return apiClient.post<{ data: { image_url: string; images: string[] } }>(`/api/products/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  deleteImage: (id: string, imageUrl?: string) =>
+    apiClient.delete<{ data: { image_url: string | null; images: string[] } }>(`/api/products/${id}/image`, {
+      data: imageUrl ? { image_url: imageUrl } : undefined,
+    }),
 
   search: (query: string) =>
     apiClient.get<{ data: Product[] }>('/api/products/search', { params: { q: query } }),

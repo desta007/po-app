@@ -9,35 +9,95 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductImageController extends Controller
 {
+    /**
+     * Upload one or more images for a product.
+     * Accepts `images[]` (multiple) and/or a single `image` for backward compatibility.
+     * Uploaded images are appended to the product's existing gallery.
+     */
     public function store(Request $request, Product $product): JsonResponse
     {
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'images' => ['sometimes', 'array', 'max:10'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'image' => ['sometimes', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ]);
 
-        // Delete old image if exists
-        if ($product->image_url) {
-            $oldPath = str_replace('/storage/', '', $product->image_url);
-            Storage::disk('public')->delete($oldPath);
+        $files = $request->file('images', []);
+        if ($request->hasFile('image')) {
+            $files[] = $request->file('image');
         }
 
-        $path = $request->file('image')->store('products', 'public');
-        $product->update(['image_url' => '/storage/' . $path]);
+        if (empty($files)) {
+            return response()->json(['message' => 'Tidak ada gambar untuk diupload.'], 422);
+        }
+
+        // Start from the existing gallery; seed with legacy image_url if gallery is empty.
+        $images = $product->images ?? [];
+        if (empty($images) && $product->image_url) {
+            $images = [$product->image_url];
+        }
+
+        foreach ($files as $file) {
+            $path = $file->store('products', 'public');
+            $images[] = '/storage/' . $path;
+        }
+
+        $product->update([
+            'images' => $images,
+            'image_url' => $images[0], // first image is the cover
+        ]);
 
         return response()->json([
-            'data' => ['image_url' => $product->image_url],
+            'data' => [
+                'image_url' => $product->image_url,
+                'images' => $product->images,
+            ],
             'message' => 'Gambar produk berhasil diupload.',
         ]);
     }
 
-    public function destroy(Product $product): JsonResponse
+    /**
+     * Delete a specific image (via `image_url` in the request body) or all images
+     * when no target is provided.
+     */
+    public function destroy(Request $request, Product $product): JsonResponse
     {
-        if ($product->image_url) {
-            $path = str_replace('/storage/', '', $product->image_url);
-            Storage::disk('public')->delete($path);
-            $product->update(['image_url' => null]);
+        $target = $request->input('image_url');
+
+        // Existing gallery, seeded with legacy image_url when empty.
+        $images = $product->images ?? [];
+        if (empty($images) && $product->image_url) {
+            $images = [$product->image_url];
         }
 
-        return response()->json(['message' => 'Gambar produk berhasil dihapus.']);
+        if ($target) {
+            // Delete a single image from the gallery.
+            $images = array_values(array_filter($images, fn ($img) => $img !== $target));
+            Storage::disk('public')->delete(str_replace('/storage/', '', $target));
+
+            $product->update([
+                'images' => $images,
+                // Promote the next image to cover if the cover was removed.
+                'image_url' => $product->image_url === $target ? ($images[0] ?? null) : $product->image_url,
+            ]);
+        } else {
+            // Delete the entire gallery.
+            foreach ($images as $img) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $img));
+            }
+
+            $product->update([
+                'images' => [],
+                'image_url' => null,
+            ]);
+        }
+
+        return response()->json([
+            'data' => [
+                'image_url' => $product->image_url,
+                'images' => $product->images,
+            ],
+            'message' => 'Gambar produk berhasil dihapus.',
+        ]);
     }
 }

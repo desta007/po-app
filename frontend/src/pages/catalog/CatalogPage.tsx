@@ -36,6 +36,10 @@ export default function CatalogPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const handleAddToCart = (product: Product) => {
+    if ((product.stock_qty ?? 0) <= 0) {
+      toast.error('Stok produk ini sedang habis.');
+      return;
+    }
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
@@ -252,14 +256,16 @@ export default function CatalogPage() {
         {/* Product Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.map(product => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group cursor-pointer border-gray-200">
+            {filteredProducts.map(product => {
+              const isOutOfStock = (product.stock_qty ?? 0) <= 0;
+              return (
+              <Card key={product.id} className={`overflow-hidden hover:shadow-md transition-shadow group border-gray-200 ${isOutOfStock ? 'cursor-default' : 'cursor-pointer'}`}>
                 <div className="aspect-square bg-gray-100 flex items-center justify-center relative overflow-hidden">
                   {product.image_url ? (
                     <img
                       src={storageUrl(product.image_url)}
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      alt={product.name}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${isOutOfStock ? 'grayscale opacity-60' : 'group-hover:scale-105'}`}
                     />
                   ) : (
                     <Package className="w-12 h-12 text-gray-300" />
@@ -271,12 +277,19 @@ export default function CatalogPage() {
                       </Badge>
                     </div>
                   )}
+                  {isOutOfStock && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="bg-gray-900/80 text-white text-[12px] font-bold px-3 py-1 rounded-full">
+                        Stok Habis
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-primary transition-colors text-[14px]">
+                  <h3 className="font-bold text-gray-900 break-words whitespace-normal mb-1 group-hover:text-primary transition-colors text-[14px]">
                     {product.name}
                   </h3>
-                  <p className="text-[12px] text-gray-500 mb-3 line-clamp-2 min-h-[36px]">
+                  <p className="text-[12px] text-gray-500 mb-3 whitespace-pre-line break-words min-h-[36px]">
                     {product.description || '-'}
                   </p>
                   <div className="flex flex-col gap-3 mt-1">
@@ -286,9 +299,18 @@ export default function CatalogPage() {
                         {formatRupiah(product.price)}
                       </span>
                     </div>
-                    {cart.find(item => item.product.id === product.id) ? (
+                    {isOutOfStock ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="w-full text-[12px] h-8 opacity-60 cursor-not-allowed"
+                        disabled
+                      >
+                        Stok Habis
+                      </Button>
+                    ) : cart.find(item => item.product.id === product.id) ? (
                       <div className="flex items-center justify-between border border-primary rounded-[8px] overflow-hidden bg-primary-50">
-                        <button 
+                        <button
                           className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary-100 transition-colors"
                           onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(product.id, -1); }}
                         >
@@ -297,7 +319,7 @@ export default function CatalogPage() {
                         <span className="text-[13px] font-bold text-primary w-8 text-center">
                           {cart.find(item => item.product.id === product.id)?.quantity}
                         </span>
-                        <button 
+                        <button
                           className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary-100 transition-colors"
                           onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(product.id, 1); }}
                         >
@@ -305,9 +327,9 @@ export default function CatalogPage() {
                         </button>
                       </div>
                     ) : (
-                      <Button 
-                        size="sm" 
-                        variant="secondary" 
+                      <Button
+                        size="sm"
+                        variant="secondary"
                         className="w-full text-[12px] h-8"
                         onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}
                       >
@@ -317,7 +339,8 @@ export default function CatalogPage() {
                   </div>
                 </div>
               </Card>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20 bg-white rounded-xl border border-gray-200 border-dashed">

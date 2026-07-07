@@ -3,7 +3,7 @@ import { adminApi } from '@/api/admin';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, ArrowLeft, Check, X, Crown, MessageCircle, Loader2, FileText } from 'lucide-react';
+import { Search, ArrowLeft, Check, X, Crown, MessageCircle, Loader2, FileText, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { formatDate, getInitials } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -40,10 +40,15 @@ export default function AdminSubscriptionsPage() {
   const [rejectReason, setRejectReason] = useState('');
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['admin', 'subscriptions', search, statusFilter, page],
     queryFn: () => adminApi.subscriptions({ search, status: statusFilter || undefined, page, per_page: 20 }),
   });
+
+  const handleRefresh = () => {
+    refetch();
+    toast.success('Memuat data terbaru...');
+  };
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => adminApi.approveSubscription(id),
@@ -118,6 +123,17 @@ export default function AdminSubscriptionsPage() {
       <PageHeader
         title="Subscription Management"
         description={`${total} permintaan subscription`}
+        actions={
+          <button
+            onClick={handleRefresh}
+            disabled={isFetching}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[6px] text-[13px] font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-60"
+            title="Muat data terbaru"
+          >
+            <RefreshCw size={14} className={cn(isFetching && 'animate-spin')} />
+            Refresh
+          </button>
+        }
       />
 
       {/* Filters */}
