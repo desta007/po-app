@@ -52,7 +52,7 @@ apiClient.interceptors.response.use(
       // If refresh endpoint itself fails, don't retry
       if (originalRequest.url?.includes('/auth/refresh')) {
         localStorage.removeItem('auth_token');
-        window.location.href = '/login';
+        window.location.href = '/';
         return Promise.reject(error);
       }
 
@@ -89,7 +89,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         localStorage.removeItem('auth_token');
-        window.location.href = '/login';
+        window.location.href = '/';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -115,7 +115,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('auth_token');
       const authPaths = ['/login', '/register', '/lupa-password', '/reset-password'];
       if (!authPaths.some((p) => window.location.pathname.startsWith(p))) {
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
 
