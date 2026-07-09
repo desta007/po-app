@@ -98,7 +98,7 @@ export default async function handler(req: Request) {
   const address = (data?.organization?.address || '').slice(0, 60);
   const allProducts = data?.products || [];
   const productCount = allProducts.length;
-  const previewProducts = shuffle(allProducts.filter((p) => p.image_url)).slice(0, 3);
+  const previewProducts = shuffle(allProducts.filter((p) => p.image_url)).slice(0, 2);
   const initial = orgName.trim().charAt(0).toUpperCase() || 'K';
 
   // Fetch semua gambar sekaligus (paralel) dengan timeout ketat, lalu inline sebagai data URI.
@@ -314,7 +314,7 @@ export default async function handler(req: Request) {
     headers: {
       'content-type': 'image/png',
       'content-length': String(buffer.byteLength),
-      'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+      'cache-control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
     },
   });
 }
