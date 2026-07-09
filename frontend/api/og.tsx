@@ -53,7 +53,7 @@ export default async function handler(req: Request) {
   const preview = allProducts.filter((p) => p.image_url).slice(0, 3);
   const initial = orgName.trim().charAt(0).toUpperCase() || 'K';
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div
         style={{
@@ -248,9 +248,17 @@ export default async function handler(req: Request) {
     {
       width: 1200,
       height: 630,
-      headers: {
-        'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
-      },
     },
   );
+
+  // Buffer penuh lalu kirim ulang dengan Content-Length eksplisit.
+  // Crawler WhatsApp menolak me-render gambar yang dikirim chunked/tanpa Content-Length.
+  const buffer = await image.arrayBuffer();
+  return new Response(buffer, {
+    headers: {
+      'content-type': 'image/png',
+      'content-length': String(buffer.byteLength),
+      'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+    },
+  });
 }
