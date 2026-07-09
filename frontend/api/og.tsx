@@ -28,30 +28,76 @@ function rupiah(n: number): string {
   return 'Rp' + Math.round(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-async function fetchCatalog(slug: string): Promise<CatalogData | null> {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+/**
+ * WhatsApp/Facebook crawler punya batas waktu ketat saat mengambil og:image.
+ * Render kartu ini melibatkan beberapa fetch gambar eksternal ke backend Railway,
+ * jadi setiap fetch dibatasi timeout ketat dan gagal dianggap "tidak ada gambar"
+ * (bukan mengulur waktu total request) agar fungsi selalu selesai cepat & terprediksi.
+ */
+async function fetchDataUri(url: string | null, timeoutMs: number): Promise<string | null> {
+  if (!url) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > 1_500_000) return null; // hindari sumber gambar raksasa membengkakkan hasil PNG
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    return `data:${contentType};base64,${arrayBufferToBase64(buf)}`;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchCatalog(slug: string, timeoutMs: number): Promise<CatalogData | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(`${API_BASE}/api/catalog/${encodeURIComponent(slug)}`, {
       headers: { Accept: 'application/json' },
+      signal: controller.signal,
     });
     if (!res.ok) return null;
     return (await res.json()) as CatalogData;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
 export default async function handler(req: Request) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get('slug') || '';
-  const data = slug ? await fetchCatalog(slug) : null;
+  const data = slug ? await fetchCatalog(slug, 3000) : null;
 
   const orgName = (data?.organization?.name || 'Katalog Online').slice(0, 42);
   const address = (data?.organization?.address || '').slice(0, 60);
-  const logo = absUrl(data?.organization?.logo_url);
   const allProducts = data?.products || [];
   const productCount = allProducts.length;
-  const preview = allProducts.filter((p) => p.image_url).slice(0, 3);
+  const previewProducts = allProducts.filter((p) => p.image_url).slice(0, 2);
   const initial = orgName.trim().charAt(0).toUpperCase() || 'K';
+
+  // Fetch semua gambar sekaligus (paralel) dengan timeout ketat, lalu inline sebagai data URI.
+  // Ini menghindari satori melakukan fetch remote-nya sendiri yang latensinya tak terkontrol.
+  const [logo, ...previewImages] = await Promise.all([
+    fetchDataUri(absUrl(data?.organization?.logo_url), 1500),
+    ...previewProducts.map((p) => fetchDataUri(absUrl(p.image_url), 1500)),
+  ]);
+  const preview = previewProducts.map((p, i) => ({ ...p, dataUri: previewImages[i] })).filter((p) => p.dataUri);
 
   const image = new ImageResponse(
     (
@@ -164,7 +210,7 @@ export default async function handler(req: Request) {
                 }}
               >
                 <img
-                  src={absUrl(p.image_url) as string}
+                  src={p.dataUri as string}
                   width={332}
                   height={258}
                   style={{ width: '332px', height: '258px', objectFit: 'cover' }}
