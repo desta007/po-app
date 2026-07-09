@@ -28,6 +28,16 @@ function rupiah(n: number): string {
   return 'Rp' + Math.round(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+/** Fisher-Yates shuffle agar produk yang tampil di kartu OG berganti-ganti antar regenerasi cache. */
+function shuffle<T>(arr: T[]): T[] {
+  const result = arr.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = '';
@@ -88,7 +98,7 @@ export default async function handler(req: Request) {
   const address = (data?.organization?.address || '').slice(0, 60);
   const allProducts = data?.products || [];
   const productCount = allProducts.length;
-  const previewProducts = allProducts.filter((p) => p.image_url).slice(0, 2);
+  const previewProducts = shuffle(allProducts.filter((p) => p.image_url)).slice(0, 3);
   const initial = orgName.trim().charAt(0).toUpperCase() || 'K';
 
   // Fetch semua gambar sekaligus (paralel) dengan timeout ketat, lalu inline sebagai data URI.
