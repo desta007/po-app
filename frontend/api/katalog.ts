@@ -27,6 +27,25 @@ interface CatalogData {
   products: unknown[];
 }
 
+/**
+ * WhatsApp membuat preview link secara real-time (saat link ditempel di chat) dengan
+ * jendela waktu sangat ketat — beda dari crawler Facebook yang persisten & bisa di-scrape ulang.
+ * Kalau backend Railway sedang cold-start, fetch tanpa timeout bisa membuat seluruh
+ * respons menggantung sampai WhatsApp menyerah dan menampilkan fallback URL polos
+ * (judul & deskripsi ikut hilang, bukan cuma gambar). Maka setiap fetch dibatasi ketat.
+ */
+async function fetchWithTimeout(url: string, timeoutMs: number, init?: RequestInit): Promise<Response | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default async function handler(req: Request) {
   const url = new URL(req.url);
   const origin = url.origin;
@@ -35,8 +54,8 @@ export default async function handler(req: Request) {
   // Ambil shell HTML hasil build (berisi referensi asset ber-hash + script SPA).
   let html = '';
   try {
-    const res = await fetch(`${origin}/index.html`, { headers: { 'x-og-shell': '1' } });
-    html = await res.text();
+    const res = await fetchWithTimeout(`${origin}/index.html`, 2000, { headers: { 'x-og-shell': '1' } });
+    html = res ? await res.text() : '';
   } catch {
     html = '';
   }
@@ -46,14 +65,14 @@ export default async function handler(req: Request) {
     return Response.redirect(`${origin}/index.html`, 302);
   }
 
-  // Ambil data katalog untuk mengisi meta tag.
+  // Ambil data katalog untuk mengisi meta tag, dibatasi timeout ketat agar tidak menggantung.
   let orgName = 'Katalog Online';
   let description = 'Lihat katalog produk dan pesan langsung via WhatsApp.';
   try {
-    const res = await fetch(`${API_BASE}/api/catalog/${encodeURIComponent(slug)}`, {
+    const res = await fetchWithTimeout(`${API_BASE}/api/catalog/${encodeURIComponent(slug)}`, 2500, {
       headers: { Accept: 'application/json' },
     });
-    if (res.ok) {
+    if (res?.ok) {
       const data = (await res.json()) as CatalogData;
       orgName = data?.organization?.name || orgName;
       const count = Array.isArray(data?.products) ? data.products.length : 0;
