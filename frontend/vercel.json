@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/katalog/:slug", "destination": "/api/katalog?slug=:slug" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
