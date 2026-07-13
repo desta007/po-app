@@ -13,6 +13,7 @@ use App\Services\PurchaseOrderNumberGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PublicCatalogController extends Controller
 {
@@ -69,17 +70,54 @@ class PublicCatalogController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:20'],
             'customer_address' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['nullable', 'uuid'],
-            'items.*.product_name' => ['required', 'string', 'max:255'],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items' => ['required', 'array', 'min:1', 'max:100'],
+            'items.*.product_id' => ['required', 'uuid'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:100000'],
         ]);
 
         $org = Organization::where('slug', $slug)->firstOrFail();
         $owner = $org->users()->wherePivot('role', 'owner')->first();
 
         return DB::transaction(function () use ($request, $org, $owner) {
+            $items = $request->input('items');
+
+            // Load only products that genuinely belong to this store's public catalog.
+            // Price and name are taken from these records, never from the request body,
+            // so a manipulated unit_price/product_name in the payload has no effect.
+            $productIds = collect($items)->pluck('product_id')->unique();
+            $products = Product::where('organization_id', $org->id)
+                ->where('is_active', true)
+                ->where('show_in_catalog', true)
+                ->whereIn('id', $productIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            // Total quantity per product (guards against the same product on multiple lines).
+            $quantities = [];
+            foreach ($items as $item) {
+                $pid = $item['product_id'];
+                $quantities[$pid] = ($quantities[$pid] ?? 0) + $item['quantity'];
+            }
+
+            $errors = [];
+            foreach ($quantities as $pid => $qty) {
+                $product = $products->get($pid);
+                if (! $product) {
+                    $errors[] = 'Salah satu produk tidak tersedia atau tidak dijual di katalog ini.';
+                    continue;
+                }
+                if ($qty > $product->stock_qty) {
+                    $errors[] = "Stok \"{$product->name}\" tidak mencukupi (tersisa {$product->stock_qty}).";
+                }
+            }
+
+            if (! empty($errors)) {
+                throw ValidationException::withMessages([
+                    'items' => array_values(array_unique($errors)),
+                ]);
+            }
+
             // Find or create customer by phone
             $phone = $request->input('customer_phone');
             $customer = Customer::where('organization_id', $org->id)
@@ -100,9 +138,25 @@ class PublicCatalogController extends Controller
                 ]);
             }
 
-            // Calculate totals
-            $items = $request->input('items');
-            $subtotal = collect($items)->sum(fn ($item) => round($item['quantity'] * $item['unit_price'], 2));
+            // Build server-authoritative line items using prices from the database.
+            $subtotal = 0;
+            $lineItems = [];
+            foreach ($items as $index => $item) {
+                $product = $products->get($item['product_id']);
+                $quantity = $item['quantity'];
+                $unitPrice = $product->price;
+                $lineSubtotal = round($quantity * $unitPrice, 2);
+                $subtotal += $lineSubtotal;
+
+                $lineItems[] = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $lineSubtotal,
+                    'sort_order' => $index,
+                ];
+            }
 
             // Create PO
             $poNumber = $this->numberGenerator->generate($org->id);
@@ -124,15 +178,8 @@ class PublicCatalogController extends Controller
             ]);
 
             // Create PO items
-            foreach ($items as $index => $item) {
-                $po->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
-                    'product_name' => $item['product_name'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => round($item['quantity'] * $item['unit_price'], 2),
-                    'sort_order' => $index,
-                ]);
+            foreach ($lineItems as $lineItem) {
+                $po->items()->create($lineItem);
             }
 
             // Log status history

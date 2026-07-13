@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes (no auth)
 Route::get('catalog/{slug}', [PublicCatalogController::class, 'show']);
-Route::post('catalog/{slug}/checkout', [PublicCatalogController::class, 'checkout']);
+Route::post('catalog/{slug}/checkout', [PublicCatalogController::class, 'checkout'])->middleware('throttle:catalog-checkout');
 
 // Authentication
 Route::prefix('auth')->group(function () {
