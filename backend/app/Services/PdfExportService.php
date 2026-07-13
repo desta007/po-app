@@ -35,8 +35,8 @@ class PdfExportService
         // @page margin: 5mm top + 5mm bottom, plus body padding
         $margin = 12;
 
-        // Header: org name (18px bold), address, phone + border-bottom padding (10px) + margin-bottom (10px)
-        $header = 28;
+        // Header: org name (15px bold) only + border-bottom padding (10px) + margin-bottom (10px)
+        $header = 18;
 
         // Invoice info section: "INVOICE" title (14px bold) + PO number + table rows + borders/padding
         $invoiceInfo = 34;
@@ -44,15 +44,16 @@ class PdfExportService
         // Items table header row with border
         $tableHeader = 10;
 
-        // Summary section: subtotal + total with border-top padding
-        $summary = 24;
+        // Summary section: total qty + subtotal + grand total with border-top padding
+        $summary = 29;
 
         // Footer: text + border-top + margin-top (15px) + padding
         $footer = 14;
 
         // Dynamic heights
-        // Each item uses 2 <tr>: one for name, one for "qty x price = subtotal"
-        $itemHeight = 14;
+        // Each item uses 1 <tr> with columns (Item | QTY | Unit Price | Total).
+        // Long item names wrap to ~2 lines in the narrow Item column.
+        $itemHeight = 16;
         $itemCount = $po->items->count();
 
         // Items with notes take extra space (additional <span> line)
