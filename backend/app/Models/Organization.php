@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Crypt;
 
 class Organization extends Model
 {
@@ -65,6 +66,43 @@ class Organization extends Model
     public function isPremium(): bool
     {
         return $this->plan === SubscriptionPlan::PREMIUM;
+    }
+
+    /**
+     * Online store configuration bag stored inside the settings JSON.
+     *
+     * @return array<string, mixed>
+     */
+    public function onlineStore(): array
+    {
+        return $this->settings['online_store'] ?? [];
+    }
+
+    /**
+     * Decrypt the Midtrans server key, or null when it is unset/undecryptable.
+     */
+    public function midtransServerKey(): ?string
+    {
+        $encrypted = $this->onlineStore()['midtrans']['server_key'] ?? null;
+
+        if (! $encrypted) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($encrypted);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether this store can accept online payments right now.
+     */
+    public function isOnlinePaymentEnabled(): bool
+    {
+        return (bool) ($this->onlineStore()['midtrans']['is_enabled'] ?? false)
+            && $this->midtransServerKey() !== null;
     }
 
     /**

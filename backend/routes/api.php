@@ -14,6 +14,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\OrganizationLogoController;
+use App\Http\Controllers\OnlineStoreSettingController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SubscriptionController;
@@ -97,9 +98,14 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::get('settings/payment-methods', [SettingController::class, 'getPaymentMethods']);
     Route::put('settings/payment-methods', [SettingController::class, 'updatePaymentMethods']);
 
-    // Team Members (owner/admin only)
+    // Online store config (read for any member; write requires owner/admin below)
+    Route::get('settings/online-store', [OnlineStoreSettingController::class, 'show']);
+
+    // Team Members + online store management (owner/admin only)
     Route::middleware('role:owner,admin')->group(function () {
         Route::apiResource('team-members', TeamMemberController::class)->except(['show']);
+        Route::put('settings/online-store', [OnlineStoreSettingController::class, 'update']);
+        Route::post('settings/online-store/test-midtrans', [OnlineStoreSettingController::class, 'testMidtrans']);
     });
 
     // Subscription

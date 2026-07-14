@@ -13,6 +13,7 @@ import { Users, UserPlus, Trash2, Shield, Crown, Eye, Briefcase, Upload, Image a
 import { useQuota } from '@/hooks/use-quota';
 import { useRef } from 'react';
 import type { MemberRole, TeamMember } from '@/types/auth';
+import { OnlineStoreTab } from '@/components/settings/online-store-tab';
 
 interface PaymentMethod {
   name: string;
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'profile', label: '👤 Profil', roles: ['owner', 'admin', 'staff', 'viewer'] as string[] },
   { id: 'organization', label: '🏢 Organisasi', roles: ['owner', 'admin', 'staff', 'viewer'] as string[] },
   { id: 'payment-methods', label: '💳 Metode Bayar', roles: ['owner', 'admin'] as string[] },
+  { id: 'online-store', label: '🛒 Toko Online', roles: ['owner', 'admin'] as string[] },
   { id: 'team', label: '👥 Anggota Tim', roles: ['owner', 'admin'] as string[] },
 ];
 
@@ -514,6 +516,11 @@ export default function SettingsPage() {
               </div>
             </Card>
           </div>
+        )}
+
+        {/* Online Store Tab */}
+        {activeTab === 'online-store' && (role === 'owner' || role === 'admin') && (
+          <OnlineStoreTab />
         )}
 
         {/* Team Tab */}
