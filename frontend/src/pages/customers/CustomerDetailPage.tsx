@@ -1,22 +1,50 @@
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customersApi } from '@/api/customers';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRupiah, getInitials } from '@/lib/utils';
 import { MessageCircle, Edit, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', phone: '', email: '', address: '', notes: '' });
   const { data, isLoading } = useQuery({ queryKey: ['customer', id], queryFn: () => customersApi.show(id!), enabled: !!id });
+
+  const updateCustomer = useMutation({
+    mutationFn: (payload: typeof editForm) => customersApi.update(id!, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['customer', id] });
+      queryClient.invalidateQueries({ queryKey: ['customers'], refetchType: 'all' });
+      setEditOpen(false);
+      toast.success('Data customer berhasil diperbarui.');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal memperbarui data customer.'),
+  });
 
   if (isLoading) return <Skeleton className="h-64 rounded-[10px]" />;
   const c = data?.data?.data || data?.data;
   if (!c) return <p className="text-gray-500">Pelanggan tidak ditemukan.</p>;
+
+  const openEditDialog = () => {
+    setEditForm({
+      name: (c as any).name || '',
+      phone: (c as any).phone || '',
+      email: (c as any).email || '',
+      address: (c as any).address || '',
+      notes: (c as any).notes || '',
+    });
+    setEditOpen(true);
+  };
 
   return (
     <div>
@@ -41,7 +69,7 @@ export default function CustomerDetailPage() {
                 toast.error('Nomor HP pelanggan tidak tersedia');
               }
             }}><MessageCircle size={15} /> Kirim WA</Button>
-            <Button variant="secondary"><Edit size={15} /> Edit</Button>
+            <Button variant="secondary" onClick={openEditDialog}><Edit size={15} /> Edit</Button>
             <Button onClick={() => navigate('/pesanan/baru')}><Plus size={15} /> PO Baru</Button>
           </div>
         </div>
@@ -73,6 +101,24 @@ export default function CustomerDetailPage() {
           <div><span className="text-gray-500">Catatan</span><p className="font-medium text-gray-900">{(c as any).notes || '-'}</p></div>
         </div>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Customer</DialogTitle></DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); updateCustomer.mutate(editForm); }} className="space-y-3">
+            <Input label="Nama *" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+            <Input label="No. WhatsApp" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+            <Input label="Email" type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+            <Input label="Alamat" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
+            <Input label="Catatan" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="secondary" type="button" onClick={() => setEditOpen(false)}>Batal</Button>
+              <Button type="submit" loading={updateCustomer.isPending}>Simpan</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
