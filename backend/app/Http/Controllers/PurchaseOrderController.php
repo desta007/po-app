@@ -51,6 +51,10 @@ class PurchaseOrderController extends Controller
             $query->where('payment_status', $paymentStatus);
         }
 
+        if ($source = $request->input('source')) {
+            $query->where('source', $source);
+        }
+
         if ($customerId = $request->input('customer_id')) {
             $query->where('customer_id', $customerId);
         }
@@ -162,6 +166,20 @@ class PurchaseOrderController extends Controller
         return response()->json([
             'data' => new PurchaseOrderResource($purchaseOrder->fresh('items', 'customer', 'statusHistory')),
             'message' => 'Status pembayaran berhasil diperbarui.',
+        ]);
+    }
+
+    public function updateTracking(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $request->validate([
+            'tracking_number' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $purchaseOrder->update(['tracking_number' => $request->input('tracking_number')]);
+
+        return response()->json([
+            'data' => new PurchaseOrderResource($purchaseOrder->fresh('items', 'customer', 'statusHistory')),
+            'message' => 'Nomor resi berhasil diperbarui.',
         ]);
     }
 

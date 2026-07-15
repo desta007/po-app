@@ -28,9 +28,11 @@ import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminOrganizationsPage from '@/pages/admin/AdminOrganizationsPage';
 import AdminSubscriptionsPage from '@/pages/admin/AdminSubscriptionsPage';
+import AdminBackupPage from '@/pages/admin/AdminBackupPage';
 
 // Public pages (lazy-loaded — standalone entry points, kept out of the main app bundle)
 const CatalogPage = lazy(() => import('@/pages/catalog/CatalogPage'));
+const OrderStatusPage = lazy(() => import('@/pages/catalog/OrderStatusPage'));
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -66,6 +68,7 @@ export default function App() {
       {/* Public routes */}
       <Route path="/" element={<LandingRoute />} />
       <Route path="/katalog/:slug" element={<CatalogPage />} />
+      <Route path="/katalog/:slug/pesanan/:poNumber" element={<OrderStatusPage />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
@@ -87,6 +90,7 @@ export default function App() {
         <Route path="admin/users" element={<AdminUsersPage />} />
         <Route path="admin/organizations" element={<AdminOrganizationsPage />} />
         <Route path="admin/subscriptions" element={<AdminSubscriptionsPage />} />
+        <Route path="admin/backup" element={<AdminBackupPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -520,7 +520,7 @@ export default function SettingsPage() {
 
         {/* Online Store Tab */}
         {activeTab === 'online-store' && (role === 'owner' || role === 'admin') && (
-          <OnlineStoreTab />
+          <OnlineStoreTab storeSlug={org?.slug} />
         )}
 
         {/* Team Tab */}

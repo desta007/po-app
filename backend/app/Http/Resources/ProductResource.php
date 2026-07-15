@@ -28,6 +28,7 @@ class ProductResource extends JsonResource
             'image_url' => $this->image_url,
             'images' => $images,
             'stock_qty' => $this->stock_qty,
+            'track_stock' => (bool) $this->track_stock,
             'is_active' => $this->is_active,
             'show_in_catalog' => $this->show_in_catalog,
             'created_at' => $this->created_at?->toISOString(),

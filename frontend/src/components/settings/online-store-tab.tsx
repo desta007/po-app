@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { onlineStoreApi, type FlatRate } from '@/api/online-store';
 import { useQuota } from '@/hooks/use-quota';
 import { formatRupiah } from '@/lib/utils';
-import { Crown, CreditCard, Truck, Plus, Trash2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Crown, CreditCard, Truck, Plus, Trash2, CheckCircle2, ShieldCheck, Copy, Webhook } from 'lucide-react';
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -26,9 +26,10 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
   );
 }
 
-export function OnlineStoreTab() {
+export function OnlineStoreTab({ storeSlug }: { storeSlug?: string }) {
   const queryClient = useQueryClient();
   const { isPremiumOrAdmin } = useQuota();
+  const webhookUrl = storeSlug ? `${window.location.origin}/api/webhooks/midtrans/${storeSlug}` : '';
 
   const { data, isLoading } = useQuery({
     queryKey: ['online-store'],
@@ -189,6 +190,40 @@ export function OnlineStoreTab() {
             <CheckCircle2 size={14} className="mr-1.5" /> Test Koneksi
           </Button>
         </div>
+      </Card>
+
+      {/* Webhook instruction */}
+      <Card>
+        <div className="flex items-start gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+            <Webhook size={18} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-[14px] font-bold text-gray-900">Wajib: Atur Notification URL di Midtrans</h3>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              Agar status pesanan otomatis menjadi <strong>Lunas</strong> setelah pembayaran, salin URL di bawah dan tempel
+              ke dashboard Midtrans Anda: <span className="font-medium">Settings → Configuration → Payment Notification URL</span>.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-[8px] p-2">
+          <span className="text-[12px] text-gray-700 font-mono select-all truncate flex-1 pl-1">
+            {webhookUrl || 'Menyiapkan link toko...'}
+          </span>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={!webhookUrl}
+            onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.success('URL webhook disalin.'); }}
+          >
+            <Copy size={13} className="mr-1" /> Salin
+          </Button>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-2">
+          Tanpa langkah ini, pembayaran tetap diterima di akun Midtrans Anda, tetapi status pesanan di aplikasi
+          tidak akan diperbarui otomatis.
+        </p>
       </Card>
 
       {/* Shipping */}

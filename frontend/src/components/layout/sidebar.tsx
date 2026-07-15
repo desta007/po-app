@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, TrendingUp, Settings, X, Shield, UsersRound, Building2, Crown } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, TrendingUp, Settings, X, Shield, UsersRound, Building2, Crown, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/auth-context';
@@ -29,6 +29,7 @@ const adminNav = [
   { to: ROUTES.ADMIN_USERS, icon: UsersRound, label: 'Semua User' },
   { to: ROUTES.ADMIN_ORGANIZATIONS, icon: Building2, label: 'Organisasi' },
   { to: ROUTES.ADMIN_SUBSCRIPTIONS, icon: Crown, label: 'Subscriptions' },
+  { to: ROUTES.ADMIN_BACKUP, icon: Database, label: 'Backup Database' },
 ];
 
 interface SidebarProps {

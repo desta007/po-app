@@ -23,6 +23,7 @@ export default function PurchaseOrderListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -33,11 +34,12 @@ export default function PurchaseOrderListPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['purchase-orders', { search, status: statusFilter, payment_status: paymentFilter, page, sort_by: sortBy, sort_dir: sortDir }],
+    queryKey: ['purchase-orders', { search, status: statusFilter, payment_status: paymentFilter, source: sourceFilter, page, sort_by: sortBy, sort_dir: sortDir }],
     queryFn: () => purchaseOrdersApi.list({
       search,
       status: statusFilter as any,
       payment_status: paymentFilter as any,
+      source: (sourceFilter || undefined) as any,
       page,
       per_page: 20,
       sort_by: sortBy,
@@ -300,6 +302,15 @@ export default function PurchaseOrderListPage() {
             <option key={k} value={k}>{v.label}</option>
           ))}
         </select>
+        <select
+          className="px-3 py-2.5 border border-gray-300 rounded-[6px] text-[14px] bg-white text-gray-900 focus:outline-none focus:border-primary"
+          value={sourceFilter}
+          onChange={(e) => { setSourceFilter(e.target.value); goToPage(1); }}
+        >
+          <option value="">Sumber: Semua</option>
+          <option value="catalog">Order Katalog</option>
+          <option value="internal">Manual</option>
+        </select>
 
         {/* Sort control */}
         <div className="flex items-center border border-gray-300 rounded-[6px] bg-white overflow-hidden">
@@ -381,7 +392,14 @@ export default function PurchaseOrderListPage() {
                         onChange={() => toggleSelect(po.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-mono-po text-xs text-primary font-semibold">{po.po_number}</TableCell>
+                    <TableCell className="font-mono-po text-xs text-primary font-semibold">
+                      <div className="flex items-center gap-1.5">
+                        {po.po_number}
+                        {po.source === 'catalog' && (
+                          <span className="inline-flex items-center rounded-full bg-violet-100 text-violet-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">Katalog</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <strong className="text-gray-900">{po.customer?.name}</strong>
                       {po.customer?.phone && <div className="text-[11px] text-gray-500">{po.customer.phone}</div>}

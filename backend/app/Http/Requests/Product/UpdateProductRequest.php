@@ -20,6 +20,7 @@ class UpdateProductRequest extends FormRequest
             'category' => ['nullable', 'string', 'max:100'],
             'image_url' => ['nullable', 'string'],
             'stock_qty' => ['nullable', 'integer', 'min:0'],
+            'track_stock' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'show_in_catalog' => ['nullable', 'boolean'],
         ];

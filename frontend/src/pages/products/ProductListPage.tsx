@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X } from 'lucide-react';
+import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X, Boxes } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { formatRupiah, storageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ function getStockBadge(qty: number) {
   return <Badge variant="success" dot>Stock {qty}</Badge>;
 }
 
-const EMPTY_FORM = { name: '', sku: '', description: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, show_in_catalog: true };
+const EMPTY_FORM = { name: '', sku: '', description: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, track_stock: true, show_in_catalog: true };
 
 export default function ProductListPage() {
   const queryClient = useQueryClient();
@@ -168,6 +168,7 @@ export default function ProductListPage() {
       unit: product.unit || 'pcs',
       category: product.category || '',
       stock_qty: product.stock_qty ?? 0,
+      track_stock: product.track_stock ?? true,
       show_in_catalog: product.show_in_catalog ?? true,
     });
     setDialogOpen(true);
@@ -330,8 +331,29 @@ export default function ProductListPage() {
             <Input label="Harga Pokok" type="number" value={form.cost} onChange={(e) => setForm({...form, cost: Number(e.target.value)})} />
             <Input label="Harga Jual *" type="number" value={form.price} onChange={(e) => setForm({...form, price: Number(e.target.value)})} required />
             <Input label="Kategori" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} />
-            <Input label="Stok" type="number" value={form.stock_qty} onChange={(e) => setForm({...form, stock_qty: Number(e.target.value)})} />
-            
+            <Input label="Stok" type="number" value={form.stock_qty} onChange={(e) => setForm({...form, stock_qty: Number(e.target.value)})} disabled={!form.track_stock} />
+
+            <div className="flex items-center justify-between py-2 px-3 rounded-[6px] bg-gray-50 border border-gray-200">
+              <div className="flex items-center gap-2">
+                <Boxes size={15} className="text-gray-500" />
+                <div>
+                  <div className="text-[13px] font-semibold text-gray-700">Kelola Stok</div>
+                  <div className="text-[11px] text-gray-500">Kurangi stok otomatis saat ada order katalog</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm({...form, track_stock: !form.track_stock})}
+                className={`relative rounded-full transition-colors ${form.track_stock ? 'bg-primary' : 'bg-gray-300'}`}
+                style={{ width: 40, height: 22 }}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 rounded-full bg-white shadow transition-transform"
+                  style={{ width: 18, height: 18, transform: form.track_stock ? 'translateX(18px)' : 'translateX(0)' }}
+                />
+              </button>
+            </div>
+
             <div className="flex items-center justify-between py-2 px-3 rounded-[6px] bg-gray-50 border border-gray-200">
               <div className="flex items-center gap-2">
                 <Globe size={15} className="text-gray-500" />

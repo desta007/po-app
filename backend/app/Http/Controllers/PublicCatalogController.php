@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\VerifiesCustomerPhone;
 use App\Http\Resources\ProductResource;
 use App\Models\Customer;
 use App\Models\Organization;
@@ -10,6 +11,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderStatusHistory;
 use App\Services\NotificationService;
 use App\Services\PurchaseOrderNumberGenerator;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +19,12 @@ use Illuminate\Validation\ValidationException;
 
 class PublicCatalogController extends Controller
 {
+    use VerifiesCustomerPhone;
+
     public function __construct(
         private PurchaseOrderNumberGenerator $numberGenerator,
         private NotificationService $notificationService,
+        private StockService $stockService,
     ) {}
 
     public function show(Request $request, string $slug): JsonResponse
@@ -52,6 +57,8 @@ class PublicCatalogController extends Controller
         $owner = $org->users()->wherePivot('role', 'owner')->first();
         $phone = $org->phone ?: $owner?->phone;
 
+        $shipping = $org->onlineStore()['shipping'] ?? [];
+
         return response()->json([
             'organization' => [
                 'name' => $org->name,
@@ -61,6 +68,17 @@ class PublicCatalogController extends Controller
             ],
             'products' => ProductResource::collection($products),
             'categories' => $categories,
+            'store' => [
+                'online_payment_available' => $org->isOnlinePaymentEnabled(),
+                'shipping' => [
+                    'flat_rates' => array_values(array_map(fn ($r) => [
+                        'name' => $r['name'] ?? '',
+                        'cost' => (float) ($r['cost'] ?? 0),
+                    ], $shipping['flat_rates'] ?? [])),
+                    'allow_pickup' => (bool) ($shipping['allow_pickup'] ?? false),
+                    'allow_shipping_tbd' => (bool) ($shipping['allow_shipping_tbd'] ?? false),
+                ],
+            ],
         ]);
     }
 
@@ -73,12 +91,17 @@ class PublicCatalogController extends Controller
             'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.product_id' => ['required', 'uuid'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:100000'],
+            'shipping_method' => ['nullable', 'string', 'max:100'],
+            'payment_preference' => ['nullable', 'in:online,whatsapp'],
         ]);
 
         $org = Organization::where('slug', $slug)->firstOrFail();
         $owner = $org->users()->wherePivot('role', 'owner')->first();
 
-        return DB::transaction(function () use ($request, $org, $owner) {
+        // Shipping cost is derived from the store's own config, never trusted from the client.
+        [$shippingCost, $shippingLabel] = $this->resolveShipping($org, $request->input('shipping_method'));
+
+        return DB::transaction(function () use ($request, $org, $owner, $shippingCost, $shippingLabel) {
             $items = $request->input('items');
 
             // Load only products that genuinely belong to this store's public catalog.
@@ -117,6 +140,9 @@ class PublicCatalogController extends Controller
                     'items' => array_values(array_unique($errors)),
                 ]);
             }
+
+            // Reserve stock now (order creation), honoring per-product track_stock.
+            $this->stockService->decrement($quantities, $products);
 
             // Find or create customer by phone
             $phone = $request->input('customer_phone');
@@ -158,6 +184,12 @@ class PublicCatalogController extends Controller
                 ];
             }
 
+            $total = round($subtotal + $shippingCost, 2);
+            $notes = 'Pesanan dari katalog online';
+            if ($shippingLabel) {
+                $notes .= " · Pengiriman: {$shippingLabel}";
+            }
+
             // Create PO
             $poNumber = $this->numberGenerator->generate($org->id);
             $po = PurchaseOrder::create([
@@ -167,13 +199,15 @@ class PublicCatalogController extends Controller
                 'order_date' => now()->toDateString(),
                 'delivery_date' => now()->toDateString(),
                 'status' => 'draft',
+                'source' => 'catalog',
                 'payment_status' => 'unpaid',
                 'subtotal' => $subtotal,
                 'discount' => 0,
                 'tax' => 0,
-                'shipping_cost' => 0,
-                'total' => $subtotal,
-                'notes' => 'Pesanan dari katalog online',
+                'shipping_cost' => $shippingCost,
+                'shipping_method' => $shippingLabel,
+                'total' => $total,
+                'notes' => $notes,
                 'created_by' => $owner?->id,
             ]);
 
@@ -194,7 +228,7 @@ class PublicCatalogController extends Controller
             // Send in-app notification to the org owner
             if ($owner) {
                 $itemCount = count($items);
-                $totalFormatted = number_format($subtotal, 0, ',', '.');
+                $totalFormatted = number_format($total, 0, ',', '.');
 
                 $this->notificationService->createInAppNotification(
                     userId: $owner->id,
@@ -208,7 +242,86 @@ class PublicCatalogController extends Controller
             return response()->json([
                 'message' => 'Pesanan berhasil dibuat.',
                 'po_number' => $poNumber,
+                'total' => $total,
+                'shipping_cost' => $shippingCost,
+                'online_payment_available' => $org->isOnlinePaymentEnabled(),
             ], 201);
         });
+    }
+
+    /**
+     * Resolve the authoritative shipping cost + human label from the store's config.
+     *
+     * @return array{0: float, 1: string|null}
+     */
+    private function resolveShipping(Organization $org, ?string $method): array
+    {
+        if (! $method) {
+            return [0.0, null];
+        }
+
+        $shipping = $org->onlineStore()['shipping'] ?? [];
+
+        if ($method === 'pickup' && ($shipping['allow_pickup'] ?? false)) {
+            return [0.0, 'Ambil di Tempat'];
+        }
+
+        if ($method === 'tbd' && ($shipping['allow_shipping_tbd'] ?? false)) {
+            return [0.0, 'Ongkir dihitung kemudian'];
+        }
+
+        foreach ($shipping['flat_rates'] ?? [] as $rate) {
+            if (($rate['name'] ?? null) === $method) {
+                return [round((float) ($rate['cost'] ?? 0), 2), $rate['name']];
+            }
+        }
+
+        // Unknown method → no shipping charge, no label (defensive default).
+        return [0.0, null];
+    }
+
+    /**
+     * Public order-tracking endpoint. Requires the matching customer phone to
+     * prevent order enumeration.
+     */
+    public function orderStatus(Request $request, string $slug, string $poNumber): JsonResponse
+    {
+        $request->validate(['phone' => ['required', 'string', 'max:20']]);
+
+        $org = Organization::where('slug', $slug)->firstOrFail();
+        $po = PurchaseOrder::where('organization_id', $org->id)
+            ->where('po_number', $poNumber)
+            ->with(['customer', 'items'])
+            ->firstOrFail();
+
+        if (! $this->phonesMatch($request->input('phone'), $po->customer?->phone)) {
+            return response()->json(['message' => 'Nomor HP tidak cocok dengan pesanan ini.'], 403);
+        }
+
+        return response()->json([
+            'data' => [
+                'po_number' => $po->po_number,
+                'status' => $po->status->value,
+                'status_label' => $po->status->label(),
+                'payment_status' => $po->payment_status->value,
+                'payment_status_label' => $po->payment_status->label(),
+                'subtotal' => (float) $po->subtotal,
+                'shipping_cost' => (float) $po->shipping_cost,
+                'shipping_method' => $po->shipping_method,
+                'tracking_number' => $po->tracking_number,
+                'total' => (float) $po->total,
+                'notes' => $po->notes,
+                'created_at' => $po->created_at,
+                'customer_name' => $po->customer?->name,
+                'items' => $po->items->map(fn ($item) => [
+                    'product_name' => $item->product_name,
+                    'quantity' => (float) $item->quantity,
+                    'unit_price' => (float) $item->unit_price,
+                    'subtotal' => (float) $item->subtotal,
+                ]),
+                'organization' => ['name' => $org->name, 'phone' => $org->phone],
+                'online_payment_available' => $org->isOnlinePaymentEnabled(),
+            ],
+        ]);
     }
 }

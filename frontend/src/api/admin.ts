@@ -27,4 +27,7 @@ export const adminApi = {
 
   downloadSubscriptionInvoice: (id: string) =>
     apiClient.get(`/api/admin/subscriptions/${id}/invoice`, { responseType: 'blob' }),
+
+  downloadDatabaseBackup: () =>
+    apiClient.get('/api/admin/database/backup', { responseType: 'blob' }),
 };

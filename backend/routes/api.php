@@ -19,12 +19,18 @@ use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PublicCatalogController;
+use App\Http\Controllers\PublicPaymentController;
 use App\Http\Controllers\QuotaController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes (no auth)
 Route::get('catalog/{slug}', [PublicCatalogController::class, 'show']);
 Route::post('catalog/{slug}/checkout', [PublicCatalogController::class, 'checkout'])->middleware('throttle:catalog-checkout');
+Route::get('catalog/{slug}/orders/{po_number}', [PublicCatalogController::class, 'orderStatus'])->middleware('throttle:catalog-order-status');
+Route::post('catalog/{slug}/orders/{po_number}/pay', [PublicPaymentController::class, 'pay'])->middleware('throttle:catalog-pay');
+
+// Midtrans server-to-server notification (authenticated by signature, not session)
+Route::post('webhooks/midtrans/{slug}', [PublicPaymentController::class, 'webhook']);
 
 // Authentication
 Route::prefix('auth')->group(function () {
@@ -65,6 +71,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::patch('purchase-orders/{purchase_order}/status', [PurchaseOrderController::class, 'updateStatus']);
     Route::patch('purchase-orders/{purchase_order}/payment', [PurchaseOrderController::class, 'updatePayment']);
+    Route::patch('purchase-orders/{purchase_order}/tracking', [PurchaseOrderController::class, 'updateTracking']);
     Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel']);
     Route::post('purchase-orders/{purchase_order}/duplicate', [PurchaseOrderController::class, 'duplicate']);
     Route::get('purchase-orders/{purchase_order}/export-pdf', [PurchaseOrderController::class, 'exportPdf']);
@@ -124,6 +131,7 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::get('users/{id}', [SuperAdminController::class, 'userDetail']);
     Route::patch('users/{id}/toggle-status', [SuperAdminController::class, 'toggleUserStatus']);
     Route::get('organizations', [SuperAdminController::class, 'organizations']);
+    Route::get('database/backup', [SuperAdminController::class, 'downloadDatabaseBackup']);
 
     // Subscription management
     Route::get('subscriptions', [SubscriptionController::class, 'subscriptions']);

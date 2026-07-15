@@ -9,7 +9,7 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
@@ -30,6 +30,7 @@ export default function PurchaseOrderDetailPage() {
   const [paymentStatus, setPaymentStatus] = useState<any>('unpaid');
   const [paidAmount, setPaidAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [trackingInput, setTrackingInput] = useState('');
 
   const { data: paymentMethodsData } = useQuery({
     queryKey: ['payment-methods'],
@@ -51,6 +52,7 @@ export default function PurchaseOrderDetailPage() {
       setPaymentStatus(po.payment_status);
       setPaidAmount(po.paid_amount || 0);
       setPaymentMethod(po.payment_method || '');
+      setTrackingInput(po.tracking_number || '');
     }
   }, [po]);
 
@@ -66,6 +68,12 @@ export default function PurchaseOrderDetailPage() {
       purchaseOrdersApi.updatePayment(id!, payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchase-order', id] }); toast.success('Status pembayaran diperbarui.'); setShowPaymentDialog(false); },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal.'),
+  });
+
+  const updateTracking = useMutation({
+    mutationFn: (tracking: string) => purchaseOrdersApi.updateTracking(id!, tracking),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchase-order', id] }); toast.success('Nomor resi disimpan.'); },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menyimpan resi.'),
   });
 
   const handleDownloadImage = async () => {
@@ -121,6 +129,9 @@ export default function PurchaseOrderDetailPage() {
             <h1 className="text-2xl font-bold text-gray-900">{po.po_number}</h1>
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: sc.bgColor, color: sc.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.color }} />{sc.label}</span>
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: pc.bgColor, color: pc.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pc.color }} />{pc.label}</span>
+            {po.source === 'catalog' && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-violet-100 text-violet-700"><ShoppingBag size={11} /> Order Katalog</span>
+            )}
           </div>
           <p className="text-[13px] text-gray-500">Dibuat {formatDate(po.order_date)} · Kirim {formatDate(po.delivery_date)}</p>
         </div>
@@ -173,6 +184,30 @@ export default function PurchaseOrderDetailPage() {
             </div>
           </Card>
           {po.payment_method && <Card><h3 className="text-[14px] font-bold mb-2">Info Pembayaran</h3><p className="text-[13px] text-gray-700">Metode: <strong>{po.payment_method}</strong></p></Card>}
+
+          <Card>
+            <h3 className="text-[14px] font-bold mb-1 flex items-center gap-1.5"><Truck size={15} /> Pengiriman</h3>
+            {po.shipping_method && <p className="text-[13px] text-gray-700 mb-2">Metode: <strong>{po.shipping_method}</strong></p>}
+            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Nomor Resi</label>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 border border-gray-300 rounded-[6px] px-3 py-2 text-[13px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
+                placeholder="Cth: JX1234567890"
+                value={trackingInput}
+                onChange={(e) => setTrackingInput(e.target.value)}
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                loading={updateTracking.isPending}
+                disabled={trackingInput === (po.tracking_number || '')}
+                onClick={() => updateTracking.mutate(trackingInput.trim())}
+              >
+                Simpan
+              </Button>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1.5">Resi otomatis tampil di halaman status pesanan pelanggan.</p>
+          </Card>
 
           {po.notes && <Card><h3 className="text-[14px] font-bold mb-2">Catatan Internal</h3><p className="text-[13px] text-gray-700">{po.notes}</p></Card>}
         </div>

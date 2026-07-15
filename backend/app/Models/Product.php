@@ -25,6 +25,7 @@ class Product extends Model
         'image_url',
         'images',
         'stock_qty',
+        'track_stock',
         'is_active',
         'show_in_catalog',
     ];
@@ -35,6 +36,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'cost' => 'decimal:2',
             'images' => 'array',
+            'track_stock' => 'boolean',
             'is_active' => 'boolean',
             'show_in_catalog' => 'boolean',
         ];

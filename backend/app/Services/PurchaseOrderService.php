@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\PurchaseOrderStatus;
 use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderStatusHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,6 +13,7 @@ class PurchaseOrderService
     public function __construct(
         private PurchaseOrderNumberGenerator $numberGenerator,
         private NotificationService $notificationService,
+        private StockService $stockService,
     ) {}
 
     public function create(array $data, array $items): PurchaseOrder
@@ -93,6 +93,11 @@ class PurchaseOrderService
         $oldStatus = $po->status;
 
         $po->update(['status' => $newStatus]);
+
+        // Return reserved stock when a catalog order is cancelled.
+        if ($newStatus === PurchaseOrderStatus::CANCELLED && $po->source === 'catalog') {
+            $this->stockService->restoreForOrder($po);
+        }
 
         PurchaseOrderStatusHistory::create([
             'po_id' => $po->id,

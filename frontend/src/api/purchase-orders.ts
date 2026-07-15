@@ -6,6 +6,7 @@ export interface POFilters {
   search?: string;
   status?: POStatus;
   payment_status?: PaymentStatus;
+  source?: 'internal' | 'catalog';
   customer_id?: string;
   date_from?: string;
   date_to?: string;
@@ -79,6 +80,9 @@ export const purchaseOrdersApi = {
 
   updatePayment: (id: string, data: UpdatePaymentData) =>
     apiClient.patch<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}/payment`, data),
+
+  updateTracking: (id: string, trackingNumber: string) =>
+    apiClient.patch<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}/tracking`, { tracking_number: trackingNumber }),
 
   duplicate: (id: string) =>
     apiClient.post<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}/duplicate`),

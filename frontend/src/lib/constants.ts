@@ -41,6 +41,7 @@ export const ROUTES = {
   ADMIN_USERS: '/admin/users',
   ADMIN_ORGANIZATIONS: '/admin/organizations',
   ADMIN_SUBSCRIPTIONS: '/admin/subscriptions',
+  ADMIN_BACKUP: '/admin/backup',
 } as const;
 
 export const UNITS = [

@@ -24,6 +24,7 @@ export interface PurchaseOrder {
   order_date: string;
   delivery_date: string;
   status: POStatus;
+  source?: 'internal' | 'catalog';
   payment_status: PaymentStatus;
   dp_amount: number;
   paid_amount: number;
@@ -31,6 +32,8 @@ export interface PurchaseOrder {
   discount: number;
   tax: number;
   shipping_cost: number;
+  shipping_method?: string | null;
+  tracking_number?: string | null;
   total: number;
   notes: string | null;
   payment_method: string | null;

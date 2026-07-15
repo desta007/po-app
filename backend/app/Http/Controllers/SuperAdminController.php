@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Organization;
 use App\Models\PurchaseOrder;
 use App\Models\User;
+use App\Services\DatabaseBackupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SuperAdminController extends Controller
 {
@@ -152,6 +154,15 @@ class SuperAdminController extends Controller
                 : 'User berhasil dinonaktifkan.',
             'is_active' => (bool) $user->is_active,
         ]);
+    }
+
+    public function downloadDatabaseBackup(DatabaseBackupService $backupService): BinaryFileResponse
+    {
+        $path = $backupService->dump();
+
+        return response()
+            ->download($path, basename($path), ['Content-Type' => 'application/sql'])
+            ->deleteFileAfterSend(true);
     }
 
     public function organizations(Request $request): JsonResponse

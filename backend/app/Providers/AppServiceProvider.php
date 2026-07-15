@@ -54,5 +54,21 @@ class AppServiceProvider extends ServiceProvider
                 ], 429);
             });
         });
+
+        RateLimiter::for('catalog-pay', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip())->response(function () {
+                return response()->json([
+                    'message' => 'Terlalu banyak percobaan pembayaran. Silakan coba lagi dalam 1 menit.',
+                ], 429);
+            });
+        });
+
+        RateLimiter::for('catalog-order-status', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip())->response(function () {
+                return response()->json([
+                    'message' => 'Terlalu banyak permintaan. Silakan coba lagi dalam 1 menit.',
+                ], 429);
+            });
+        });
     }
 }
