@@ -536,7 +536,7 @@ export default function CatalogPage() {
             const inCart = cart.find(i => i.product.id === detailProduct.id);
             return (
               <>
-                <DialogHeader>
+                <DialogHeader onClose={() => setDetailProduct(null)}>
                   <DialogTitle className="pr-6">{detailProduct.name}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-1 max-h-[75vh] overflow-y-auto">
