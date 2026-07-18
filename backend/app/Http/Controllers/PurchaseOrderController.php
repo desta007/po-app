@@ -237,7 +237,7 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'ids' => ['required', 'array', 'min:1', 'max:50'],
             'ids.*' => ['required', 'uuid'],
-            'size' => ['required', 'in:25x15,30x15,30x20'],
+            'size' => ['required', 'in:25x15,30x15,30x20,50x30'],
         ]);
 
         $pos = PurchaseOrder::whereIn('id', $request->ids)

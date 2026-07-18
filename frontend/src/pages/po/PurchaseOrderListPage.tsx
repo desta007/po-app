@@ -170,7 +170,7 @@ export default function PurchaseOrderListPage() {
     }
   };
 
-  const handleBulkPrintLabels = async (size: '25x15' | '30x15' | '30x20') => {
+  const handleBulkPrintLabels = async (size: '25x15' | '30x15' | '30x20' | '50x30') => {
     if (selectedIds.size === 0) return;
     setBulkPrinting(true);
     try {
@@ -572,6 +572,9 @@ export default function PurchaseOrderListPage() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleBulkPrintLabels('30x20')}>
                 <Tag className="mr-2" size={14} /> Label 30 x 20 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkPrintLabels('50x30')}>
+                <Tag className="mr-2" size={14} /> Label 50 x 30 mm
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

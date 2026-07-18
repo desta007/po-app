@@ -167,23 +167,35 @@ class PdfExportService
             '25x15' => ['width' => 25, 'height' => 15],
             '30x15' => ['width' => 30, 'height' => 15],
             '30x20' => ['width' => 30, 'height' => 20],
+            '50x30' => ['width' => 50, 'height' => 30],
         ];
         $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['30x20'];
 
-        // Build flat list of labels: one per quantity unit per product item per PO
+        // Build flat list of labels: one per quantity unit per product item per PO.
+        // Page numbers are sequential across the whole PO (all products), e.g. 1/5..5/5.
         $labels = [];
         foreach ($purchaseOrders as $po) {
             $po->load('items', 'customer');
             $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M y') : '-';
 
+            // Total labels for this PO across all product items.
+            $poTotal = 0;
+            foreach ($po->items as $item) {
+                $poTotal += max(1, (int) $item->quantity);
+            }
+
+            $pageIndex = 0;
             foreach ($po->items as $item) {
                 $qty = max(1, (int) $item->quantity);
                 for ($i = 0; $i < $qty; $i++) {
+                    $pageIndex++;
                     $labels[] = [
                         'po_number' => $po->po_number,
                         'delivery_date' => $deliveryDate,
                         'customer' => $po->customer->name ?? '-',
                         'product' => $item->product_name,
+                        'page_index' => $pageIndex,
+                        'page_total' => $poTotal,
                     ];
                 }
             }

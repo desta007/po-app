@@ -90,7 +90,7 @@ export const purchaseOrdersApi = {
   bulkExportPdf: (ids: string[], format: 'receipt' | 'corporate') =>
     apiClient.post('/api/purchase-orders/bulk-export-pdf', { ids, format }, { responseType: 'blob' }),
 
-  bulkExportLabels: (ids: string[], size: '25x15' | '30x15' | '30x20') =>
+  bulkExportLabels: (ids: string[], size: '25x15' | '30x15' | '30x20' | '50x30') =>
     apiClient.post('/api/purchase-orders/bulk-export-labels', { ids, size }, { responseType: 'blob' }),
 
   exportPdf: (id: string) =>
