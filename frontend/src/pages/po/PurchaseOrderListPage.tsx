@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
+import { settingsApi } from '@/api/settings';
+import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Check } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -152,6 +154,73 @@ export default function PurchaseOrderListPage() {
       }
       return next;
     });
+  };
+
+  const { data: orgData } = useQuery({
+    queryKey: ['organization'],
+    queryFn: () => settingsApi.getOrganization(),
+  });
+  const organization = orgData?.data?.data;
+
+  const [paperWidth, setPaperWidthState] = useState<PaperWidth>(getPaperWidth());
+  const changePaperWidth = (w: PaperWidth) => {
+    setPaperWidth(w);
+    setPaperWidthState(w);
+  };
+
+  const handleConnectPrinter = async () => {
+    if (!isBluetoothPrintingSupported()) {
+      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      return;
+    }
+    try {
+      const name = await connectPrinter();
+      toast.success(`Terhubung ke ${name}.`);
+    } catch (err: any) {
+      if (err?.name === 'NotFoundError') return;
+      toast.error(err?.message || 'Gagal menghubungkan printer.');
+    }
+  };
+
+  // Cetak struk satu PO ke printer thermal. Detail (termasuk item) diambil ulang
+  // via show() karena data list tidak selalu memuat item.
+  const handlePrintThermal = async (po: PurchaseOrder) => {
+    if (!isBluetoothPrintingSupported()) {
+      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      return;
+    }
+    try {
+      await ensurePrinterConnected(); // pairing butuh gesture — panggil sebelum fetch
+      const full = (await purchaseOrdersApi.show(po.id)).data.data;
+      await printReceipt(full, organization, paperWidth);
+      toast.success('Struk terkirim ke printer.');
+    } catch (err: any) {
+      if (err?.name === 'NotFoundError') return;
+      toast.error(err?.message || 'Gagal mencetak ke printer thermal.');
+    }
+  };
+
+  const handleBulkPrintThermal = async () => {
+    if (selectedIds.size === 0) return;
+    if (!isBluetoothPrintingSupported()) {
+      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      return;
+    }
+    setBulkPrinting(true);
+    try {
+      await ensurePrinterConnected();
+      for (const id of Array.from(selectedIds)) {
+        const full = (await purchaseOrdersApi.show(id)).data.data;
+        await printReceipt(full, organization, paperWidth);
+      }
+      toast.success(`${selectedIds.size} struk terkirim ke printer.`);
+    } catch (err: any) {
+      if (err?.name !== 'NotFoundError') {
+        toast.error(err?.message || 'Gagal mencetak ke printer thermal.');
+      }
+    } finally {
+      setBulkPrinting(false);
+    }
   };
 
   const handleBulkPrint = async (format: 'receipt' | 'corporate') => {
@@ -435,6 +504,9 @@ export default function PurchaseOrderListPage() {
                           <DropdownMenuItem onClick={() => handleDownloadImage(po)}>
                             <Download className="mr-2" /> Download Image (Struk)
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintThermal(po)}>
+                            <Printer className="mr-2" /> Cetak Struk (BT)
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handlePrintCorporatePdf(po)}>
                             <FileText className="mr-2" /> Invoice Corporate (A4)
                           </DropdownMenuItem>
@@ -550,6 +622,37 @@ export default function PurchaseOrderListPage() {
             {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
             Print Corporate (A4)
           </Button>
+          <div className="w-px h-6 bg-gray-600" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/10 hover:bg-white/20 text-white border-0"
+                disabled={bulkPrinting}
+              >
+                {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                Struk Thermal (BT)
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" side="top" className="w-56">
+              <DropdownMenuItem onClick={handleBulkPrintThermal}>
+                <Printer className="mr-2" size={14} /> Cetak {selectedIds.size} struk
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConnectPrinter}>
+                <Bluetooth className="mr-2" size={14} />
+                {connectedPrinterName() ? `Printer: ${connectedPrinterName()}` : 'Hubungkan printer'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Lebar kertas</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => changePaperWidth('58')}>
+                <Check size={14} className={`mr-2 ${paperWidth === '58' ? 'opacity-100' : 'opacity-0'}`} /> 58 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => changePaperWidth('80')}>
+                <Check size={14} className={`mr-2 ${paperWidth === '80' ? 'opacity-100' : 'opacity-0'}`} /> 80 mm
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="w-px h-6 bg-gray-600" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -9,8 +9,10 @@ import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
 
@@ -36,6 +38,53 @@ export default function PurchaseOrderDetailPage() {
     queryKey: ['payment-methods'],
     queryFn: () => settingsApi.getPaymentMethods(),
   });
+
+  const { data: orgData } = useQuery({
+    queryKey: ['organization'],
+    queryFn: () => settingsApi.getOrganization(),
+  });
+  const organization = orgData?.data?.data;
+
+  const [printing, setPrinting] = useState(false);
+  const [paperWidth, setPaperWidthState] = useState<PaperWidth>(getPaperWidth());
+
+  const changePaperWidth = (w: PaperWidth) => {
+    setPaperWidth(w);
+    setPaperWidthState(w);
+  };
+
+  const handlePrintThermal = async () => {
+    if (!isBluetoothPrintingSupported()) {
+      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      return;
+    }
+    if (!po) return;
+    setPrinting(true);
+    try {
+      await ensurePrinterConnected();
+      await printReceipt(po, organization, paperWidth);
+      toast.success('Struk terkirim ke printer.');
+    } catch (err: any) {
+      if (err?.name === 'NotFoundError') return; // user membatalkan dialog perangkat
+      toast.error(err?.message || 'Gagal mencetak ke printer thermal.');
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handleConnectPrinter = async () => {
+    if (!isBluetoothPrintingSupported()) {
+      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      return;
+    }
+    try {
+      const name = await connectPrinter();
+      toast.success(`Terhubung ke ${name}.`);
+    } catch (err: any) {
+      if (err?.name === 'NotFoundError') return;
+      toast.error(err?.message || 'Gagal menghubungkan printer.');
+    }
+  };
 
 
 
@@ -143,6 +192,30 @@ export default function PurchaseOrderDetailPage() {
           <Button variant="secondary" onClick={handleDownloadImage}>
             <Download size={15} /> Download Image (Struk)
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" loading={printing}>
+                <Printer size={15} /> Cetak Struk (BT)
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handlePrintThermal}>
+                <Printer className="mr-2" size={14} /> Cetak sekarang
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConnectPrinter}>
+                <Bluetooth className="mr-2" size={14} />
+                {connectedPrinterName() ? `Printer: ${connectedPrinterName()}` : 'Hubungkan printer'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Lebar kertas</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => changePaperWidth('58')}>
+                <Check size={14} className={`mr-2 ${paperWidth === '58' ? 'opacity-100' : 'opacity-0'}`} /> 58 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => changePaperWidth('80')}>
+                <Check size={14} className={`mr-2 ${paperWidth === '80' ? 'opacity-100' : 'opacity-0'}`} /> 80 mm
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="secondary" onClick={handleDownloadCorporatePdf}>
             <Download size={15} /> Download PDF Corporate
           </Button>
