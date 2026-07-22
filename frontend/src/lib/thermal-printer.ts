@@ -116,6 +116,23 @@ function noWritableError(): Error {
   );
 }
 
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Koneksi GATT pertama pada printer BLE murah sering gagal sekali lalu berhasil;
+// coba beberapa kali dengan jeda sebelum menyerah.
+async function connectGattWithRetry(dev: any, attempts = 3): Promise<any> {
+  let lastErr: any;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await dev.gatt.connect();
+    } catch (e) {
+      lastErr = e;
+      await delay(600);
+    }
+  }
+  throw lastErr || new Error('Koneksi ke printer gagal (timeout).');
+}
+
 /** Buka dialog pemilih perangkat & pasangkan printer baru. Butuh gesture user. */
 export async function connectPrinter(): Promise<string> {
   const bt = (navigator as any).bluetooth;
@@ -129,7 +146,7 @@ export async function connectPrinter(): Promise<string> {
   device.addEventListener('gattserverdisconnected', () => {
     characteristic = null;
   });
-  const server = await device.gatt.connect();
+  const server = await connectGattWithRetry(device);
   characteristic = await findWritableCharacteristic(server);
   if (!characteristic) {
     throw noWritableError();
@@ -155,8 +172,6 @@ export async function ensurePrinterConnected(): Promise<string> {
   }
   return connectPrinter();
 }
-
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function sendBytesBle(bytes: Uint8Array): Promise<void> {
   await ensurePrinterConnected();
