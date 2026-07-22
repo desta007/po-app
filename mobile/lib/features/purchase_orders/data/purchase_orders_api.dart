@@ -103,6 +103,30 @@ class PurchaseOrdersApi {
         );
         return Uint8List.fromList(res.data!);
       });
+
+  /// Cetak beberapa PO sekaligus jadi satu PDF (struk / corporate).
+  Future<Uint8List> bulkExportPdfBytes(
+          List<String> ids, PoBulkPdfFormat format) =>
+      guardApi(() async {
+        final res = await _dio.post<List<int>>(
+          '/api/purchase-orders/bulk-export-pdf',
+          data: {'ids': ids, 'format': format.apiValue},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return Uint8List.fromList(res.data!);
+      });
+
+  /// Cetak label untuk satu / beberapa PO dalam ukuran tertentu.
+  Future<Uint8List> bulkExportLabelsBytes(
+          List<String> ids, PoLabelSize size) =>
+      guardApi(() async {
+        final res = await _dio.post<List<int>>(
+          '/api/purchase-orders/bulk-export-labels',
+          data: {'ids': ids, 'size': size.apiValue},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return Uint8List.fromList(res.data!);
+      });
 }
 
 enum PoExportKind {
@@ -126,5 +150,41 @@ enum PoExportKind {
         receiptPdf => 'PO-$poNumber.pdf',
         corporatePdf => 'PO-$poNumber-corporate.pdf',
         image => 'PO-$poNumber.png',
+      };
+}
+
+/// Format PDF untuk cetak massal — selaras dengan web (`receipt` / `corporate`).
+enum PoBulkPdfFormat {
+  receipt,
+  corporate;
+
+  String get apiValue => name;
+
+  String get label => switch (this) {
+        receipt => 'Struk',
+        corporate => 'Corporate (A4)',
+      };
+}
+
+/// Ukuran label (mm) — daftar sama persis dengan web
+/// ([PurchaseOrderListPage.tsx]): 25×15, 30×15, 30×20, 50×30.
+enum PoLabelSize {
+  s25x15,
+  s30x15,
+  s30x20,
+  s50x30;
+
+  String get apiValue => switch (this) {
+        s25x15 => '25x15',
+        s30x15 => '30x15',
+        s30x20 => '30x20',
+        s50x30 => '50x30',
+      };
+
+  String get label => switch (this) {
+        s25x15 => '25 × 15 mm',
+        s30x15 => '30 × 15 mm',
+        s30x20 => '30 × 20 mm',
+        s50x30 => '50 × 30 mm',
       };
 }

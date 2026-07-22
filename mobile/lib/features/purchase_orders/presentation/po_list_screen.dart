@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../data/po_models.dart';
+import '../data/purchase_orders_api.dart';
 import '../providers/po_providers.dart';
+import '../services/po_share_service.dart';
+import 'widgets/label_size_sheet.dart';
 import 'widgets/po_badges.dart';
 
 class PoListScreen extends ConsumerStatefulWidget {
@@ -21,6 +25,102 @@ class PoListScreen extends ConsumerStatefulWidget {
 class _PoListScreenState extends ConsumerState<PoListScreen> {
   Timer? _debounce;
   bool _appliedQueryFilter = false;
+
+  // Mode seleksi untuk cetak massal (struk / corporate / label).
+  final Set<String> _selectedIds = {};
+  bool _selectionMode = false;
+  bool _bulkBusy = false;
+
+  void _enterSelection(String id) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds.add(id);
+    });
+  }
+
+  void _exitSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelected(String id) {
+    setState(() {
+      if (!_selectedIds.remove(id)) _selectedIds.add(id);
+      if (_selectedIds.isEmpty) _selectionMode = false;
+    });
+  }
+
+  Future<void> _runBulk(Future<void> Function() action) async {
+    if (_selectedIds.isEmpty || _bulkBusy) return;
+    setState(() => _bulkBusy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Menyiapkan file…')));
+    try {
+      await action();
+      messenger.hideCurrentSnackBar();
+      if (mounted) _exitSelection();
+    } on ApiException catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _bulkBusy = false);
+    }
+  }
+
+  Future<void> _bulkPrintPdf(PoBulkPdfFormat format) => _runBulk(() => ref
+      .read(poShareServiceProvider)
+      .shareBulkPdf(ids: _selectedIds.toList(), format: format));
+
+  Future<void> _bulkPrintLabels() async {
+    if (_selectedIds.isEmpty || _bulkBusy) return;
+    final size = await showLabelSizeSheet(context);
+    if (size == null) return;
+    await _runBulk(() => ref
+        .read(poShareServiceProvider)
+        .shareLabels(ids: _selectedIds.toList(), size: size));
+  }
+
+  Widget _buildBulkBar() {
+    final enabled = _selectedIds.isNotEmpty && !_bulkBusy;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: enabled
+                    ? () => _bulkPrintPdf(PoBulkPdfFormat.receipt)
+                    : null,
+                icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                label: const Text('Struk'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: enabled
+                    ? () => _bulkPrintPdf(PoBulkPdfFormat.corporate)
+                    : null,
+                icon: const Icon(Icons.description_outlined, size: 18),
+                label: const Text('Corporate'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: enabled ? _bulkPrintLabels : null,
+                icon: const Icon(Icons.label_outline, size: 18),
+                label: const Text('Label'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -59,12 +159,37 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
     final notifier = ref.read(poListProvider.notifier);
     final filters = notifier.filters;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Purchase Order')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/po/create'),
-        child: const Icon(Icons.add),
-      ),
+    return PopScope(
+      canPop: !_selectionMode,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _exitSelection();
+      },
+      child: Scaffold(
+      appBar: _selectionMode
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _exitSelection,
+              ),
+              title: Text('${_selectedIds.length} dipilih'),
+            )
+          : AppBar(
+              title: const Text('Purchase Order'),
+              actions: [
+                IconButton(
+                  tooltip: 'Pilih untuk cetak',
+                  icon: const Icon(Icons.checklist),
+                  onPressed: () => setState(() => _selectionMode = true),
+                ),
+              ],
+            ),
+      floatingActionButton: _selectionMode
+          ? null
+          : FloatingActionButton(
+              onPressed: () => context.push('/po/create'),
+              child: const Icon(Icons.add),
+            ),
+      bottomNavigationBar: _selectionMode ? _buildBulkBar() : null,
       body: Column(
         children: [
           Padding(
@@ -142,7 +267,16 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
                       if (index >= state.items.length) {
                         return const LoadMoreIndicator();
                       }
-                      return _PoCard(po: state.items[index]);
+                      final po = state.items[index];
+                      return _PoCard(
+                        po: po,
+                        selectionMode: _selectionMode,
+                        selected: _selectedIds.contains(po.id),
+                        onTap: () => _selectionMode
+                            ? _toggleSelected(po.id)
+                            : context.push('/po/${po.id}'),
+                        onLongPress: () => _enterSelection(po.id),
+                      );
                     },
                   ),
                 ),
@@ -150,6 +284,7 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
             }),
           ),
         ],
+      ),
       ),
     );
   }
@@ -184,17 +319,29 @@ class _StatusFilterChip extends StatelessWidget {
 }
 
 class _PoCard extends StatelessWidget {
-  const _PoCard({required this.po});
+  const _PoCard({
+    required this.po,
+    required this.selectionMode,
+    required this.selected,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   final PurchaseOrder po;
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      color: selected ? AppColors.primary.withValues(alpha: 0.08) : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/po/${po.id}'),
+        onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -202,6 +349,18 @@ class _PoCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  if (selectionMode) ...[
+                    Icon(
+                      selected
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      size: 20,
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Expanded(
                     child: Text(
                       po.poNumber,

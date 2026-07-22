@@ -10,6 +10,7 @@ import '../data/po_models.dart';
 import '../data/purchase_orders_api.dart';
 import '../providers/po_providers.dart';
 import '../services/po_share_service.dart';
+import 'widgets/label_size_sheet.dart';
 import 'widgets/po_badges.dart';
 
 class PoDetailScreen extends ConsumerWidget {
@@ -417,11 +418,37 @@ class _ActionBar extends ConsumerWidget {
                   }
                 },
               ),
+            const Divider(height: 8),
+            ListTile(
+              leading: const Icon(Icons.label_outline),
+              title: const Text('Cetak Label'),
+              subtitle: const Text('Label produk per item'),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                await _printLabels(context, ref);
+              },
+            ),
             const SizedBox(height: 8),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _printLabels(BuildContext context, WidgetRef ref) async {
+    final size = await showLabelSizeSheet(context);
+    if (size == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Menyiapkan label…')));
+    try {
+      await ref
+          .read(poShareServiceProvider)
+          .shareLabels(ids: [poId], size: size, subject: 'Label ${po.poNumber}');
+      messenger.hideCurrentSnackBar();
+    } on ApiException catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }
 
