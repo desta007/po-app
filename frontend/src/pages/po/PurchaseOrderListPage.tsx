@@ -177,8 +177,8 @@ export default function PurchaseOrderListPage() {
       const name = await connectPrinter();
       toast.success(`Terhubung ke ${name}.`);
     } catch (err: any) {
-      if (err?.name === 'NotFoundError') return;
-      toast.error(err?.message || 'Gagal menghubungkan printer.');
+      if (err?.name === 'NotFoundError') return; // user membatalkan dialog
+      toast.error(`Gagal menghubungkan printer${err?.name ? ` (${err.name})` : ''}: ${err?.message || 'pastikan printer menyala & tidak sedang terhubung ke perangkat lain.'}`);
     }
   };
 
