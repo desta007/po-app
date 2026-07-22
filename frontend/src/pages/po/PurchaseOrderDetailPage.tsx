@@ -10,9 +10,9 @@ import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth, Usb } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, bluetoothUnsupportedReason, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
 
@@ -54,14 +54,14 @@ export default function PurchaseOrderDetailPage() {
   };
 
   const handlePrintThermal = async () => {
-    if (!isBluetoothPrintingSupported()) {
+    if (!po) return;
+    if (connectedTransport() === null && !isBluetoothPrintingSupported() && !isSerialPrintingSupported()) {
       toast.error(bluetoothUnsupportedReason());
       return;
     }
-    if (!po) return;
     setPrinting(true);
     try {
-      await ensurePrinterConnected();
+      await ensurePrinterReady();
       await printReceipt(po, organization, paperWidth);
       toast.success('Struk terkirim ke printer.');
     } catch (err: any) {
@@ -83,6 +83,20 @@ export default function PurchaseOrderDetailPage() {
     } catch (err: any) {
       if (err?.name === 'NotFoundError') return;
       toast.error(err?.message || 'Gagal menghubungkan printer.');
+    }
+  };
+
+  const handleConnectSerial = async () => {
+    if (!isSerialPrintingSupported()) {
+      toast.error('Browser tidak mendukung Web Serial. Gunakan Chrome atau Edge di laptop/PC.');
+      return;
+    }
+    try {
+      await connectSerialPrinter();
+      toast.success('Printer USB/COM terhubung.');
+    } catch (err: any) {
+      if (err?.name === 'NotFoundError') return;
+      toast.error(err?.message || 'Gagal menghubungkan printer USB/COM.');
     }
   };
 
@@ -195,16 +209,20 @@ export default function PurchaseOrderDetailPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" loading={printing}>
-                <Printer size={15} /> Cetak Struk (BT)
+                <Printer size={15} /> Cetak Struk (Thermal)
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuItem onClick={handlePrintThermal}>
                 <Printer className="mr-2" size={14} /> Cetak sekarang
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Hubungkan printer</DropdownMenuLabel>
               <DropdownMenuItem onClick={handleConnectPrinter}>
-                <Bluetooth className="mr-2" size={14} />
-                {connectedPrinterName() ? `Printer: ${connectedPrinterName()}` : 'Hubungkan printer'}
+                <Bluetooth className="mr-2" size={14} /> Bluetooth (BLE){connectedTransport() === 'bluetooth' ? ' ✓' : ''}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConnectSerial}>
+                <Usb className="mr-2" size={14} /> USB / COM (Serial){connectedTransport() === 'serial' ? ' ✓' : ''}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Lebar kertas</DropdownMenuLabel>

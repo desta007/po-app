@@ -33,12 +33,18 @@ export function setPaperWidth(width: PaperWidth): void {
 
 // Daftar service GATT yang umum dipakai printer thermal BLE murah. Dipakai untuk
 // `optionalServices` agar karakteristik tulisnya bisa ditemukan setelah connect.
+// Web Bluetooth menyembunyikan service yang tidak didaftarkan di sini, jadi
+// daftar ini sengaja lengkap agar mencakup mayoritas printer ESC/POS BLE.
 const KNOWN_SERVICES: (number | string)[] = [
-  0xffe0, 0xff00, 0x18f0, 0xff12,
-  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Microchip / banyak printer BT
-  '0000ff00-0000-1000-8000-00805f9b34fb',
+  0xffe0, 0xffe5, 0xff00, 0xfff0, 0xfee0, 0xfea0, 0x18f0, 0xff12, 0xffb0, 0xff80,
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Microchip ISSC / banyak printer BT
   '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // sebagian printer thermal
 ];
+
+// UUID service yang berhasil ditemukan saat koneksi terakhir — untuk diagnostik
+// bila karakteristik tulis tidak ketemu.
+let lastDiscoveredServices: string[] = [];
 
 // Handle disimpan di level modul agar koneksi bertahan selama sesi (banyak print
 // pakai satu pairing). `any` dipakai karena tipe Web Bluetooth tidak ada di
@@ -79,14 +85,35 @@ export function connectedPrinterName(): string | null {
 }
 
 async function findWritableCharacteristic(server: any): Promise<any> {
-  const services = await server.getPrimaryServices();
+  let services: any[] = [];
+  try {
+    services = await server.getPrimaryServices();
+  } catch {
+    services = [];
+  }
+  lastDiscoveredServices = services.map((s) => s.uuid);
   for (const service of services) {
-    const chars = await service.getCharacteristics();
+    let chars: any[] = [];
+    try {
+      chars = await service.getCharacteristics();
+    } catch {
+      continue;
+    }
     for (const c of chars) {
       if (c.properties.write || c.properties.writeWithoutResponse) return c;
     }
   }
   return null;
+}
+
+function noWritableError(): Error {
+  const found = lastDiscoveredServices.length
+    ? lastDiscoveredServices.join(', ')
+    : '(tidak ada service yang bisa dibaca — kemungkinan printer Bluetooth Classic, bukan BLE)';
+  return new Error(
+    `Terhubung tapi jalur tulis printer tidak ditemukan. Service terdeteksi: ${found}. ` +
+      `Coba metode "USB/COM (Serial)" atau kirim info ini ke pengembang.`,
+  );
 }
 
 /** Buka dialog pemilih perangkat & pasangkan printer baru. Butuh gesture user. */
@@ -105,7 +132,7 @@ export async function connectPrinter(): Promise<string> {
   const server = await device.gatt.connect();
   characteristic = await findWritableCharacteristic(server);
   if (!characteristic) {
-    throw new Error('Karakteristik tulis printer tidak ditemukan.');
+    throw noWritableError();
   }
   return device.name || 'Printer';
 }
@@ -131,7 +158,7 @@ export async function ensurePrinterConnected(): Promise<string> {
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function sendBytes(bytes: Uint8Array): Promise<void> {
+async function sendBytesBle(bytes: Uint8Array): Promise<void> {
   await ensurePrinterConnected();
   // BLE membatasi ukuran paket; potong kecil agar aman di printer murah.
   const chunkSize = 180;
@@ -145,6 +172,67 @@ async function sendBytes(bytes: Uint8Array): Promise<void> {
       await characteristic.writeValue(chunk);
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Koneksi Web Serial (untuk printer yang muncul sebagai COM port di PC)
+//
+// Printer thermal Bluetooth Classic (SPP) TIDAK terlihat oleh Web Bluetooth
+// (yang hanya BLE). Di Windows, printer seperti itu muncul sebagai port COM
+// ("Standard Serial over Bluetooth link"). Web Serial bisa membuka port itu dan
+// mengirim byte ESC/POS mentah — jalur paling andal untuk cetak dari PC. Juga
+// berlaku untuk printer thermal via kabel USB-serial.
+// ---------------------------------------------------------------------------
+
+let serialPort: any = null;
+
+export function isSerialPrintingSupported(): boolean {
+  return typeof navigator !== 'undefined' && !!(navigator as any).serial;
+}
+
+export function isSerialConnected(): boolean {
+  return !!(serialPort && serialPort.writable);
+}
+
+/** Buka pemilih port COM & sambungkan printer serial. Butuh gesture user. */
+export async function connectSerialPrinter(baudRate = 9600): Promise<void> {
+  const serial = (navigator as any).serial;
+  if (!serial) {
+    throw new Error('Browser tidak mendukung Web Serial. Gunakan Chrome atau Edge di desktop.');
+  }
+  serialPort = await serial.requestPort();
+  await serialPort.open({ baudRate });
+}
+
+async function sendBytesSerial(bytes: Uint8Array): Promise<void> {
+  if (!serialPort) throw new Error('Printer serial belum terhubung.');
+  if (!serialPort.writable) await serialPort.open({ baudRate: 9600 });
+  const writer = serialPort.writable.getWriter();
+  try {
+    const chunkSize = 512;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      await writer.write(bytes.slice(i, i + chunkSize));
+    }
+  } finally {
+    writer.releaseLock();
+  }
+}
+
+/** Nama transport printer yang sedang terhubung, untuk ditampilkan di UI. */
+export function connectedTransport(): 'bluetooth' | 'serial' | null {
+  if (isSerialConnected()) return 'serial';
+  if (isPrinterConnected()) return 'bluetooth';
+  return null;
+}
+
+/**
+ * Pastikan ADA printer siap (serial atau Bluetooth). Kalau serial sudah aktif,
+ * langsung lolos tanpa menyentuh Bluetooth. Panggil ini di awal handler klik
+ * (sebelum `await` lain) karena pairing Bluetooth butuh gesture user.
+ */
+export async function ensurePrinterReady(): Promise<void> {
+  if (isSerialConnected()) return;
+  await ensurePrinterConnected();
 }
 
 // ---------------------------------------------------------------------------
@@ -336,11 +424,20 @@ export function buildReceipt(
   return e.done();
 }
 
-/** Bangun struk lalu kirim ke printer thermal terhubung. */
+/**
+ * Bangun struk lalu kirim ke printer yang sedang terhubung. Kalau port serial
+ * aktif, pakai serial; jika tidak, pakai jalur Bluetooth (yang akan meminta
+ * pairing bila belum ada).
+ */
 export async function printReceipt(
   po: PurchaseOrder,
   org: Organization | null | undefined,
   paperWidth: PaperWidth = getPaperWidth(),
 ): Promise<void> {
-  await sendBytes(buildReceipt(po, org, paperWidth));
+  const bytes = buildReceipt(po, org, paperWidth);
+  if (isSerialConnected()) {
+    await sendBytesSerial(bytes);
+  } else {
+    await sendBytesBle(bytes);
+  }
 }

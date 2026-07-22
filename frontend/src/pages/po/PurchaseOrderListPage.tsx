@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
 import { settingsApi } from '@/api/settings';
-import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, bluetoothUnsupportedReason, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Check } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -182,15 +182,29 @@ export default function PurchaseOrderListPage() {
     }
   };
 
+  const handleConnectSerial = async () => {
+    if (!isSerialPrintingSupported()) {
+      toast.error('Browser tidak mendukung Web Serial. Gunakan Chrome atau Edge di laptop/PC.');
+      return;
+    }
+    try {
+      await connectSerialPrinter();
+      toast.success('Printer USB/COM terhubung.');
+    } catch (err: any) {
+      if (err?.name === 'NotFoundError') return;
+      toast.error(err?.message || 'Gagal menghubungkan printer USB/COM.');
+    }
+  };
+
   // Cetak struk satu PO ke printer thermal. Detail (termasuk item) diambil ulang
   // via show() karena data list tidak selalu memuat item.
   const handlePrintThermal = async (po: PurchaseOrder) => {
-    if (!isBluetoothPrintingSupported()) {
+    if (connectedTransport() === null && !isBluetoothPrintingSupported() && !isSerialPrintingSupported()) {
       toast.error(bluetoothUnsupportedReason());
       return;
     }
     try {
-      await ensurePrinterConnected(); // pairing butuh gesture — panggil sebelum fetch
+      await ensurePrinterReady(); // pairing butuh gesture — panggil sebelum fetch
       const full = (await purchaseOrdersApi.show(po.id)).data.data;
       await printReceipt(full, organization, paperWidth);
       toast.success('Struk terkirim ke printer.');
@@ -202,13 +216,13 @@ export default function PurchaseOrderListPage() {
 
   const handleBulkPrintThermal = async () => {
     if (selectedIds.size === 0) return;
-    if (!isBluetoothPrintingSupported()) {
+    if (connectedTransport() === null && !isBluetoothPrintingSupported() && !isSerialPrintingSupported()) {
       toast.error(bluetoothUnsupportedReason());
       return;
     }
     setBulkPrinting(true);
     try {
-      await ensurePrinterConnected();
+      await ensurePrinterReady();
       for (const id of Array.from(selectedIds)) {
         const full = (await purchaseOrdersApi.show(id)).data.data;
         await printReceipt(full, organization, paperWidth);
@@ -505,7 +519,7 @@ export default function PurchaseOrderListPage() {
                             <Download className="mr-2" /> Download Image (Struk)
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handlePrintThermal(po)}>
-                            <Printer className="mr-2" /> Cetak Struk (BT)
+                            <Printer className="mr-2" /> Cetak Struk (Thermal)
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handlePrintCorporatePdf(po)}>
                             <FileText className="mr-2" /> Invoice Corporate (A4)
@@ -632,16 +646,20 @@ export default function PurchaseOrderListPage() {
                 disabled={bulkPrinting}
               >
                 {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
-                Struk Thermal (BT)
+                Struk Thermal
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" side="top" className="w-56">
+            <DropdownMenuContent align="center" side="top" className="w-64">
               <DropdownMenuItem onClick={handleBulkPrintThermal}>
                 <Printer className="mr-2" size={14} /> Cetak {selectedIds.size} struk
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Hubungkan printer</DropdownMenuLabel>
               <DropdownMenuItem onClick={handleConnectPrinter}>
-                <Bluetooth className="mr-2" size={14} />
-                {connectedPrinterName() ? `Printer: ${connectedPrinterName()}` : 'Hubungkan printer'}
+                <Bluetooth className="mr-2" size={14} /> Bluetooth (BLE){connectedTransport() === 'bluetooth' ? ' ✓' : ''}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConnectSerial}>
+                <Usb className="mr-2" size={14} /> USB / COM (Serial){connectedTransport() === 'serial' ? ' ✓' : ''}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Lebar kertas</DropdownMenuLabel>
