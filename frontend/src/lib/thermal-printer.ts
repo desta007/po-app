@@ -50,6 +50,26 @@ export function isBluetoothPrintingSupported(): boolean {
   return typeof navigator !== 'undefined' && !!(navigator as any).bluetooth;
 }
 
+// iOS memaksa semua browser (termasuk Chrome/Edge) memakai WebKit yang tidak
+// mendukung Web Bluetooth — jadi arahannya berbeda dari desktop/Android.
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return (
+    /iPad|iPhone|iPod/.test(ua) ||
+    // iPadOS 13+ menyamar sebagai Mac; deteksi lewat touch point
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+}
+
+/** Pesan siap-tampil kenapa cetak Bluetooth tak tersedia, sesuai platform. */
+export function bluetoothUnsupportedReason(): string {
+  if (isIOS()) {
+    return 'iPhone/iPad tidak mendukung cetak Bluetooth (semua browser iOS memakai Safari). Gunakan HP Android/laptop dengan Chrome, atau browser "Bluefy" di iOS.';
+  }
+  return 'Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge terbaru.';
+}
+
 export function isPrinterConnected(): boolean {
   return !!(device && device.gatt && device.gatt.connected && characteristic);
 }

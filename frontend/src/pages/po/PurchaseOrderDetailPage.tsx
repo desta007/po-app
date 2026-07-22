@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, bluetoothUnsupportedReason, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 
 const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
 
@@ -55,7 +55,7 @@ export default function PurchaseOrderDetailPage() {
 
   const handlePrintThermal = async () => {
     if (!isBluetoothPrintingSupported()) {
-      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      toast.error(bluetoothUnsupportedReason());
       return;
     }
     if (!po) return;
@@ -74,7 +74,7 @@ export default function PurchaseOrderDetailPage() {
 
   const handleConnectPrinter = async () => {
     if (!isBluetoothPrintingSupported()) {
-      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      toast.error(bluetoothUnsupportedReason());
       return;
     }
     try {

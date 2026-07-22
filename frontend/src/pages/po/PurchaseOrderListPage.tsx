@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
 import { settingsApi } from '@/api/settings';
-import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterConnected, connectPrinter, printReceipt, isBluetoothPrintingSupported, bluetoothUnsupportedReason, connectedPrinterName, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -170,7 +170,7 @@ export default function PurchaseOrderListPage() {
 
   const handleConnectPrinter = async () => {
     if (!isBluetoothPrintingSupported()) {
-      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      toast.error(bluetoothUnsupportedReason());
       return;
     }
     try {
@@ -186,7 +186,7 @@ export default function PurchaseOrderListPage() {
   // via show() karena data list tidak selalu memuat item.
   const handlePrintThermal = async (po: PurchaseOrder) => {
     if (!isBluetoothPrintingSupported()) {
-      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      toast.error(bluetoothUnsupportedReason());
       return;
     }
     try {
@@ -203,7 +203,7 @@ export default function PurchaseOrderListPage() {
   const handleBulkPrintThermal = async () => {
     if (selectedIds.size === 0) return;
     if (!isBluetoothPrintingSupported()) {
-      toast.error('Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge.');
+      toast.error(bluetoothUnsupportedReason());
       return;
     }
     setBulkPrinting(true);
