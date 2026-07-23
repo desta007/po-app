@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
-import { formatRupiah, formatDate } from '@/lib/utils';
+import { formatRupiah, formatDate, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useQuota } from '@/hooks/use-quota';
@@ -86,13 +86,12 @@ export default function PurchaseOrderListPage() {
   };
 
   const handlePrintCorporatePdf = async (po: PurchaseOrder) => {
+    const win = openBlankTab();
     try {
       const response = await purchaseOrdersApi.exportCorporatePdf(po.id) as any;
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      fillPdfTab(win, response.data, `Invoice-${po.po_number}.pdf`);
     } catch (err) {
+      win?.close();
       toast.error('Gagal mencetak PDF Corporate');
     }
   };
@@ -239,14 +238,13 @@ export default function PurchaseOrderListPage() {
 
   const handleBulkPrint = async (format: 'receipt' | 'corporate') => {
     if (selectedIds.size === 0) return;
+    const win = openBlankTab();
     setBulkPrinting(true);
     try {
       const response = await purchaseOrdersApi.bulkExportPdf(Array.from(selectedIds), format) as any;
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      fillPdfTab(win, response.data, `PO-${format}-${selectedIds.size}.pdf`);
     } catch (err: any) {
+      win?.close();
       toast.error(err.response?.data?.message || 'Gagal mencetak PDF');
     } finally {
       setBulkPrinting(false);
@@ -255,14 +253,13 @@ export default function PurchaseOrderListPage() {
 
   const handleBulkPrintLabels = async (size: '25x15' | '30x15' | '30x20' | '50x30') => {
     if (selectedIds.size === 0) return;
+    const win = openBlankTab();
     setBulkPrinting(true);
     try {
       const response = await purchaseOrdersApi.bulkExportLabels(Array.from(selectedIds), size) as any;
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      fillPdfTab(win, response.data, `Label-${size}-${selectedIds.size}.pdf`);
     } catch (err: any) {
+      win?.close();
       toast.error(err.response?.data?.message || 'Gagal mencetak label');
     } finally {
       setBulkPrinting(false);

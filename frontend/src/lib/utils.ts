@@ -62,3 +62,39 @@ export function storageUrl(path: string | null | undefined): string {
   if (path.startsWith('http') || path.startsWith('blob:')) return path;
   return `${API_BASE_URL}${path}`;
 }
+
+/**
+ * Buka tab kosong SEBELUM operasi async (mis. fetch PDF). Chrome/Edge memblokir
+ * `window.open` yang dipanggil setelah `await` karena user gesture sudah hilang
+ * (Safari lebih longgar). Panggil ini langsung di awal handler klik, lalu isi
+ * hasilnya lewat `fillPdfTab`.
+ */
+export function openBlankTab(): Window | null {
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(
+      '<title>Menyiapkan...</title><p style="font-family:sans-serif;padding:24px;color:#555">Menyiapkan dokumen, mohon tunggu...</p>',
+    );
+  }
+  return win;
+}
+
+/**
+ * Arahkan tab yang sudah dibuka `openBlankTab` ke PDF hasil fetch. Kalau tab
+ * ternyata diblokir/null, jatuh ke unduh file supaya user tetap dapat hasilnya.
+ */
+export function fillPdfTab(win: Window | null, data: BlobPart, filename: string): void {
+  const blob = new Blob([data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  if (win && !win.closed) {
+    win.location.href = url;
+  } else {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+}
