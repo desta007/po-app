@@ -17,13 +17,35 @@ trait BelongsToOrganization
             }
         });
 
-        static::addGlobalScope('organization', function (Builder $builder) {
-            if (auth()->check() && auth()->user()->current_org_id) {
-                $builder->where(
-                    $builder->getModel()->getTable() . '.organization_id',
-                    auth()->user()->current_org_id
-                );
+        // Prevent an existing record from being reassigned to another
+        // organization via mass assignment on update (cross-tenant write).
+        static::updating(function ($model) {
+            if ($model->isDirty('organization_id')) {
+                $model->organization_id = $model->getOriginal('organization_id');
             }
+        });
+
+        static::addGlobalScope('organization', function (Builder $builder) {
+            // Only scope authenticated requests. Public/unauthenticated flows
+            // (e.g. catalog checkout) filter by organization_id explicitly.
+            if (!auth()->check()) {
+                return;
+            }
+
+            $orgId = auth()->user()->current_org_id;
+
+            // Fail closed: an authenticated user without an active organization
+            // must never see cross-tenant rows.
+            if (!$orgId) {
+                $builder->whereRaw('1 = 0');
+
+                return;
+            }
+
+            $builder->where(
+                $builder->getModel()->getTable() . '.organization_id',
+                $orgId
+            );
         });
     }
 }

@@ -56,32 +56,27 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Protected routes
 Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
-    // Customers
-    Route::apiResource('customers', CustomerController::class);
+    /*
+     |-------------------------------------------------------------------
+     | Read-only endpoints — available to every member (incl. viewer)
+     |-------------------------------------------------------------------
+     */
+    Route::apiResource('customers', CustomerController::class)->only(['index', 'show']);
 
-    // Products
-    Route::apiResource('products', ProductController::class);
-    Route::post('products/{product}/image', [ProductImageController::class, 'store']);
-    Route::delete('products/{product}/image', [ProductImageController::class, 'destroy']);
+    Route::apiResource('products', ProductController::class)->only(['index', 'show']);
 
-    // Purchase Orders
+    // Purchase order reads + exports (read-only, all members)
     Route::post('purchase-orders/bulk-export-pdf', [PurchaseOrderController::class, 'bulkExportPdf']);
     Route::post('purchase-orders/bulk-export-labels', [PurchaseOrderController::class, 'bulkExportLabels']);
     Route::get('purchase-orders/export-excel', [PurchaseOrderController::class, 'exportExcel']);
-    Route::apiResource('purchase-orders', PurchaseOrderController::class);
-    Route::patch('purchase-orders/{purchase_order}/status', [PurchaseOrderController::class, 'updateStatus']);
-    Route::patch('purchase-orders/{purchase_order}/payment', [PurchaseOrderController::class, 'updatePayment']);
-    Route::patch('purchase-orders/{purchase_order}/tracking', [PurchaseOrderController::class, 'updateTracking']);
-    Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel']);
-    Route::post('purchase-orders/{purchase_order}/duplicate', [PurchaseOrderController::class, 'duplicate']);
+    Route::apiResource('purchase-orders', PurchaseOrderController::class)->only(['index', 'show']);
     Route::get('purchase-orders/{purchase_order}/export-pdf', [PurchaseOrderController::class, 'exportPdf']);
     Route::get('purchase-orders/{purchase_order}/export-corporate-pdf', [PurchaseOrderController::class, 'exportCorporatePdf']);
     Route::get('purchase-orders/{purchase_order}/export-image', [PurchaseOrderController::class, 'exportImage']);
     Route::get('purchase-orders/{purchase_order}/export-html', [PurchaseOrderController::class, 'exportHtml']);
 
-    // Calendar
+    // Calendar (read)
     Route::get('calendar/events', [CalendarController::class, 'events']);
-    Route::patch('calendar/events/{purchase_order}/reschedule', [CalendarController::class, 'reschedule']);
 
     // Dashboard
     Route::get('dashboard/today-summary', [DashboardController::class, 'todaySummary']);
@@ -95,33 +90,58 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     Route::get('reports/profit', [ReportController::class, 'profitReport']);
     Route::get('reports/export-excel', [ReportController::class, 'exportExcel']);
 
-    // Settings
+    // Settings (reads) + self-service profile
     Route::get('settings/organization', [SettingController::class, 'getOrganization']);
-    Route::put('settings/organization', [SettingController::class, 'updateOrganization']);
     Route::put('settings/profile', [SettingController::class, 'updateProfile']);
     Route::put('settings/notifications', [SettingController::class, 'updateNotificationPrefs']);
-    Route::post('settings/organization/logo', [OrganizationLogoController::class, 'store']);
-    Route::delete('settings/organization/logo', [OrganizationLogoController::class, 'destroy']);
     Route::get('settings/payment-methods', [SettingController::class, 'getPaymentMethods']);
-    Route::put('settings/payment-methods', [SettingController::class, 'updatePaymentMethods']);
-
-    // Online store config (read for any member; write requires owner/admin below)
     Route::get('settings/online-store', [OnlineStoreSettingController::class, 'show']);
 
-    // Team Members + online store management (owner/admin only)
-    Route::middleware('role:owner,admin')->group(function () {
-        Route::apiResource('team-members', TeamMemberController::class)->except(['show']);
-        Route::put('settings/online-store', [OnlineStoreSettingController::class, 'update']);
-        Route::post('settings/online-store/test-midtrans', [OnlineStoreSettingController::class, 'testMidtrans']);
-    });
-
-    // Subscription
+    // Subscription (read + request)
     Route::get('subscription/status', [SubscriptionController::class, 'status']);
     Route::post('subscription/request', [SubscriptionController::class, 'requestUpgrade']);
     Route::get('subscription/{id}/invoice', [SubscriptionController::class, 'exportInvoice']);
 
     // Quota / usage
     Route::get('quota/usage', [QuotaController::class, 'usage']);
+
+    /*
+     |-------------------------------------------------------------------
+     | Write endpoints — owner / admin / staff (viewer is read-only)
+     |-------------------------------------------------------------------
+     */
+    Route::middleware('role:owner,admin,staff')->group(function () {
+        Route::apiResource('customers', CustomerController::class)->only(['store', 'update', 'destroy']);
+
+        Route::apiResource('products', ProductController::class)->only(['store', 'update', 'destroy']);
+        Route::post('products/{product}/image', [ProductImageController::class, 'store']);
+        Route::delete('products/{product}/image', [ProductImageController::class, 'destroy']);
+
+        Route::apiResource('purchase-orders', PurchaseOrderController::class)->only(['store', 'update', 'destroy']);
+        Route::patch('purchase-orders/{purchase_order}/status', [PurchaseOrderController::class, 'updateStatus']);
+        Route::patch('purchase-orders/{purchase_order}/payment', [PurchaseOrderController::class, 'updatePayment']);
+        Route::patch('purchase-orders/{purchase_order}/tracking', [PurchaseOrderController::class, 'updateTracking']);
+        Route::post('purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'cancel']);
+        Route::post('purchase-orders/{purchase_order}/duplicate', [PurchaseOrderController::class, 'duplicate']);
+
+        Route::patch('calendar/events/{purchase_order}/reschedule', [CalendarController::class, 'reschedule']);
+    });
+
+    /*
+     |-------------------------------------------------------------------
+     | Organization configuration + team management — owner / admin only
+     |-------------------------------------------------------------------
+     */
+    Route::middleware('role:owner,admin')->group(function () {
+        Route::put('settings/organization', [SettingController::class, 'updateOrganization']);
+        Route::post('settings/organization/logo', [OrganizationLogoController::class, 'store']);
+        Route::delete('settings/organization/logo', [OrganizationLogoController::class, 'destroy']);
+        Route::put('settings/payment-methods', [SettingController::class, 'updatePaymentMethods']);
+
+        Route::apiResource('team-members', TeamMemberController::class)->except(['show']);
+        Route::put('settings/online-store', [OnlineStoreSettingController::class, 'update']);
+        Route::post('settings/online-store/test-midtrans', [OnlineStoreSettingController::class, 'testMidtrans']);
+    });
 });
 
 // Super Admin routes
