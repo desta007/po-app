@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DeliveryDatePicker, toLocalISO } from '@/components/ui/delivery-date-picker';
-import { formatRupiah, storageUrl } from '@/lib/utils';
+import { formatRupiah } from '@/lib/utils';
 import { ArrowLeft, Store, User, Truck, Wallet, Receipt, Check, MapPin, CalendarDays, CreditCard, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
