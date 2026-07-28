@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatRupiah, storageUrl } from '@/lib/utils';
-import { Package, Store, ShoppingCart, Minus, Plus, CreditCard, MessageCircle } from 'lucide-react';
+import { Package, Store, ShoppingCart, Minus, Plus, CreditCard, MessageCircle, User, Truck, Wallet, Receipt, Check, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -420,16 +420,23 @@ export default function CatalogPage() {
 
       {/* Checkout Dialog */}
       <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
-        <DialogContent className="max-w-md w-full">
-          <DialogHeader>
+        <DialogContent className="max-w-md w-full p-0 flex flex-col max-h-[calc(100vh-2rem)]">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Detail Pesanan</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
-            <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-6 bg-gray-50">
+            {/* Data Penerima */}
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3.5">
+              <div className="flex items-center gap-2">
+                <User size={15} className="text-primary" />
+                <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Data Penerima</h4>
+              </div>
               <Input label="Nama Lengkap" placeholder="Cth: Budi Santoso" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
               <Input label="No. WhatsApp" placeholder="Cth: 08123456789" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Alamat Pengiriman</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                  <MapPin size={13} className="text-gray-400" /> Alamat Pengiriman
+                </label>
                 <textarea
                   className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
                   placeholder="Cth: Jl. Sudirman No. 12, RT 01/02, Jakarta"
@@ -437,88 +444,121 @@ export default function CatalogPage() {
                   onChange={(e) => setCustomerAddress(e.target.value)}
                 />
               </div>
-            </div>
+            </section>
 
-            {/* Shipping options */}
+            {/* Metode Pengiriman */}
             {shippingOptions.length > 0 && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-2">Metode Pengiriman</label>
-                <div className="space-y-2">
-                  {shippingOptions.map(opt => (
-                    <label key={opt.id} className={`flex items-center justify-between gap-3 p-3 rounded-lg border cursor-pointer transition-all ${shippingId === opt.id ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <div className="flex items-center gap-3">
-                        <input type="radio" name="shipping" checked={shippingId === opt.id} onChange={() => setShippingId(opt.id)} className="accent-primary" />
-                        <div>
-                          <span className="text-[13px] font-medium text-gray-800">{opt.label}</span>
-                          {opt.note && <p className="text-[11px] text-gray-500">{opt.note}</p>}
-                        </div>
-                      </div>
-                      <span className="text-[13px] font-semibold text-gray-700">{opt.cost > 0 ? formatRupiah(opt.cost) : 'Gratis'}</span>
-                    </label>
-                  ))}
+              <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Truck size={15} className="text-primary" />
+                  <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Metode Pengiriman</h4>
                 </div>
-              </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {shippingOptions.map(opt => {
+                    const active = shippingId === opt.id;
+                    return (
+                      <button
+                        type="button"
+                        key={opt.id}
+                        onClick={() => setShippingId(opt.id)}
+                        className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border text-left transition-all ${active ? 'border-primary bg-primary shadow-md shadow-primary/20' : 'border-gray-200 bg-white hover:border-primary/40'}`}
+                      >
+                        <div>
+                          <span className={`block text-[13px] font-semibold ${active ? 'text-white' : 'text-gray-800'}`}>{opt.label}</span>
+                          {opt.note && <p className={`text-[11px] ${active ? 'text-white/80' : 'text-gray-500'}`}>{opt.note}</p>}
+                        </div>
+                        <span className={`text-[13px] font-bold whitespace-nowrap ${active ? 'text-white' : 'text-primary'}`}>{opt.cost > 0 ? formatRupiah(opt.cost) : 'Gratis'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
             )}
 
-            {/* Order summary */}
-            <div className="border-t border-gray-100 pt-4">
-              <h4 className="text-[13px] font-bold text-gray-900 mb-3">Ringkasan Pesanan</h4>
-              <div className="bg-gray-50 rounded-[10px] p-3 space-y-2">
-                {cart.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-[13px]">
-                    <div className="flex gap-2">
-                      <span className="font-medium text-gray-500">{item.quantity}x</span>
-                      <span className="text-gray-900 line-clamp-1">{item.product.name}</span>
+            {/* Metode Pembayaran */}
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Wallet size={15} className="text-primary" />
+                <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Metode Pembayaran</h4>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {onlinePaymentAvailable && (
+                  <button
+                    type="button"
+                    onClick={() => setPaymentPref('online')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border text-left transition-all ${paymentPref === 'online' ? 'border-primary bg-primary shadow-md shadow-primary/20' : 'border-gray-200 bg-white hover:border-primary/40'}`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${paymentPref === 'online' ? 'bg-white/20 text-white' : 'bg-primary-50 text-primary'}`}>
+                      <CreditCard size={18} />
                     </div>
-                    <span className="font-semibold">{formatRupiah(item.product.price * item.quantity)}</span>
+                    <div className="flex-1">
+                      <span className={`block text-[13px] font-semibold ${paymentPref === 'online' ? 'text-white' : 'text-gray-800'}`}>Bayar Online Sekarang</span>
+                      <p className={`text-[11px] ${paymentPref === 'online' ? 'text-white/80' : 'text-gray-500'}`}>Transfer, QRIS, e-wallet, kartu — aman via Midtrans.</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentPref === 'online' ? 'border-white bg-white' : 'border-gray-300'}`}>
+                      {paymentPref === 'online' && <Check size={12} className="text-primary" strokeWidth={3} />}
+                    </div>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPaymentPref('whatsapp')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border text-left transition-all ${paymentPref === 'whatsapp' ? 'border-primary bg-primary shadow-md shadow-primary/20' : 'border-gray-200 bg-white hover:border-primary/40'}`}
+                >
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${paymentPref === 'whatsapp' ? 'bg-white/20 text-white' : 'bg-green-50 text-green-600'}`}>
+                    <MessageCircle size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <span className={`block text-[13px] font-semibold ${paymentPref === 'whatsapp' ? 'text-white' : 'text-gray-800'}`}>Pesan via WhatsApp</span>
+                    <p className={`text-[11px] ${paymentPref === 'whatsapp' ? 'text-white/80' : 'text-gray-500'}`}>Konfirmasi & pembayaran diatur langsung dengan penjual.</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentPref === 'whatsapp' ? 'border-white bg-white' : 'border-gray-300'}`}>
+                    {paymentPref === 'whatsapp' && <Check size={12} className="text-primary" strokeWidth={3} />}
+                  </div>
+                </button>
+              </div>
+            </section>
+
+            {/* Ringkasan Pesanan */}
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Receipt size={15} className="text-primary" />
+                <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Ringkasan Pesanan</h4>
+              </div>
+              <div className="space-y-2.5">
+                {cart.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-[13px] gap-3">
+                    <div className="flex gap-2 min-w-0">
+                      <span className="font-semibold text-primary flex-shrink-0">{item.quantity}×</span>
+                      <span className="text-gray-800 line-clamp-1">{item.product.name}</span>
+                    </div>
+                    <span className="font-semibold text-gray-900 whitespace-nowrap">{formatRupiah(item.product.price * item.quantity)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between text-[13px] text-gray-600 pt-1">
-                  <span>Subtotal</span><span>{formatRupiah(cartTotal)}</span>
-                </div>
-                {selectedShipping && (
+                <div className="border-t border-dashed border-gray-200 pt-2.5 space-y-1.5">
                   <div className="flex justify-between text-[13px] text-gray-600">
-                    <span>Ongkir ({selectedShipping.label})</span>
-                    <span>{shippingCost > 0 ? formatRupiah(shippingCost) : 'Gratis'}</span>
+                    <span>Subtotal</span><span>{formatRupiah(cartTotal)}</span>
                   </div>
-                )}
-                <div className="border-t border-gray-200 mt-1 pt-2 flex justify-between font-bold">
-                  <span>Total</span><span className="text-primary">{formatRupiah(grandTotal)}</span>
+                  {selectedShipping && (
+                    <div className="flex justify-between text-[13px] text-gray-600">
+                      <span>Ongkir ({selectedShipping.label})</span>
+                      <span>{shippingCost > 0 ? formatRupiah(shippingCost) : 'Gratis'}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="border-t border-gray-200 pt-2.5 flex justify-between items-center">
+                  <span className="text-[14px] font-bold text-gray-900">Total</span>
+                  <span className="text-[18px] font-extrabold text-primary">{formatRupiah(grandTotal)}</span>
                 </div>
               </div>
-            </div>
-
-            {/* Payment method */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-2">Metode Pembayaran</label>
-              <div className="space-y-2">
-                {onlinePaymentAvailable && (
-                  <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${paymentPref === 'online' ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input type="radio" name="payment" checked={paymentPref === 'online'} onChange={() => setPaymentPref('online')} className="accent-primary" />
-                    <CreditCard size={18} className="text-primary" />
-                    <div>
-                      <span className="text-[13px] font-semibold text-gray-800">Bayar Online Sekarang</span>
-                      <p className="text-[11px] text-gray-500">Transfer, QRIS, e-wallet, kartu — aman via Midtrans.</p>
-                    </div>
-                  </label>
-                )}
-                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${paymentPref === 'whatsapp' ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <input type="radio" name="payment" checked={paymentPref === 'whatsapp'} onChange={() => setPaymentPref('whatsapp')} className="accent-primary" />
-                  <MessageCircle size={18} className="text-green-600" />
-                  <div>
-                    <span className="text-[13px] font-semibold text-gray-800">Pesan via WhatsApp</span>
-                    <p className="text-[11px] text-gray-500">Konfirmasi & pembayaran diatur langsung dengan penjual.</p>
-                  </div>
-                </label>
-              </div>
-            </div>
+            </section>
           </div>
 
-          <DialogFooter className="mt-2">
-            <Button variant="secondary" onClick={() => setShowCheckoutDialog(false)}>Batal</Button>
+          <DialogFooter className="flex-shrink-0 bg-white">
+            <Button variant="secondary" className="rounded-full px-5" onClick={() => setShowCheckoutDialog(false)}>Batal</Button>
             <Button
               onClick={handleSubmitOrder}
-              className={paymentPref === 'online' ? '' : 'bg-green-500 hover:bg-green-600 text-white border-0'}
+              className={`rounded-full px-6 ${paymentPref === 'online' ? '' : 'bg-green-500 hover:bg-green-600 text-white border-0'}`}
               disabled={!customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || isSubmitting}
               loading={isSubmitting}
             >
