@@ -93,6 +93,7 @@ class PublicCatalogController extends Controller
             'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:100000'],
             'shipping_method' => ['nullable', 'string', 'max:100'],
             'payment_preference' => ['nullable', 'in:online,whatsapp'],
+            'delivery_date' => ['nullable', 'date', 'after_or_equal:today'],
         ]);
 
         $org = Organization::where('slug', $slug)->firstOrFail();
@@ -197,7 +198,7 @@ class PublicCatalogController extends Controller
                 'po_number' => $poNumber,
                 'customer_id' => $customer->id,
                 'order_date' => now()->toDateString(),
-                'delivery_date' => now()->toDateString(),
+                'delivery_date' => $request->input('delivery_date') ?: now()->toDateString(),
                 'status' => 'draft',
                 'source' => 'catalog',
                 'payment_status' => 'unpaid',

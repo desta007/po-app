@@ -39,6 +39,7 @@ export interface CheckoutPayload {
   customer_address: string;
   shipping_method?: string | null;
   payment_preference?: 'online' | 'whatsapp';
+  delivery_date?: string | null;
   items: CheckoutItem[];
 }
 
