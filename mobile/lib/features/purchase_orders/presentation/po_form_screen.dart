@@ -54,7 +54,7 @@ class _PoFormScreenState extends ConsumerState<PoFormScreen> {
   static final _apiDate = DateFormat('yyyy-MM-dd');
 
   late Customer? _customer = widget.po?.customer ?? widget.initialCustomer;
-  late DateTime _orderDate = widget.po != null
+  late final DateTime _orderDate = widget.po != null
       ? (DateTime.tryParse(widget.po!.orderDate) ?? DateTime.now())
       : DateTime.now();
   late DateTime _deliveryDate = widget.po != null
@@ -112,25 +112,6 @@ class _PoFormScreenState extends ConsumerState<PoFormScreen> {
   Future<void> _pickCustomer() async {
     final customer = await showCustomerPicker(context);
     if (customer != null) setState(() => _customer = customer);
-  }
-
-  Future<void> _pickDate({required bool isDelivery}) async {
-    final initial = isDelivery ? _deliveryDate : _orderDate;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: isDelivery ? DateTime.now() : DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isDelivery) {
-          _deliveryDate = picked;
-        } else {
-          _orderDate = picked;
-        }
-      });
-    }
   }
 
   Future<void> _addOrEditItem({_ItemDraft? existing}) async {
@@ -225,26 +206,15 @@ class _PoFormScreenState extends ConsumerState<PoFormScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Tanggal
-          const _SectionTitle('Tanggal'),
-          Row(
-            children: [
-              Expanded(
-                child: _DateField(
-                  label: 'Tgl Order',
-                  value: _orderDate,
-                  onTap: () => _pickDate(isDelivery: false),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _DateField(
-                  label: 'Tgl Kirim',
-                  value: _deliveryDate,
-                  onTap: () => _pickDate(isDelivery: true),
-                ),
-              ),
-            ],
+          // Tanggal Order — otomatis dari tanggal sistem
+          const _SectionTitle('Tanggal Order'),
+          _OrderDateDisplay(value: _orderDate),
+          const SizedBox(height: 16),
+          // Tanggal Kirim — kartu pilihan cepat + tanggal lain
+          const _SectionTitle('Tanggal Kirim'),
+          _DeliveryDatePicker(
+            selected: _deliveryDate,
+            onSelected: (d) => setState(() => _deliveryDate = d),
           ),
           const SizedBox(height: 16),
           // Items
@@ -380,25 +350,172 @@ class _SectionTitle extends StatelessWidget {
       );
 }
 
-class _DateField extends StatelessWidget {
-  const _DateField(
-      {required this.label, required this.value, required this.onTap});
+const _hari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const _bulan = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+];
 
-  final String label;
+// DateTime.weekday: Senin=1..Minggu=7. `% 7` → Minggu=0, Senin=1, ... Sabtu=6.
+String _formatTanggal(DateTime d) =>
+    '${_hari[d.weekday % 7]}, ${d.day} ${_bulan[d.month - 1]} ${d.year}';
+
+bool _sameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Tanggal order: tampil read-only karena otomatis dari tanggal sistem.
+class _OrderDateDisplay extends StatelessWidget {
+  const _OrderDateDisplay({required this.value});
+
   final DateTime value;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.event_outlined, size: 18, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Text(_formatTanggal(value)),
+          const Spacer(),
+          const Text('otomatis',
+              style:
+                  TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pemilih tanggal kirim: kartu 7 hari ke depan + kartu "Tgl lain"
+/// yang membuka date picker penuh untuk tanggal yang lebih jauh.
+class _DeliveryDatePicker extends StatelessWidget {
+  const _DeliveryDatePicker(
+      {required this.selected, required this.onSelected});
+
+  final DateTime selected;
+  final ValueChanged<DateTime> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final t0 = DateTime(now.year, now.month, now.day);
+    final cards = List.generate(7, (i) => t0.add(Duration(days: i)));
+    final custom = !cards.any((d) => _sameDay(d, selected));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 76,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: cards.length + 1,
+            separatorBuilder: (_, index) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              if (i < cards.length) {
+                final d = cards[i];
+                return _DateCard(
+                  top: _sameDay(d, t0) ? 'Hari Ini' : _hari[d.weekday % 7],
+                  day: '${d.day}',
+                  bottom: _bulan[d.month - 1],
+                  selected: _sameDay(d, selected),
+                  onTap: () => onSelected(d),
+                );
+              }
+              return _DateCard(
+                icon: custom ? null : Icons.edit_calendar_outlined,
+                top: custom ? _hari[selected.weekday % 7] : null,
+                day: custom ? '${selected.day}' : null,
+                bottom: custom ? _bulan[selected.month - 1] : 'Tgl lain',
+                dashed: !custom,
+                selected: custom,
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: selected,
+                    firstDate: t0,
+                    lastDate: t0.add(const Duration(days: 365 * 2)),
+                  );
+                  if (picked != null) onSelected(picked);
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text('Dikirim: ${_formatTanggal(selected)}',
+            style: const TextStyle(
+                fontSize: 12, color: AppColors.textSecondary)),
+      ],
+    );
+  }
+}
+
+class _DateCard extends StatelessWidget {
+  const _DateCard({
+    required this.selected,
+    required this.onTap,
+    this.top,
+    this.day,
+    this.bottom,
+    this.icon,
+    this.dashed = false,
+  });
+
+  final bool selected;
+  final VoidCallback onTap;
+  final String? top;
+  final String? day;
+  final String? bottom;
+  final IconData? icon;
+  final bool dashed;
+
+  @override
+  Widget build(BuildContext context) {
+    final sub = selected ? Colors.white70 : AppColors.textSecondary;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 62,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: selected
+                  ? AppColors.primary
+                  : (dashed ? AppColors.textSecondary : AppColors.border)),
         ),
-        child: Text(formatDate(value)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null)
+              Icon(icon, size: 18, color: sub)
+            else ...[
+              Text((top ?? '').toUpperCase(),
+                  style: TextStyle(
+                      fontSize: 9, fontWeight: FontWeight.bold, color: sub)),
+              const SizedBox(height: 2),
+              Text(day ?? '',
+                  style: TextStyle(
+                      fontSize: 20,
+                      height: 1,
+                      fontWeight: FontWeight.bold,
+                      color: selected ? Colors.white : AppColors.textPrimary)),
+            ],
+            const SizedBox(height: 3),
+            Text((bottom ?? '').toUpperCase(),
+                style: TextStyle(
+                    fontSize: 9, fontWeight: FontWeight.w600, color: sub)),
+          ],
+        ),
       ),
     );
   }
