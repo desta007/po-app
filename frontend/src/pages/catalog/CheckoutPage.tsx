@@ -56,7 +56,8 @@ export default function CheckoutPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
-  const [shippingId, setShippingId] = useState<string>('');
+  const [fulfillmentType, setFulfillmentType] = useState<'pickup' | 'delivery'>('delivery');
+  const [deliveryMethodId, setDeliveryMethodId] = useState<string>('');
   const [paymentPref, setPaymentPref] = useState<'online' | 'whatsapp'>('whatsapp');
   const [deliveryDate, setDeliveryDate] = useState<string>(() => toLocalISO(new Date()));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,28 +70,39 @@ export default function CheckoutPage() {
 
   const onlinePaymentAvailable = catalog?.store?.online_payment_available ?? false;
 
-  const shippingOptions = useMemo<ShippingOption[]>(() => {
+  // Delivery options require an address (flat rates + "ongkir dihitung kemudian").
+  const deliveryOptions = useMemo<ShippingOption[]>(() => {
     const s = catalog?.store?.shipping;
     if (!s) return [];
     const opts: ShippingOption[] = s.flat_rates
       .filter(r => r.name.trim())
       .map(r => ({ id: r.name, label: r.name, cost: r.cost }));
-    if (s.allow_pickup) opts.push({ id: 'pickup', label: 'Ambil di Tempat', cost: 0, note: 'Gratis' });
     if (s.allow_shipping_tbd) opts.push({ id: 'tbd', label: 'Ongkir dihitung kemudian', cost: 0, note: 'Dikonfirmasi via WhatsApp' });
     return opts;
   }, [catalog?.store?.shipping]);
+
+  const pickupAvailable = catalog?.store?.shipping?.allow_pickup ?? false;
+  const deliveryAvailable = deliveryOptions.length > 0;
 
   // Preselect sensible defaults once catalog loads.
   useEffect(() => {
     if (!catalog) return;
     setPaymentPref(onlinePaymentAvailable ? 'online' : 'whatsapp');
-    setShippingId(prev => prev || (shippingOptions.length > 0 ? shippingOptions[0]!.id : ''));
-  }, [catalog, onlinePaymentAvailable, shippingOptions]);
+    // Default the fulfillment type to whatever the store actually supports.
+    if (!deliveryAvailable && pickupAvailable) setFulfillmentType('pickup');
+    else if (deliveryAvailable && !pickupAvailable) setFulfillmentType('delivery');
+    setDeliveryMethodId(prev => prev || (deliveryOptions[0]?.id ?? ''));
+  }, [catalog, onlinePaymentAvailable, deliveryAvailable, pickupAvailable, deliveryOptions]);
 
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
-  const selectedShipping = shippingOptions.find(o => o.id === shippingId);
-  const shippingCost = selectedShipping?.cost ?? 0;
+
+  // The shipping_method value the backend expects: 'pickup' or a delivery option id.
+  const effectiveShippingId = fulfillmentType === 'pickup' ? 'pickup' : deliveryMethodId;
+  const selectedDelivery = deliveryOptions.find(o => o.id === deliveryMethodId);
+  const shippingCost = fulfillmentType === 'pickup' ? 0 : (selectedDelivery?.cost ?? 0);
+  const shippingLabel = fulfillmentType === 'pickup' ? 'Ambil Sendiri' : (selectedDelivery?.label ?? null);
   const grandTotal = cartTotal + shippingCost;
+  const addressRequired = fulfillmentType === 'delivery';
 
   const clearCart = () => {
     setCart([]);
@@ -100,13 +112,16 @@ export default function CheckoutPage() {
   const sendViaWhatsApp = (poNumber: string) => {
     let text = `Halo ${catalog?.organization.name}, saya ingin memesan:\n\n`;
     if (poNumber) text += `*No. PO: ${poNumber}*\n\n`;
-    text += `*Data Pemesan*\nNama: ${customerName}\nNo. HP: ${customerPhone}\nAlamat: ${customerAddress}\n\n`;
-    text += `*Tanggal Kirim:* ${deliveryDate}\n\n`;
+    text += `*Data Pemesan*\nNama: ${customerName}\nNo. HP: ${customerPhone}\n`;
+    if (fulfillmentType === 'delivery' && customerAddress.trim()) text += `Alamat: ${customerAddress}\n`;
+    text += `\n`;
+    text += `*Metode:* ${fulfillmentType === 'pickup' ? 'Ambil Sendiri (Pick-up)' : 'Dikirim (Delivery)'}\n`;
+    text += `*Tanggal ${fulfillmentType === 'pickup' ? 'Ambil' : 'Kirim'}:* ${deliveryDate}\n\n`;
     text += `*Detail Pesanan*\n`;
     cart.forEach((item, i) => {
       text += `${i + 1}. ${item.product.name} (x${item.quantity}) - ${formatRupiah(item.product.price * item.quantity)}\n`;
     });
-    if (selectedShipping) text += `\nPengiriman: ${selectedShipping.label}${shippingCost > 0 ? ` (${formatRupiah(shippingCost)})` : ''}`;
+    if (shippingLabel) text += `\nPengiriman: ${shippingLabel}${shippingCost > 0 ? ` (${formatRupiah(shippingCost)})` : ''}`;
     text += `\nTotal: *${formatRupiah(grandTotal)}*\n\nMohon info ketersediaannya. Terima kasih.`;
 
     let phone = catalog?.organization.phone?.replace(/[^0-9]/g, '') || '';
@@ -119,15 +134,19 @@ export default function CheckoutPage() {
   };
 
   const handleSubmitOrder = async () => {
-    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
-      toast.error('Mohon lengkapi Nama, No. HP, dan Alamat Pengiriman.');
+    if (!customerName.trim() || !customerPhone.trim()) {
+      toast.error('Mohon lengkapi Nama dan No. HP.');
+      return;
+    }
+    if (addressRequired && !customerAddress.trim()) {
+      toast.error('Mohon isi Alamat Pengiriman untuk pesanan yang dikirim.');
       return;
     }
     if (!deliveryDate) {
-      toast.error('Pilih tanggal kirim terlebih dahulu.');
+      toast.error('Pilih tanggal terlebih dahulu.');
       return;
     }
-    if (shippingOptions.length > 0 && !shippingId) {
+    if (fulfillmentType === 'delivery' && deliveryAvailable && !deliveryMethodId) {
       toast.error('Pilih metode pengiriman terlebih dahulu.');
       return;
     }
@@ -138,7 +157,7 @@ export default function CheckoutPage() {
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
         customer_address: customerAddress.trim(),
-        shipping_method: shippingId || null,
+        shipping_method: effectiveShippingId || null,
         payment_preference: paymentPref,
         delivery_date: deliveryDate || null,
         items: cart.map(item => ({
@@ -247,6 +266,77 @@ export default function CheckoutPage() {
 
       {/* Content */}
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-36">
+        {/* Metode Pengambilan: Pick-up vs Delivery */}
+        {(pickupAvailable || deliveryAvailable) && (
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Truck size={15} className="text-primary" />
+              <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Metode Pengiriman</h4>
+            </div>
+
+            {/* Segmented toggle */}
+            <div className="flex gap-2">
+              {pickupAvailable && (
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentType('pickup')}
+                  className={`flex-1 flex flex-col items-center gap-1 px-3 py-3 rounded-2xl border transition-all ${fulfillmentType === 'pickup' ? 'border-primary bg-primary text-white shadow-md shadow-primary/20' : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'}`}
+                >
+                  <Store size={20} className={fulfillmentType === 'pickup' ? 'text-white' : 'text-primary'} />
+                  <span className="text-[13px] font-bold">Ambil Sendiri</span>
+                  <span className={`text-[10px] ${fulfillmentType === 'pickup' ? 'text-white/80' : 'text-gray-400'}`}>Pick-up di lokasi</span>
+                </button>
+              )}
+              {deliveryAvailable && (
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentType('delivery')}
+                  className={`flex-1 flex flex-col items-center gap-1 px-3 py-3 rounded-2xl border transition-all ${fulfillmentType === 'delivery' ? 'border-primary bg-primary text-white shadow-md shadow-primary/20' : 'border-gray-200 bg-white text-gray-700 hover:border-primary/40'}`}
+                >
+                  <Truck size={20} className={fulfillmentType === 'delivery' ? 'text-white' : 'text-primary'} />
+                  <span className="text-[13px] font-bold">Dikirim</span>
+                  <span className={`text-[10px] ${fulfillmentType === 'delivery' ? 'text-white/80' : 'text-gray-400'}`}>Delivery ke alamat</span>
+                </button>
+              )}
+            </div>
+
+            {/* Pickup location info */}
+            {fulfillmentType === 'pickup' && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-primary-50 border border-primary-100 p-3">
+                <MapPin size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                <div className="text-[12px]">
+                  <p className="font-semibold text-gray-800">Ambil di lokasi toko</p>
+                  <p className="text-gray-600">{catalog.organization.address || 'Alamat & jam pengambilan dikonfirmasi via WhatsApp.'}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Delivery method options */}
+            {fulfillmentType === 'delivery' && deliveryOptions.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Pilih Pengiriman</p>
+                {deliveryOptions.map(opt => {
+                  const active = deliveryMethodId === opt.id;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.id}
+                      onClick={() => setDeliveryMethodId(opt.id)}
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border text-left transition-all ${active ? 'border-primary bg-primary shadow-md shadow-primary/20' : 'border-gray-200 bg-white hover:border-primary/40'}`}
+                    >
+                      <div>
+                        <span className={`block text-[13px] font-semibold ${active ? 'text-white' : 'text-gray-800'}`}>{opt.label}</span>
+                        {opt.note && <p className={`text-[11px] ${active ? 'text-white/80' : 'text-gray-500'}`}>{opt.note}</p>}
+                      </div>
+                      <span className={`text-[13px] font-bold whitespace-nowrap ${active ? 'text-white' : 'text-primary'}`}>{opt.cost > 0 ? formatRupiah(opt.cost) : 'Gratis'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Data Penerima */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3.5">
           <div className="flex items-center gap-2">
@@ -255,56 +345,29 @@ export default function CheckoutPage() {
           </div>
           <Input label="Nama Lengkap" placeholder="Cth: Budi Santoso" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
           <Input label="No. WhatsApp" placeholder="Cth: 08123456789" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-              <MapPin size={13} className="text-gray-400" /> Alamat Pengiriman
-            </label>
-            <textarea
-              className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
-              placeholder="Cth: Jl. Sudirman No. 12, RT 01/02, Jakarta"
-              value={customerAddress}
-              onChange={(e) => setCustomerAddress(e.target.value)}
-            />
-          </div>
+          {addressRequired && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                <MapPin size={13} className="text-gray-400" /> Alamat Pengiriman
+              </label>
+              <textarea
+                className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
+                placeholder="Cth: Jl. Sudirman No. 12, RT 01/02, Jakarta"
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+              />
+            </div>
+          )}
         </section>
 
-        {/* Tanggal Kirim */}
+        {/* Jadwal */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-1">
           <div className="flex items-center gap-2 mb-1">
             <CalendarDays size={15} className="text-primary" />
-            <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Jadwal Pengiriman</h4>
+            <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">{fulfillmentType === 'pickup' ? 'Jadwal Pengambilan' : 'Jadwal Pengiriman'}</h4>
           </div>
           <DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} />
         </section>
-
-        {/* Metode Pengiriman */}
-        {shippingOptions.length > 0 && (
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Truck size={15} className="text-primary" />
-              <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Metode Pengiriman</h4>
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              {shippingOptions.map(opt => {
-                const active = shippingId === opt.id;
-                return (
-                  <button
-                    type="button"
-                    key={opt.id}
-                    onClick={() => setShippingId(opt.id)}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border text-left transition-all ${active ? 'border-primary bg-primary shadow-md shadow-primary/20' : 'border-gray-200 bg-white hover:border-primary/40'}`}
-                  >
-                    <div>
-                      <span className={`block text-[13px] font-semibold ${active ? 'text-white' : 'text-gray-800'}`}>{opt.label}</span>
-                      {opt.note && <p className={`text-[11px] ${active ? 'text-white/80' : 'text-gray-500'}`}>{opt.note}</p>}
-                    </div>
-                    <span className={`text-[13px] font-bold whitespace-nowrap ${active ? 'text-white' : 'text-primary'}`}>{opt.cost > 0 ? formatRupiah(opt.cost) : 'Gratis'}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
         {/* Metode Pembayaran */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
@@ -370,9 +433,9 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-[13px] text-gray-600">
                 <span>Subtotal</span><span>{formatRupiah(cartTotal)}</span>
               </div>
-              {selectedShipping && (
+              {shippingLabel && (
                 <div className="flex justify-between text-[13px] text-gray-600">
-                  <span>Ongkir ({selectedShipping.label})</span>
+                  <span>{fulfillmentType === 'pickup' ? shippingLabel : `Ongkir (${shippingLabel})`}</span>
                   <span>{shippingCost > 0 ? formatRupiah(shippingCost) : 'Gratis'}</span>
                 </div>
               )}
@@ -395,7 +458,7 @@ export default function CheckoutPage() {
           <Button
             onClick={handleSubmitOrder}
             className={`flex-1 rounded-full h-12 ${paymentPref === 'online' ? '' : 'bg-green-500 hover:bg-green-600 text-white border-0'}`}
-            disabled={!customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || isSubmitting}
+            disabled={!customerName.trim() || !customerPhone.trim() || (addressRequired && !customerAddress.trim()) || isSubmitting}
             loading={isSubmitting}
           >
             {paymentPref === 'online' ? 'Lanjut ke Pembayaran' : 'Kirim ke WhatsApp'}
