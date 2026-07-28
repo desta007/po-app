@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatRupiah, storageUrl } from '@/lib/utils';
-import { Package, Store, ShoppingCart, Minus, Plus } from 'lucide-react';
+import { Package, Store, ShoppingCart, Minus, Plus, PackageSearch } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -160,12 +160,19 @@ export default function CatalogPage() {
                 <Store size={24} />
               </div>
             )}
-            <div>
-              <h1 className="text-xl font-extrabold text-gray-900">{catalog.organization.name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-xl font-extrabold text-gray-900 line-clamp-1">{catalog.organization.name}</h1>
               <p className="text-[13px] text-gray-500 line-clamp-1">
                 {catalog.organization.address} {catalog.organization.phone && `• ${catalog.organization.phone}`}
               </p>
             </div>
+            <button
+              onClick={() => navigate(`/katalog/${slug}/lacak`)}
+              className="ml-auto flex items-center gap-1.5 flex-shrink-0 px-3 py-2 rounded-full border border-gray-200 text-[13px] font-semibold text-gray-700 hover:border-primary hover:text-primary transition-colors"
+            >
+              <PackageSearch size={16} />
+              <span className="hidden sm:inline">Lacak Pesanan</span>
+            </button>
           </div>
         </div>
       </header>

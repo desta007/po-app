@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DeliveryDatePicker, toLocalISO } from '@/components/ui/delivery-date-picker';
 import { formatRupiah } from '@/lib/utils';
-import { ArrowLeft, Store, User, Truck, Wallet, Receipt, Check, MapPin, CalendarDays, CreditCard, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Store, User, Truck, Wallet, Receipt, Check, MapPin, CalendarDays, CreditCard, MessageCircle, Minus, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ShippingOption {
@@ -61,6 +61,29 @@ export default function CheckoutPage() {
   const [paymentPref, setPaymentPref] = useState<'online' | 'whatsapp'>('whatsapp');
   const [deliveryDate, setDeliveryDate] = useState<string>(() => toLocalISO(new Date()));
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Keep localStorage in sync so edits here reflect back on the catalog page.
+  useEffect(() => {
+    try {
+      localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [cart, cartStorageKey]);
+
+  const handleUpdateQuantity = (productId: string, delta: number) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.product.id === productId);
+      if (!existing) return prev;
+      const newQty = existing.quantity + delta;
+      if (newQty <= 0) return prev.filter(item => item.product.id !== productId);
+      return prev.map(item => item.product.id === productId ? { ...item, quantity: newQty } : item);
+    });
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    setCart(prev => prev.filter(item => item.product.id !== productId));
+  };
 
   const { data: catalog, isLoading, isError } = useQuery({
     queryKey: ['catalog', slug],
@@ -178,6 +201,11 @@ export default function CheckoutPage() {
       });
 
       const poNumber = res.data.po_number;
+
+      // Remember the last order so the customer can re-open its status later.
+      try {
+        localStorage.setItem(`catalog-last-order-${slug}`, JSON.stringify({ poNumber, phone: customerPhone.trim() }));
+      } catch { /* ignore */ }
 
       // Online payment path
       if (paymentPref === 'online' && res.data.online_payment_available) {
@@ -424,18 +452,55 @@ export default function CheckoutPage() {
 
         {/* Ringkasan Pesanan */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Receipt size={15} className="text-primary" />
-            <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Ringkasan Pesanan</h4>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Receipt size={15} className="text-primary" />
+              <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Ringkasan Pesanan</h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/katalog/${slug}`)}
+              className="flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
+            >
+              <Plus size={13} /> Tambah item
+            </button>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {cart.map((item, idx) => (
-              <div key={idx} className="flex justify-between text-[13px] gap-3">
-                <div className="flex gap-2 min-w-0">
-                  <span className="font-semibold text-primary flex-shrink-0">{item.quantity}×</span>
-                  <span className="text-gray-800 line-clamp-1">{item.product.name}</span>
+              <div key={idx} className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-gray-800 line-clamp-1">{item.product.name}</p>
+                  <p className="text-[12px] text-gray-500">{formatRupiah(item.product.price)} × {item.quantity} = <span className="font-semibold text-gray-700">{formatRupiah(item.product.price * item.quantity)}</span></p>
                 </div>
-                <span className="font-semibold text-gray-900 whitespace-nowrap">{formatRupiah(item.product.price * item.quantity)}</span>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="flex items-center border border-gray-200 rounded-full overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateQuantity(item.product.id, -1)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+                      aria-label="Kurangi"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-7 text-center text-[13px] font-bold text-gray-900">{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateQuantity(item.product.id, 1)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+                      aria-label="Tambah"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveItem(item.product.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-danger hover:bg-danger-light transition-colors"
+                    aria-label="Hapus item"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             ))}
             <div className="border-t border-dashed border-gray-200 pt-2.5 space-y-1.5">
