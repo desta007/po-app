@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Trash2, Check } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { DeliveryDatePicker, OrderDateDisplay, formatTanggal } from '@/components/ui/delivery-date-picker';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
 
@@ -184,9 +185,9 @@ export default function PurchaseOrderEditPage() {
 
       {step === 2 && (
         <Card className="max-w-xl mx-auto" padding="lg">
+          <div className="mb-5"><OrderDateDisplay value={orderDate} /></div>
+          <div className="mb-5"><DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} /></div>
           <div className="grid sm:grid-cols-2 gap-3 mb-4">
-            <Input label="Tanggal Order" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
-            <Input label="Tanggal Kirim" type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
             <Input label="Diskon (Rp)" type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
             <Input label="Pajak (Rp)" type="number" value={tax} onChange={(e) => setTax(Number(e.target.value))} />
             <Input label="Ongkos Kirim (Rp)" type="number" value={shippingCost} onChange={(e) => setShippingCost(Number(e.target.value))} />
@@ -200,7 +201,7 @@ export default function PurchaseOrderEditPage() {
         <Card className="max-w-xl mx-auto" padding="lg">
           <h3 className="text-base font-bold mb-4">Review Perubahan PO</h3>
           <p className="text-[13px] mb-1"><strong>Customer:</strong> {selectedCustomer?.name}</p>
-          <p className="text-[13px] mb-3"><strong>Kirim:</strong> {deliveryDate}</p>
+          <p className="text-[13px] mb-3"><strong>Kirim:</strong> {formatTanggal(deliveryDate)}</p>
           <div className="rounded-[10px] border border-gray-200 overflow-hidden mb-4">
             <table className="w-full border-collapse"><thead className="bg-gray-50 border-b border-gray-200"><tr><th className="p-2.5 text-left text-[11px] font-bold text-gray-500 uppercase">Produk</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Qty</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Harga</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Subtotal</th></tr></thead>
             <tbody>{items.filter(it => it.product_name).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>

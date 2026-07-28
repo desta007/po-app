@@ -12,17 +12,11 @@ import { Card } from '@/components/ui/card';
 import { ROUTES } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Plus, Trash2, Check, CalendarDays, CalendarPlus } from 'lucide-react';
+import { Plus, Trash2, Check } from 'lucide-react';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { DeliveryDatePicker, OrderDateDisplay, toLocalISO, formatTanggal } from '@/components/ui/delivery-date-picker';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
-
-const HARI = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-const toLocalISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const bulanShort = (d: Date) => BULAN[d.getMonth()];
-const hariShort = (d: Date) => HARI[d.getDay()];
-const formatTanggal = (iso: string) => { const d = new Date(iso + 'T00:00'); return `${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`; };
 
 export default function PurchaseOrderCreatePage() {
   const navigate = useNavigate();
@@ -65,10 +59,6 @@ export default function PurchaseOrderCreatePage() {
   const handleSubmit = () => { createPO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, payment_method: paymentMethod, notes, items }); };
   const steps = ['Customer', 'Items', 'Jadwal & Bayar', 'Review'];
   const selectedCustomer = customers.find((c: any) => c.id === customerId);
-
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const dateCards = Array.from({ length: 7 }, (_, i) => { const d = new Date(today); d.setDate(d.getDate() + i); return d; });
-  const customSelected = !dateCards.some((d) => toLocalISO(d) === deliveryDate);
 
   return (
     <div>
@@ -135,50 +125,8 @@ export default function PurchaseOrderCreatePage() {
 
       {step === 2 && (
         <Card className="max-w-xl mx-auto" padding="lg">
-          {/* Tanggal Order — otomatis dari tanggal sistem */}
-          <div className="mb-5">
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Tanggal Order</label>
-            <div className="flex items-center gap-2 border border-gray-200 bg-gray-50 rounded-[6px] px-3 py-2.5 text-[14px] text-gray-700">
-              <CalendarDays size={16} className="text-primary" />
-              <span>{formatTanggal(orderDate)}</span>
-              <span className="ml-auto text-[11px] text-gray-400">otomatis</span>
-            </div>
-          </div>
-
-          {/* Tanggal Kirim — kartu pilihan cepat + tanggal lain */}
-          <div className="mb-5">
-            <label className="block text-xs font-semibold text-gray-700 mb-2">Tanggal Kirim</label>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-              {dateCards.map((d) => {
-                const iso = toLocalISO(d);
-                const selected = deliveryDate === iso;
-                const isToday = iso === toLocalISO(today);
-                return (
-                  <button key={iso} type="button" onClick={() => setDeliveryDate(iso)}
-                    className={`flex-shrink-0 w-[66px] rounded-[12px] border py-2.5 flex flex-col items-center gap-0.5 transition ${selected ? 'bg-primary border-primary text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-primary'}`}>
-                    <span className={`text-[10px] font-bold uppercase ${selected ? 'text-white/80' : 'text-gray-400'}`}>{isToday ? 'Hari Ini' : hariShort(d)}</span>
-                    <span className="text-[20px] font-bold leading-none">{d.getDate()}</span>
-                    <span className={`text-[10px] font-semibold uppercase ${selected ? 'text-white/80' : 'text-gray-400'}`}>{bulanShort(d)}</span>
-                  </button>
-                );
-              })}
-              <label className={`flex-shrink-0 w-[66px] rounded-[12px] border py-2.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition ${customSelected ? 'bg-primary border-primary text-white' : 'bg-white border-dashed border-gray-300 text-gray-500 hover:border-primary'}`}>
-                {customSelected ? (
-                  <>
-                    <span className="text-[20px] font-bold leading-none">{new Date(deliveryDate + 'T00:00').getDate()}</span>
-                    <span className="text-[10px] font-semibold uppercase text-white/80">{bulanShort(new Date(deliveryDate + 'T00:00'))}</span>
-                  </>
-                ) : (
-                  <>
-                    <CalendarPlus size={18} />
-                    <span className="text-[10px] font-semibold text-center leading-tight">Tanggal<br />lain</span>
-                  </>
-                )}
-                <input type="date" className="sr-only" min={toLocalISO(today)} value={deliveryDate} onChange={(e) => { if (e.target.value) setDeliveryDate(e.target.value); }} />
-              </label>
-            </div>
-            <p className="text-[12px] text-gray-500 mt-1">Dikirim: <strong className="text-gray-700">{formatTanggal(deliveryDate)}</strong></p>
-          </div>
+          <div className="mb-5"><OrderDateDisplay value={orderDate} /></div>
+          <div className="mb-5"><DeliveryDatePicker value={deliveryDate} onChange={setDeliveryDate} /></div>
 
           <div className="grid sm:grid-cols-2 gap-3 mb-4">
             <Input label="Diskon (Rp)" type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
