@@ -263,11 +263,20 @@ class PublicCatalogController extends Controller
 
         $shipping = $org->onlineStore()['shipping'] ?? [];
 
-        if ($method === 'pickup' && ($shipping['allow_pickup'] ?? false)) {
+        $flatRates = $shipping['flat_rates'] ?? [];
+        $allowPickup = (bool) ($shipping['allow_pickup'] ?? false);
+        $allowTbd = (bool) ($shipping['allow_shipping_tbd'] ?? false);
+
+        // When the store has configured no fulfillment method at all, the checkout
+        // still offers pickup + "ongkir dihitung kemudian" as a baseline, so accept
+        // those here too (both are zero-cost — no way to underpay a flat rate).
+        $noConfig = empty($flatRates) && ! $allowPickup && ! $allowTbd;
+
+        if ($method === 'pickup' && ($allowPickup || $noConfig)) {
             return [0.0, 'Ambil di Tempat'];
         }
 
-        if ($method === 'tbd' && ($shipping['allow_shipping_tbd'] ?? false)) {
+        if ($method === 'tbd' && ($allowTbd || $noConfig)) {
             return [0.0, 'Ongkir dihitung kemudian'];
         }
 

@@ -71,17 +71,26 @@ export default function CheckoutPage() {
   const onlinePaymentAvailable = catalog?.store?.online_payment_available ?? false;
 
   // Delivery options require an address (flat rates + "ongkir dihitung kemudian").
-  const deliveryOptions = useMemo<ShippingOption[]>(() => {
+  // If the store has configured nothing at all, we fall back to offering both
+  // pickup and a "confirmed via WhatsApp" delivery so the choice always appears.
+  const { deliveryOptions, pickupAvailable } = useMemo(() => {
     const s = catalog?.store?.shipping;
-    if (!s) return [];
-    const opts: ShippingOption[] = s.flat_rates
+    const opts: ShippingOption[] = (s?.flat_rates ?? [])
       .filter(r => r.name.trim())
       .map(r => ({ id: r.name, label: r.name, cost: r.cost }));
-    if (s.allow_shipping_tbd) opts.push({ id: 'tbd', label: 'Ongkir dihitung kemudian', cost: 0, note: 'Dikonfirmasi via WhatsApp' });
-    return opts;
+    if (s?.allow_shipping_tbd) opts.push({ id: 'tbd', label: 'Ongkir dihitung kemudian', cost: 0, note: 'Dikonfirmasi via WhatsApp' });
+
+    const configuredPickup = s?.allow_pickup ?? false;
+    const noConfig = opts.length === 0 && !configuredPickup;
+    if (noConfig) {
+      return {
+        deliveryOptions: [{ id: 'tbd', label: 'Ongkir dihitung kemudian', cost: 0, note: 'Dikonfirmasi via WhatsApp' }] as ShippingOption[],
+        pickupAvailable: true,
+      };
+    }
+    return { deliveryOptions: opts, pickupAvailable: configuredPickup };
   }, [catalog?.store?.shipping]);
 
-  const pickupAvailable = catalog?.store?.shipping?.allow_pickup ?? false;
   const deliveryAvailable = deliveryOptions.length > 0;
 
   // Preselect sensible defaults once catalog loads.
