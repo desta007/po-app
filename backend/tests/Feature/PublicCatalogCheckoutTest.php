@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendWhatsAppNotification;
 use App\Models\Organization;
 use App\Models\OrganizationMember;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PublicCatalogCheckoutTest extends TestCase
@@ -151,5 +153,42 @@ class PublicCatalogCheckoutTest extends TestCase
         $response->assertCreated()->assertJsonStructure(['message', 'po_number']);
         $this->assertEquals(1, PurchaseOrder::count());
         $this->assertEquals(150000, (float) PurchaseOrder::firstOrFail()->total);
+    }
+
+    public function test_checkout_dispatches_whatsapp_to_seller_and_customer(): void
+    {
+        Queue::fake();
+        [$org, $product] = $this->makeStore();
+
+        $this->postJson("/api/catalog/{$org->slug}/checkout", [
+            'customer_name' => 'Budi',
+            'customer_phone' => '0811111111',
+            'items' => [[
+                'product_id' => $product->id,
+                'quantity' => 1,
+            ]],
+        ])->assertCreated();
+
+        // One message to the store's phone, one to the customer.
+        Queue::assertPushed(SendWhatsAppNotification::class, 2);
+        Queue::assertPushed(SendWhatsAppNotification::class, fn ($job) => $job->phone === '08123456789');
+        Queue::assertPushed(SendWhatsAppNotification::class, fn ($job) => $job->phone === '0811111111');
+    }
+
+    public function test_failed_checkout_does_not_dispatch_whatsapp(): void
+    {
+        Queue::fake();
+        [$org, $product] = $this->makeStore(['stock_qty' => 1]);
+
+        $this->postJson("/api/catalog/{$org->slug}/checkout", [
+            'customer_name' => 'Budi',
+            'customer_phone' => '0811111111',
+            'items' => [[
+                'product_id' => $product->id,
+                'quantity' => 5,
+            ]],
+        ])->assertStatus(422);
+
+        Queue::assertNothingPushed();
     }
 }

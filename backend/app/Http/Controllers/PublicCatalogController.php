@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Concerns\VerifiesCustomerPhone;
 use App\Http\Resources\ProductResource;
+use App\Jobs\SendWhatsAppNotification;
 use App\Models\Customer;
 use App\Models\Organization;
 use App\Models\Product;
@@ -102,7 +103,7 @@ class PublicCatalogController extends Controller
         // Shipping cost is derived from the store's own config, never trusted from the client.
         [$shippingCost, $shippingLabel] = $this->resolveShipping($org, $request->input('shipping_method'));
 
-        return DB::transaction(function () use ($request, $org, $owner, $shippingCost, $shippingLabel) {
+        [$po, $customer, $lineItems, $total] = DB::transaction(function () use ($request, $org, $owner, $shippingCost, $shippingLabel) {
             $items = $request->input('items');
 
             // Load only products that genuinely belong to this store's public catalog.
@@ -240,14 +241,109 @@ class PublicCatalogController extends Controller
                 );
             }
 
-            return response()->json([
-                'message' => 'Pesanan berhasil dibuat.',
-                'po_number' => $poNumber,
-                'total' => $total,
-                'shipping_cost' => $shippingCost,
-                'online_payment_available' => $org->isOnlinePaymentEnabled(),
-            ], 201);
+            return [$po, $customer, $lineItems, $total];
         });
+
+        // Fire-and-forget WhatsApp messages. Dispatched only after the transaction
+        // has committed (we're outside DB::transaction now), so a rolled-back order
+        // never triggers a send, and a WhatsApp/queue failure never fails checkout.
+        $sellerPhone = $org->phone ?: $owner?->phone;
+        if ($sellerPhone) {
+            SendWhatsAppNotification::dispatch(
+                $sellerPhone,
+                $this->buildSellerMessage($org, $po, $customer, $lineItems, $shippingLabel, $shippingCost, $total),
+            );
+        }
+
+        if ($customer->phone) {
+            SendWhatsAppNotification::dispatch(
+                $customer->phone,
+                $this->buildCustomerMessage($org, $po, $customer, $lineItems, $shippingLabel, $shippingCost, $total),
+            );
+        }
+
+        return response()->json([
+            'message' => 'Pesanan berhasil dibuat.',
+            'po_number' => $po->po_number,
+            'total' => $total,
+            'shipping_cost' => $shippingCost,
+            'online_payment_available' => $org->isOnlinePaymentEnabled(),
+        ], 201);
+    }
+
+    /**
+     * WhatsApp message sent to the store owner when a catalog order comes in.
+     *
+     * @param  array<int, array<string, mixed>>  $lineItems
+     */
+    private function buildSellerMessage(Organization $org, PurchaseOrder $po, Customer $customer, array $lineItems, ?string $shippingLabel, float $shippingCost, float $total): string
+    {
+        $text = "🛒 *Pesanan Baru dari Katalog*\n";
+        $text .= "No. PO: *{$po->po_number}*\n\n";
+        $text .= "*Data Pemesan*\n";
+        $text .= "Nama: {$customer->name}\n";
+        $text .= "No. HP: {$customer->phone}\n";
+        if ($customer->address) {
+            $text .= "Alamat: {$customer->address}\n";
+        }
+        $text .= "Tanggal: " . $this->formatDate($po->delivery_date) . "\n\n";
+        $text .= $this->formatItemLines($lineItems, $shippingLabel, $shippingCost, $total);
+        $text .= "\n\nBuka aplikasi untuk memproses pesanan ini.";
+
+        return $text;
+    }
+
+    /**
+     * WhatsApp confirmation sent to the customer after checkout.
+     *
+     * @param  array<int, array<string, mixed>>  $lineItems
+     */
+    private function buildCustomerMessage(Organization $org, PurchaseOrder $po, Customer $customer, array $lineItems, ?string $shippingLabel, float $shippingCost, float $total): string
+    {
+        $text = "Halo {$customer->name}, terima kasih telah memesan di *{$org->name}*! 🙏\n\n";
+        $text .= "Pesanan Anda sudah kami terima.\n";
+        $text .= "No. PO: *{$po->po_number}*\n";
+        $text .= "Tanggal: " . $this->formatDate($po->delivery_date) . "\n\n";
+        $text .= $this->formatItemLines($lineItems, $shippingLabel, $shippingCost, $total);
+
+        $statusUrl = rtrim((string) config('app.frontend_url'), '/')
+            . "/katalog/{$org->slug}/pesanan/" . rawurlencode($po->po_number);
+        $text .= "\n\nCek status pesanan Anda di:\n{$statusUrl}";
+        $text .= "\n\nKami akan segera mengonfirmasi ketersediaan & pembayaran. Terima kasih!";
+
+        return $text;
+    }
+
+    /**
+     * Shared "*Detail Pesanan*" block used in both seller and customer messages.
+     *
+     * @param  array<int, array<string, mixed>>  $lineItems
+     */
+    private function formatItemLines(array $lineItems, ?string $shippingLabel, float $shippingCost, float $total): string
+    {
+        $text = "*Detail Pesanan*\n";
+        foreach ($lineItems as $i => $item) {
+            $lineTotal = 'Rp' . number_format((float) $item['subtotal'], 0, ',', '.');
+            $qty = rtrim(rtrim(number_format((float) $item['quantity'], 2, '.', ''), '0'), '.');
+            $text .= ($i + 1) . ". {$item['product_name']} (x{$qty}) - {$lineTotal}\n";
+        }
+        if ($shippingLabel) {
+            $text .= "Pengiriman: {$shippingLabel}";
+            $text .= $shippingCost > 0 ? ' (Rp' . number_format($shippingCost, 0, ',', '.') . ')' : '';
+            $text .= "\n";
+        }
+        $text .= "Total: *Rp" . number_format($total, 0, ',', '.') . "*";
+
+        return $text;
+    }
+
+    private function formatDate(mixed $date): string
+    {
+        try {
+            return \Illuminate\Support\Carbon::parse($date)->format('d M Y');
+        } catch (\Throwable) {
+            return (string) $date;
+        }
     }
 
     /**
