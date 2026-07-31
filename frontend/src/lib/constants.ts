@@ -1,8 +1,7 @@
 import type { POStatus, PaymentStatus } from '@/types/purchase-order';
 
 export const PO_STATUS_CONFIG: Record<POStatus, { label: string; color: string; bgColor: string }> = {
-  draft: { label: 'Draft', color: '#9CA3AF', bgColor: '#F3F4F6' },
-  confirmed: { label: 'Dikonfirmasi', color: '#1F4E79', bgColor: '#DBEAFE' },
+  draft: { label: 'Baru', color: '#9CA3AF', bgColor: '#F3F4F6' },
   in_progress: { label: 'Diproses', color: '#D97706', bgColor: '#FEF3C7' },
   completed: { label: 'Selesai', color: '#C8A2C8', bgColor: '#F0E6F0' },
   cancelled: { label: 'Dibatalkan', color: '#C00000', bgColor: '#FEE2E2' },

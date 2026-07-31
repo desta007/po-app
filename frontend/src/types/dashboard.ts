@@ -1,7 +1,6 @@
 export interface TodaySummary {
   total_po: number;
   draft: number;
-  confirmed: number;
   in_progress: number;
   completed: number;
   total_revenue: number;

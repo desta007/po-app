@@ -66,7 +66,6 @@ class DashboardController extends Controller
 
             'total_orders_this_month' => $posThisMonth->count(),
             'draft' => $posThisMonth->where('status', 'draft')->count(),
-            'confirmed' => $posThisMonth->where('status', 'confirmed')->count(),
             'in_progress' => $posThisMonth->where('status', 'in_progress')->count(),
             'completed' => $posThisMonth->where('status', 'completed')->count(),
         ]);

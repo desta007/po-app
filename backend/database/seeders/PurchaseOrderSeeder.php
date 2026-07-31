@@ -21,7 +21,7 @@ class PurchaseOrderSeeder extends Seeder
         $products = Product::where('organization_id', $org->id)->get();
 
         $statuses = ['draft', 'draft', 'draft', 'draft', 'draft',
-                     'confirmed', 'confirmed', 'confirmed', 'confirmed', 'confirmed',
+                     'in_progress', 'in_progress', 'in_progress', 'in_progress', 'in_progress',
                      'in_progress', 'in_progress', 'in_progress', 'in_progress', 'in_progress', 'in_progress', 'in_progress', 'in_progress',
                      'completed', 'completed', 'completed', 'completed', 'completed',
                      'cancelled', 'cancelled'];
@@ -104,9 +104,8 @@ class PurchaseOrderSeeder extends Seeder
             ]);
 
             $transitions = match ($status) {
-                'confirmed' => [['draft', 'confirmed']],
-                'in_progress' => [['draft', 'confirmed'], ['confirmed', 'in_progress']],
-                'completed' => [['draft', 'confirmed'], ['confirmed', 'in_progress'], ['in_progress', 'completed']],
+                'in_progress' => [['draft', 'in_progress']],
+                'completed' => [['draft', 'in_progress'], ['in_progress', 'completed']],
                 'cancelled' => [['draft', 'cancelled']],
                 default => [],
             };

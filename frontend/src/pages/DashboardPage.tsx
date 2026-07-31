@@ -105,7 +105,7 @@ export default function DashboardPage() {
       {/* Status breakdown */}
       {t && (
         <div className="flex flex-wrap gap-2 mb-6">
-          {(['draft', 'confirmed', 'in_progress', 'completed'] as const).map((s) => (
+          {(['draft', 'in_progress', 'completed'] as const).map((s) => (
             <Badge key={s} dot style={{ backgroundColor: PO_STATUS_CONFIG[s].bgColor, color: PO_STATUS_CONFIG[s].color }}>
               {PO_STATUS_CONFIG[s].label}: {(t as any)[s] ?? 0}
             </Badge>

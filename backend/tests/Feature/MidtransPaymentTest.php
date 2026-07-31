@@ -173,7 +173,7 @@ class MidtransPaymentTest extends TestCase
 
     // --- Webhook ---
 
-    public function test_webhook_with_valid_signature_marks_order_paid_and_confirmed(): void
+    public function test_webhook_with_valid_signature_marks_order_paid_and_in_progress(): void
     {
         [$org, $owner] = $this->makeStore();
         $po = $this->makeOrder($org, $owner);
@@ -201,7 +201,7 @@ class MidtransPaymentTest extends TestCase
 
         $po->refresh();
         $this->assertEquals(PaymentStatus::PAID, $po->payment_status);
-        $this->assertEquals(PurchaseOrderStatus::CONFIRMED, $po->status);
+        $this->assertEquals(PurchaseOrderStatus::IN_PROGRESS, $po->status);
         $this->assertEquals(100000, (float) $po->paid_amount);
         $this->assertDatabaseHas('payment_transactions', ['gateway_order_id' => $orderId, 'status' => 'paid']);
     }
@@ -238,7 +238,7 @@ class MidtransPaymentTest extends TestCase
     {
         [$org, $owner] = $this->makeStore();
         $po = $this->makeOrder($org, $owner);
-        $po->update(['payment_status' => 'paid', 'status' => 'confirmed', 'paid_amount' => 100000]);
+        $po->update(['payment_status' => 'paid', 'status' => 'in_progress', 'paid_amount' => 100000]);
 
         $orderId = $po->po_number . '-abc123';
         PaymentTransaction::create([

@@ -12,7 +12,6 @@ class CalendarEventResource extends JsonResource
     {
         $statusColors = [
             'draft' => '#9CA3AF',
-            'confirmed' => '#1F4E79',
             'in_progress' => '#FFC000',
             'completed' => '#C8A2C8',
             'cancelled' => '#C00000',

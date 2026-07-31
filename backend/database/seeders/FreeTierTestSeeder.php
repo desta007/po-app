@@ -299,7 +299,7 @@ class FreeTierTestSeeder extends Seeder
         array $products,
         int $count
     ): void {
-        $statuses = ['draft', 'confirmed', 'in_progress', 'completed'];
+        $statuses = ['draft', 'in_progress', 'completed'];
         $paymentStatuses = ['unpaid', 'dp', 'paid'];
 
         for ($i = 1; $i <= $count; $i++) {

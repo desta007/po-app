@@ -92,9 +92,8 @@ export default function ReportPage() {
           <CardContent>
             {[
               { label: 'Selesai', count: t.completed || 0, pct: totalOrders > 0 ? Math.round(((t.completed || 0) / totalOrders) * 100) : 0, color: '#70AD47', bg: 'bg-accent-light text-accent' },
-              { label: 'Confirmed', count: t.confirmed || 0, pct: totalOrders > 0 ? Math.round(((t.confirmed || 0) / totalOrders) * 100) : 0, color: '#1F4E79', bg: 'bg-primary-50 text-primary' },
-              { label: 'Progress', count: t.in_progress || 0, pct: totalOrders > 0 ? Math.round(((t.in_progress || 0) / totalOrders) * 100) : 0, color: '#FFC000', bg: 'bg-warning-light text-amber-700' },
-              { label: 'Draft', count: t.draft || 0, pct: totalOrders > 0 ? Math.round(((t.draft || 0) / totalOrders) * 100) : 0, color: '#A3A3A3', bg: 'bg-gray-100 text-gray-700' },
+              { label: 'Diproses', count: t.in_progress || 0, pct: totalOrders > 0 ? Math.round(((t.in_progress || 0) / totalOrders) * 100) : 0, color: '#FFC000', bg: 'bg-warning-light text-amber-700' },
+              { label: 'Baru', count: t.draft || 0, pct: totalOrders > 0 ? Math.round(((t.draft || 0) / totalOrders) * 100) : 0, color: '#A3A3A3', bg: 'bg-gray-100 text-gray-700' },
             ].map((s) => (
               <div key={s.label} className="mb-3">
                 <div className="flex justify-between text-xs mb-1"><span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${s.bg}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{s.label} ({s.count})</span><strong>{s.pct}%</strong></div>

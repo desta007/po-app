@@ -130,9 +130,9 @@ class PublicPaymentController extends Controller
         $po->paid_amount = $po->total;
         $po->payment_method = 'Midtrans';
 
-        // Move a fresh draft forward to confirmed on successful payment.
+        // Move a fresh draft forward to in-progress on successful payment.
         if ($po->status === PurchaseOrderStatus::DRAFT) {
-            $po->status = PurchaseOrderStatus::CONFIRMED;
+            $po->status = PurchaseOrderStatus::IN_PROGRESS;
         }
         $po->save();
 

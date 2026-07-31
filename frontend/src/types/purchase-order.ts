@@ -1,6 +1,6 @@
 import type { Customer } from './customer';
 
-export type POStatus = 'draft' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+export type POStatus = 'draft' | 'in_progress' | 'completed' | 'cancelled';
 export type PaymentStatus = 'unpaid' | 'dp' | 'paid';
 
 export interface PurchaseOrderItem {

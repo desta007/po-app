@@ -25,7 +25,7 @@ class SendEmailNotification implements ShouldQueue
         if (!$email) return;
 
         $mailable = match ($this->status) {
-            PurchaseOrderStatus::CONFIRMED => new PurchaseOrderConfirmation($this->po),
+            PurchaseOrderStatus::IN_PROGRESS => new PurchaseOrderConfirmation($this->po),
             default => null,
         };
 

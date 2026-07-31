@@ -11,7 +11,7 @@ class UpdateStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'in:draft,confirmed,in_progress,completed,cancelled'],
+            'status' => ['required', 'in:draft,in_progress,completed,cancelled'],
             'reason' => ['nullable', 'string'],
         ];
     }

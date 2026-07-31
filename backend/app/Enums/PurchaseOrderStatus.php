@@ -5,7 +5,6 @@ namespace App\Enums;
 enum PurchaseOrderStatus: string
 {
     case DRAFT = 'draft';
-    case CONFIRMED = 'confirmed';
     case IN_PROGRESS = 'in_progress';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
@@ -13,8 +12,7 @@ enum PurchaseOrderStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::DRAFT => 'Draft',
-            self::CONFIRMED => 'Dikonfirmasi',
+            self::DRAFT => 'Baru',
             self::IN_PROGRESS => 'Diproses',
             self::COMPLETED => 'Selesai',
             self::CANCELLED => 'Dibatalkan',
@@ -25,7 +23,6 @@ enum PurchaseOrderStatus: string
     {
         return match ($this) {
             self::DRAFT => '#9CA3AF',
-            self::CONFIRMED => '#1F4E79',
             self::IN_PROGRESS => '#FFC000',
             self::COMPLETED => '#C8A2C8',
             self::CANCELLED => '#C00000',
@@ -39,8 +36,7 @@ enum PurchaseOrderStatus: string
     public function allowedTransitions(): array
     {
         return match ($this) {
-            self::DRAFT => [self::CONFIRMED, self::CANCELLED],
-            self::CONFIRMED => [self::IN_PROGRESS, self::CANCELLED],
+            self::DRAFT => [self::IN_PROGRESS, self::CANCELLED],
             self::IN_PROGRESS => [self::COMPLETED, self::CANCELLED],
             self::COMPLETED => [],
             self::CANCELLED => [],

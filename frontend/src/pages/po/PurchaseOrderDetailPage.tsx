@@ -14,7 +14,7 @@ import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Tru
 import { useState, useEffect } from 'react';
 import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 
-const STATUS_ORDER = ['draft', 'confirmed', 'in_progress', 'completed'] as const;
+const STATUS_ORDER = ['draft', 'in_progress', 'completed'] as const;
 
 export default function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -246,7 +246,7 @@ export default function PurchaseOrderDetailPage() {
               toast.error('Nomor HP pelanggan tidak tersedia');
             }
           }}><MessageCircle size={15} /> Kirim WA</Button>
-          {nextStatus && <Button onClick={() => updateStatus.mutate({ status: nextStatus })} loading={updateStatus.isPending}>{nextStatus === 'confirmed' ? 'Konfirmasi' : nextStatus === 'in_progress' ? 'Proses' : 'Selesai'} <Check size={15} /></Button>}
+          {nextStatus && <Button onClick={() => updateStatus.mutate({ status: nextStatus })} loading={updateStatus.isPending}>{nextStatus === 'in_progress' ? 'Proses' : 'Selesai'} <Check size={15} /></Button>}
         </div>
       </div>
       <div className="grid lg:grid-cols-3 gap-5">
@@ -304,11 +304,9 @@ export default function PurchaseOrderDetailPage() {
         </div>
         <div className="space-y-4">
           <Card>
-            <h3 className="text-[14px] font-bold mb-3">Status Workflow</h3>
-            <div className="flex flex-col gap-1">
-              {STATUS_ORDER.map((status, i) => { const isDone = i <= currentIdx; const cfg = PO_STATUS_CONFIG[status]; return (<div key={status} className={`flex items-center gap-2 px-2 py-2 rounded-[6px] ${isDone ? 'bg-accent-light' : 'opacity-50'}`}><div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] flex-shrink-0 ${isDone ? 'bg-accent text-white' : 'border-2 border-dashed border-gray-300'}`}>{isDone && '✓'}</div><div className="text-[13px] font-semibold">{cfg.label}</div></div>); })}
-            </div>
-            {nextStatus && <Button className="w-full mt-3" onClick={() => updateStatus.mutate({ status: nextStatus })} loading={updateStatus.isPending}>{nextStatus === 'confirmed' ? 'Konfirmasi' : 'Proses Sekarang'} →</Button>}
+            <h3 className="text-[14px] font-bold mb-3">Status Pesanan</h3>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold" style={{ backgroundColor: sc.bgColor, color: sc.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.color }} />{sc.label}</span>
+            {nextStatus && <Button className="w-full mt-3" onClick={() => updateStatus.mutate({ status: nextStatus })} loading={updateStatus.isPending}>{nextStatus === 'in_progress' ? 'Proses Sekarang' : 'Selesaikan'} →</Button>}
             {po.status !== 'completed' && po.status !== 'cancelled' && <Button variant="secondary" size="sm" className="w-full mt-3 text-danger" onClick={() => { const r = prompt('Alasan:'); if (r) updateStatus.mutate({ status: 'cancelled', reason: r }); }}><X size={14} /> Batalkan PO</Button>}
           </Card>
           <Card>
