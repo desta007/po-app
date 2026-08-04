@@ -95,13 +95,9 @@ class DashboardScreen extends ConsumerWidget {
                           Row(
                             children: [
                               _StatusCount(
-                                  label: 'Draft',
+                                  label: 'Baru',
                                   count: s.draft,
                                   color: AppColors.textSecondary),
-                              _StatusCount(
-                                  label: 'Konfirmasi',
-                                  count: s.confirmed,
-                                  color: AppColors.secondary),
                               _StatusCount(
                                   label: 'Proses',
                                   count: s.inProgress,

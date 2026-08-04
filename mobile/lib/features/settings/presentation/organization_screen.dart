@@ -113,9 +113,13 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
         ),
         data: (org) {
           _fill(org);
-          final catalogUrl = (Env.catalogBaseUrl.isNotEmpty &&
+          // Route katalog publik di web: `/katalog/{slug}`. Buang trailing
+          // slash dari base agar tidak jadi `//katalog`.
+          final catalogBase =
+              Env.catalogBaseUrl.replaceAll(RegExp(r'/+$'), '');
+          final catalogUrl = (catalogBase.isNotEmpty &&
                   (org.slug?.isNotEmpty ?? false))
-              ? '${Env.catalogBaseUrl}/catalog/${org.slug}'
+              ? '$catalogBase/katalog/${org.slug}'
               : null;
           return Form(
             key: _formKey,

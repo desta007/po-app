@@ -19,7 +19,6 @@ void main() {
       'customer_change_up': true,
       'total_orders_this_month': 20,
       'draft': 2,
-      'confirmed': 5,
       'in_progress': 6,
       'completed': 7,
     });
@@ -55,13 +54,13 @@ void main() {
       'extendedProps': {
         'po_number': 'PO-0001',
         'customer_name': 'Ibu Sari',
-        'status': 'confirmed',
+        'status': 'in_progress',
         'payment_status': 'dp',
         'total': '750000.00',
       },
     });
     expect(e.props.poNumber, 'PO-0001');
-    expect(e.props.status, PoStatus.confirmed);
+    expect(e.props.status, PoStatus.inProgress);
     expect(e.props.total, 750000.0);
   });
 

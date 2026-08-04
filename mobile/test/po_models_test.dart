@@ -45,7 +45,7 @@ void main() {
         'status_history': [
           {
             'id': 'h-1',
-            'from_status': 'confirmed',
+            'from_status': 'draft',
             'to_status': 'in_progress',
             'changed_at': '2026-07-11T10:00:00Z',
           },
@@ -59,7 +59,7 @@ void main() {
       expect(po.customer?.totalRevenue, 2500000.0);
       expect(po.items.single.quantity, 10.0);
       expect(po.items.single.unitPrice, 15000.0);
-      expect(po.statusHistory.single.fromStatus, PoStatus.confirmed);
+      expect(po.statusHistory.single.fromStatus, PoStatus.draft);
     });
 
     test('angka numerik biasa (bukan string) juga terbaca', () {
@@ -74,9 +74,9 @@ void main() {
   });
 
   group('PoStatus transisi (mengikuti backend)', () {
-    test('draft → confirmed/cancelled', () {
+    test('draft → inProgress/cancelled', () {
       expect(PoStatus.draft.allowedTransitions,
-          [PoStatus.confirmed, PoStatus.cancelled]);
+          [PoStatus.inProgress, PoStatus.cancelled]);
     });
     test('completed & cancelled final', () {
       expect(PoStatus.completed.allowedTransitions, isEmpty);

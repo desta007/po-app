@@ -43,16 +43,23 @@ class PurchaseOrdersApi {
   Future<PurchaseOrder> create(PoInput input) => guardApi(() async {
         final res = await _dio.post<Map<String, dynamic>>(
             '/api/purchase-orders',
-            data: input.toJson());
+            data: _inputPayload(input));
         return PurchaseOrder.fromJson(res.data!['data'] as Map<String, dynamic>);
       });
 
   Future<PurchaseOrder> update(String id, PoInput input) => guardApi(() async {
         final res = await _dio.put<Map<String, dynamic>>(
             '/api/purchase-orders/$id',
-            data: input.toJson());
+            data: _inputPayload(input));
         return PurchaseOrder.fromJson(res.data!['data'] as Map<String, dynamic>);
       });
+
+  /// Payload create/update PO tanpa key bernilai null. Kolom numerik seperti
+  /// `dp_amount` bersifat NOT NULL DEFAULT 0 di backend, sehingga mengirim null
+  /// (field yang tidak diisi form) memicu error server. Hilangkan key null agar
+  /// backend memakai nilai default kolom.
+  Map<String, dynamic> _inputPayload(PoInput input) =>
+      input.toJson()..removeWhere((_, value) => value == null);
 
   Future<PurchaseOrder> updateStatus(String id, PoStatus status,
           {String? reason}) =>
@@ -77,6 +84,14 @@ class PurchaseOrdersApi {
               'paid_amount': paidAmount,
               'payment_method': paymentMethod,
             });
+        return PurchaseOrder.fromJson(res.data!['data'] as Map<String, dynamic>);
+      });
+
+  Future<PurchaseOrder> updateTracking(String id, String trackingNumber) =>
+      guardApi(() async {
+        final res = await _dio.patch<Map<String, dynamic>>(
+            '/api/purchase-orders/$id/tracking',
+            data: {'tracking_number': trackingNumber});
         return PurchaseOrder.fromJson(res.data!['data'] as Map<String, dynamic>);
       });
 
@@ -111,6 +126,25 @@ class PurchaseOrdersApi {
         final res = await _dio.post<List<int>>(
           '/api/purchase-orders/bulk-export-pdf',
           data: {'ids': ids, 'format': format.apiValue},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return Uint8List.fromList(res.data!);
+      });
+
+  /// Export daftar PO (mengikuti filter & urutan aktif) sebagai file Excel.
+  Future<Uint8List> exportExcelBytes({
+    PoFilters filters = const PoFilters(),
+    String sortBy = 'created_at',
+    String sortDir = 'desc',
+  }) =>
+      guardApi(() async {
+        final res = await _dio.get<List<int>>(
+          '/api/purchase-orders/export-excel',
+          queryParameters: {
+            ...filters.toQuery(),
+            'sort_by': sortBy,
+            'sort_dir': sortDir,
+          },
           options: Options(responseType: ResponseType.bytes),
         );
         return Uint8List.fromList(res.data!);

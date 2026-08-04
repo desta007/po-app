@@ -840,7 +840,7 @@ as bool,
 /// @nodoc
 mixin _$TeamMember {
 
- String get id; String? get userId; String get userName; String get userEmail; String? get userPhone; String? get userAvatar; String? get lastLoginAt; String get role; String? get roleLabel; String? get joinedAt;
+@FlexString() String get id;@FlexStringNullable() String? get userId; String get userName; String get userEmail; String? get userPhone; String? get userAvatar; String? get lastLoginAt; String get role; String? get roleLabel; String? get joinedAt;
 /// Create a copy of TeamMember
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -873,7 +873,7 @@ abstract mixin class $TeamMemberCopyWith<$Res>  {
   factory $TeamMemberCopyWith(TeamMember value, $Res Function(TeamMember) _then) = _$TeamMemberCopyWithImpl;
 @useResult
 $Res call({
- String id, String? userId, String userName, String userEmail, String? userPhone, String? userAvatar, String? lastLoginAt, String role, String? roleLabel, String? joinedAt
+@FlexString() String id,@FlexStringNullable() String? userId, String userName, String userEmail, String? userPhone, String? userAvatar, String? lastLoginAt, String role, String? roleLabel, String? joinedAt
 });
 
 
@@ -987,7 +987,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? userId,  String userName,  String userEmail,  String? userPhone,  String? userAvatar,  String? lastLoginAt,  String role,  String? roleLabel,  String? joinedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@FlexString()  String id, @FlexStringNullable()  String? userId,  String userName,  String userEmail,  String? userPhone,  String? userAvatar,  String? lastLoginAt,  String role,  String? roleLabel,  String? joinedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TeamMember() when $default != null:
 return $default(_that.id,_that.userId,_that.userName,_that.userEmail,_that.userPhone,_that.userAvatar,_that.lastLoginAt,_that.role,_that.roleLabel,_that.joinedAt);case _:
@@ -1008,7 +1008,7 @@ return $default(_that.id,_that.userId,_that.userName,_that.userEmail,_that.userP
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? userId,  String userName,  String userEmail,  String? userPhone,  String? userAvatar,  String? lastLoginAt,  String role,  String? roleLabel,  String? joinedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@FlexString()  String id, @FlexStringNullable()  String? userId,  String userName,  String userEmail,  String? userPhone,  String? userAvatar,  String? lastLoginAt,  String role,  String? roleLabel,  String? joinedAt)  $default,) {final _that = this;
 switch (_that) {
 case _TeamMember():
 return $default(_that.id,_that.userId,_that.userName,_that.userEmail,_that.userPhone,_that.userAvatar,_that.lastLoginAt,_that.role,_that.roleLabel,_that.joinedAt);case _:
@@ -1028,7 +1028,7 @@ return $default(_that.id,_that.userId,_that.userName,_that.userEmail,_that.userP
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? userId,  String userName,  String userEmail,  String? userPhone,  String? userAvatar,  String? lastLoginAt,  String role,  String? roleLabel,  String? joinedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@FlexString()  String id, @FlexStringNullable()  String? userId,  String userName,  String userEmail,  String? userPhone,  String? userAvatar,  String? lastLoginAt,  String role,  String? roleLabel,  String? joinedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _TeamMember() when $default != null:
 return $default(_that.id,_that.userId,_that.userName,_that.userEmail,_that.userPhone,_that.userAvatar,_that.lastLoginAt,_that.role,_that.roleLabel,_that.joinedAt);case _:
@@ -1043,11 +1043,11 @@ return $default(_that.id,_that.userId,_that.userName,_that.userEmail,_that.userP
 @JsonSerializable()
 
 class _TeamMember implements TeamMember {
-  const _TeamMember({required this.id, this.userId, required this.userName, required this.userEmail, this.userPhone, this.userAvatar, this.lastLoginAt, required this.role, this.roleLabel, this.joinedAt});
+  const _TeamMember({@FlexString() required this.id, @FlexStringNullable() this.userId, required this.userName, required this.userEmail, this.userPhone, this.userAvatar, this.lastLoginAt, required this.role, this.roleLabel, this.joinedAt});
   factory _TeamMember.fromJson(Map<String, dynamic> json) => _$TeamMemberFromJson(json);
 
-@override final  String id;
-@override final  String? userId;
+@override@FlexString() final  String id;
+@override@FlexStringNullable() final  String? userId;
 @override final  String userName;
 @override final  String userEmail;
 @override final  String? userPhone;
@@ -1090,7 +1090,7 @@ abstract mixin class _$TeamMemberCopyWith<$Res> implements $TeamMemberCopyWith<$
   factory _$TeamMemberCopyWith(_TeamMember value, $Res Function(_TeamMember) _then) = __$TeamMemberCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? userId, String userName, String userEmail, String? userPhone, String? userAvatar, String? lastLoginAt, String role, String? roleLabel, String? joinedAt
+@FlexString() String id,@FlexStringNullable() String? userId, String userName, String userEmail, String? userPhone, String? userAvatar, String? lastLoginAt, String role, String? roleLabel, String? joinedAt
 });
 
 

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TodaySummary {
 
-@FlexInt() int get totalPo; String? get poChange; bool get poChangeUp;@FlexDouble() double get totalRevenue; String? get revenueChange; bool get revenueChangeUp;@FlexInt() int get activeCustomers; String? get customerChange;@FlexInt() int get totalOrdersThisMonth;@FlexInt() int get draft;@FlexInt() int get confirmed;@FlexInt() int get inProgress;@FlexInt() int get completed;
+@FlexInt() int get totalPo; String? get poChange; bool get poChangeUp;@FlexDouble() double get totalRevenue; String? get revenueChange; bool get revenueChangeUp;@FlexInt() int get activeCustomers; String? get customerChange;@FlexInt() int get totalOrdersThisMonth;@FlexInt() int get draft;@FlexInt() int get inProgress;@FlexInt() int get completed;
 /// Create a copy of TodaySummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $TodaySummaryCopyWith<TodaySummary> get copyWith => _$TodaySummaryCopyWithImpl<T
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TodaySummary&&(identical(other.totalPo, totalPo) || other.totalPo == totalPo)&&(identical(other.poChange, poChange) || other.poChange == poChange)&&(identical(other.poChangeUp, poChangeUp) || other.poChangeUp == poChangeUp)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.revenueChange, revenueChange) || other.revenueChange == revenueChange)&&(identical(other.revenueChangeUp, revenueChangeUp) || other.revenueChangeUp == revenueChangeUp)&&(identical(other.activeCustomers, activeCustomers) || other.activeCustomers == activeCustomers)&&(identical(other.customerChange, customerChange) || other.customerChange == customerChange)&&(identical(other.totalOrdersThisMonth, totalOrdersThisMonth) || other.totalOrdersThisMonth == totalOrdersThisMonth)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.confirmed, confirmed) || other.confirmed == confirmed)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.completed, completed) || other.completed == completed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TodaySummary&&(identical(other.totalPo, totalPo) || other.totalPo == totalPo)&&(identical(other.poChange, poChange) || other.poChange == poChange)&&(identical(other.poChangeUp, poChangeUp) || other.poChangeUp == poChangeUp)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.revenueChange, revenueChange) || other.revenueChange == revenueChange)&&(identical(other.revenueChangeUp, revenueChangeUp) || other.revenueChangeUp == revenueChangeUp)&&(identical(other.activeCustomers, activeCustomers) || other.activeCustomers == activeCustomers)&&(identical(other.customerChange, customerChange) || other.customerChange == customerChange)&&(identical(other.totalOrdersThisMonth, totalOrdersThisMonth) || other.totalOrdersThisMonth == totalOrdersThisMonth)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.completed, completed) || other.completed == completed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,totalPo,poChange,poChangeUp,totalRevenue,revenueChange,revenueChangeUp,activeCustomers,customerChange,totalOrdersThisMonth,draft,confirmed,inProgress,completed);
+int get hashCode => Object.hash(runtimeType,totalPo,poChange,poChangeUp,totalRevenue,revenueChange,revenueChangeUp,activeCustomers,customerChange,totalOrdersThisMonth,draft,inProgress,completed);
 
 @override
 String toString() {
-  return 'TodaySummary(totalPo: $totalPo, poChange: $poChange, poChangeUp: $poChangeUp, totalRevenue: $totalRevenue, revenueChange: $revenueChange, revenueChangeUp: $revenueChangeUp, activeCustomers: $activeCustomers, customerChange: $customerChange, totalOrdersThisMonth: $totalOrdersThisMonth, draft: $draft, confirmed: $confirmed, inProgress: $inProgress, completed: $completed)';
+  return 'TodaySummary(totalPo: $totalPo, poChange: $poChange, poChangeUp: $poChangeUp, totalRevenue: $totalRevenue, revenueChange: $revenueChange, revenueChangeUp: $revenueChangeUp, activeCustomers: $activeCustomers, customerChange: $customerChange, totalOrdersThisMonth: $totalOrdersThisMonth, draft: $draft, inProgress: $inProgress, completed: $completed)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $TodaySummaryCopyWith<$Res>  {
   factory $TodaySummaryCopyWith(TodaySummary value, $Res Function(TodaySummary) _then) = _$TodaySummaryCopyWithImpl;
 @useResult
 $Res call({
-@FlexInt() int totalPo, String? poChange, bool poChangeUp,@FlexDouble() double totalRevenue, String? revenueChange, bool revenueChangeUp,@FlexInt() int activeCustomers, String? customerChange,@FlexInt() int totalOrdersThisMonth,@FlexInt() int draft,@FlexInt() int confirmed,@FlexInt() int inProgress,@FlexInt() int completed
+@FlexInt() int totalPo, String? poChange, bool poChangeUp,@FlexDouble() double totalRevenue, String? revenueChange, bool revenueChangeUp,@FlexInt() int activeCustomers, String? customerChange,@FlexInt() int totalOrdersThisMonth,@FlexInt() int draft,@FlexInt() int inProgress,@FlexInt() int completed
 });
 
 
@@ -65,7 +65,7 @@ class _$TodaySummaryCopyWithImpl<$Res>
 
 /// Create a copy of TodaySummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? totalPo = null,Object? poChange = freezed,Object? poChangeUp = null,Object? totalRevenue = null,Object? revenueChange = freezed,Object? revenueChangeUp = null,Object? activeCustomers = null,Object? customerChange = freezed,Object? totalOrdersThisMonth = null,Object? draft = null,Object? confirmed = null,Object? inProgress = null,Object? completed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? totalPo = null,Object? poChange = freezed,Object? poChangeUp = null,Object? totalRevenue = null,Object? revenueChange = freezed,Object? revenueChangeUp = null,Object? activeCustomers = null,Object? customerChange = freezed,Object? totalOrdersThisMonth = null,Object? draft = null,Object? inProgress = null,Object? completed = null,}) {
   return _then(_self.copyWith(
 totalPo: null == totalPo ? _self.totalPo : totalPo // ignore: cast_nullable_to_non_nullable
 as int,poChange: freezed == poChange ? _self.poChange : poChange // ignore: cast_nullable_to_non_nullable
@@ -77,7 +77,6 @@ as bool,activeCustomers: null == activeCustomers ? _self.activeCustomers : activ
 as int,customerChange: freezed == customerChange ? _self.customerChange : customerChange // ignore: cast_nullable_to_non_nullable
 as String?,totalOrdersThisMonth: null == totalOrdersThisMonth ? _self.totalOrdersThisMonth : totalOrdersThisMonth // ignore: cast_nullable_to_non_nullable
 as int,draft: null == draft ? _self.draft : draft // ignore: cast_nullable_to_non_nullable
-as int,confirmed: null == confirmed ? _self.confirmed : confirmed // ignore: cast_nullable_to_non_nullable
 as int,inProgress: null == inProgress ? _self.inProgress : inProgress // ignore: cast_nullable_to_non_nullable
 as int,completed: null == completed ? _self.completed : completed // ignore: cast_nullable_to_non_nullable
 as int,
@@ -165,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@FlexInt()  int totalPo,  String? poChange,  bool poChangeUp, @FlexDouble()  double totalRevenue,  String? revenueChange,  bool revenueChangeUp, @FlexInt()  int activeCustomers,  String? customerChange, @FlexInt()  int totalOrdersThisMonth, @FlexInt()  int draft, @FlexInt()  int confirmed, @FlexInt()  int inProgress, @FlexInt()  int completed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@FlexInt()  int totalPo,  String? poChange,  bool poChangeUp, @FlexDouble()  double totalRevenue,  String? revenueChange,  bool revenueChangeUp, @FlexInt()  int activeCustomers,  String? customerChange, @FlexInt()  int totalOrdersThisMonth, @FlexInt()  int draft, @FlexInt()  int inProgress, @FlexInt()  int completed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TodaySummary() when $default != null:
-return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue,_that.revenueChange,_that.revenueChangeUp,_that.activeCustomers,_that.customerChange,_that.totalOrdersThisMonth,_that.draft,_that.confirmed,_that.inProgress,_that.completed);case _:
+return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue,_that.revenueChange,_that.revenueChangeUp,_that.activeCustomers,_that.customerChange,_that.totalOrdersThisMonth,_that.draft,_that.inProgress,_that.completed);case _:
   return orElse();
 
 }
@@ -186,10 +185,10 @@ return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@FlexInt()  int totalPo,  String? poChange,  bool poChangeUp, @FlexDouble()  double totalRevenue,  String? revenueChange,  bool revenueChangeUp, @FlexInt()  int activeCustomers,  String? customerChange, @FlexInt()  int totalOrdersThisMonth, @FlexInt()  int draft, @FlexInt()  int confirmed, @FlexInt()  int inProgress, @FlexInt()  int completed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@FlexInt()  int totalPo,  String? poChange,  bool poChangeUp, @FlexDouble()  double totalRevenue,  String? revenueChange,  bool revenueChangeUp, @FlexInt()  int activeCustomers,  String? customerChange, @FlexInt()  int totalOrdersThisMonth, @FlexInt()  int draft, @FlexInt()  int inProgress, @FlexInt()  int completed)  $default,) {final _that = this;
 switch (_that) {
 case _TodaySummary():
-return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue,_that.revenueChange,_that.revenueChangeUp,_that.activeCustomers,_that.customerChange,_that.totalOrdersThisMonth,_that.draft,_that.confirmed,_that.inProgress,_that.completed);case _:
+return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue,_that.revenueChange,_that.revenueChangeUp,_that.activeCustomers,_that.customerChange,_that.totalOrdersThisMonth,_that.draft,_that.inProgress,_that.completed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +205,10 @@ return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@FlexInt()  int totalPo,  String? poChange,  bool poChangeUp, @FlexDouble()  double totalRevenue,  String? revenueChange,  bool revenueChangeUp, @FlexInt()  int activeCustomers,  String? customerChange, @FlexInt()  int totalOrdersThisMonth, @FlexInt()  int draft, @FlexInt()  int confirmed, @FlexInt()  int inProgress, @FlexInt()  int completed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@FlexInt()  int totalPo,  String? poChange,  bool poChangeUp, @FlexDouble()  double totalRevenue,  String? revenueChange,  bool revenueChangeUp, @FlexInt()  int activeCustomers,  String? customerChange, @FlexInt()  int totalOrdersThisMonth, @FlexInt()  int draft, @FlexInt()  int inProgress, @FlexInt()  int completed)?  $default,) {final _that = this;
 switch (_that) {
 case _TodaySummary() when $default != null:
-return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue,_that.revenueChange,_that.revenueChangeUp,_that.activeCustomers,_that.customerChange,_that.totalOrdersThisMonth,_that.draft,_that.confirmed,_that.inProgress,_that.completed);case _:
+return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue,_that.revenueChange,_that.revenueChangeUp,_that.activeCustomers,_that.customerChange,_that.totalOrdersThisMonth,_that.draft,_that.inProgress,_that.completed);case _:
   return null;
 
 }
@@ -221,7 +220,7 @@ return $default(_that.totalPo,_that.poChange,_that.poChangeUp,_that.totalRevenue
 @JsonSerializable()
 
 class _TodaySummary implements TodaySummary {
-  const _TodaySummary({@FlexInt() this.totalPo = 0, this.poChange, this.poChangeUp = true, @FlexDouble() this.totalRevenue = 0, this.revenueChange, this.revenueChangeUp = true, @FlexInt() this.activeCustomers = 0, this.customerChange, @FlexInt() this.totalOrdersThisMonth = 0, @FlexInt() this.draft = 0, @FlexInt() this.confirmed = 0, @FlexInt() this.inProgress = 0, @FlexInt() this.completed = 0});
+  const _TodaySummary({@FlexInt() this.totalPo = 0, this.poChange, this.poChangeUp = true, @FlexDouble() this.totalRevenue = 0, this.revenueChange, this.revenueChangeUp = true, @FlexInt() this.activeCustomers = 0, this.customerChange, @FlexInt() this.totalOrdersThisMonth = 0, @FlexInt() this.draft = 0, @FlexInt() this.inProgress = 0, @FlexInt() this.completed = 0});
   factory _TodaySummary.fromJson(Map<String, dynamic> json) => _$TodaySummaryFromJson(json);
 
 @override@JsonKey()@FlexInt() final  int totalPo;
@@ -234,7 +233,6 @@ class _TodaySummary implements TodaySummary {
 @override final  String? customerChange;
 @override@JsonKey()@FlexInt() final  int totalOrdersThisMonth;
 @override@JsonKey()@FlexInt() final  int draft;
-@override@JsonKey()@FlexInt() final  int confirmed;
 @override@JsonKey()@FlexInt() final  int inProgress;
 @override@JsonKey()@FlexInt() final  int completed;
 
@@ -251,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TodaySummary&&(identical(other.totalPo, totalPo) || other.totalPo == totalPo)&&(identical(other.poChange, poChange) || other.poChange == poChange)&&(identical(other.poChangeUp, poChangeUp) || other.poChangeUp == poChangeUp)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.revenueChange, revenueChange) || other.revenueChange == revenueChange)&&(identical(other.revenueChangeUp, revenueChangeUp) || other.revenueChangeUp == revenueChangeUp)&&(identical(other.activeCustomers, activeCustomers) || other.activeCustomers == activeCustomers)&&(identical(other.customerChange, customerChange) || other.customerChange == customerChange)&&(identical(other.totalOrdersThisMonth, totalOrdersThisMonth) || other.totalOrdersThisMonth == totalOrdersThisMonth)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.confirmed, confirmed) || other.confirmed == confirmed)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.completed, completed) || other.completed == completed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TodaySummary&&(identical(other.totalPo, totalPo) || other.totalPo == totalPo)&&(identical(other.poChange, poChange) || other.poChange == poChange)&&(identical(other.poChangeUp, poChangeUp) || other.poChangeUp == poChangeUp)&&(identical(other.totalRevenue, totalRevenue) || other.totalRevenue == totalRevenue)&&(identical(other.revenueChange, revenueChange) || other.revenueChange == revenueChange)&&(identical(other.revenueChangeUp, revenueChangeUp) || other.revenueChangeUp == revenueChangeUp)&&(identical(other.activeCustomers, activeCustomers) || other.activeCustomers == activeCustomers)&&(identical(other.customerChange, customerChange) || other.customerChange == customerChange)&&(identical(other.totalOrdersThisMonth, totalOrdersThisMonth) || other.totalOrdersThisMonth == totalOrdersThisMonth)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.completed, completed) || other.completed == completed));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,totalPo,poChange,poChangeUp,totalRevenue,revenueChange,revenueChangeUp,activeCustomers,customerChange,totalOrdersThisMonth,draft,confirmed,inProgress,completed);
+int get hashCode => Object.hash(runtimeType,totalPo,poChange,poChangeUp,totalRevenue,revenueChange,revenueChangeUp,activeCustomers,customerChange,totalOrdersThisMonth,draft,inProgress,completed);
 
 @override
 String toString() {
-  return 'TodaySummary(totalPo: $totalPo, poChange: $poChange, poChangeUp: $poChangeUp, totalRevenue: $totalRevenue, revenueChange: $revenueChange, revenueChangeUp: $revenueChangeUp, activeCustomers: $activeCustomers, customerChange: $customerChange, totalOrdersThisMonth: $totalOrdersThisMonth, draft: $draft, confirmed: $confirmed, inProgress: $inProgress, completed: $completed)';
+  return 'TodaySummary(totalPo: $totalPo, poChange: $poChange, poChangeUp: $poChangeUp, totalRevenue: $totalRevenue, revenueChange: $revenueChange, revenueChangeUp: $revenueChangeUp, activeCustomers: $activeCustomers, customerChange: $customerChange, totalOrdersThisMonth: $totalOrdersThisMonth, draft: $draft, inProgress: $inProgress, completed: $completed)';
 }
 
 
@@ -271,7 +269,7 @@ abstract mixin class _$TodaySummaryCopyWith<$Res> implements $TodaySummaryCopyWi
   factory _$TodaySummaryCopyWith(_TodaySummary value, $Res Function(_TodaySummary) _then) = __$TodaySummaryCopyWithImpl;
 @override @useResult
 $Res call({
-@FlexInt() int totalPo, String? poChange, bool poChangeUp,@FlexDouble() double totalRevenue, String? revenueChange, bool revenueChangeUp,@FlexInt() int activeCustomers, String? customerChange,@FlexInt() int totalOrdersThisMonth,@FlexInt() int draft,@FlexInt() int confirmed,@FlexInt() int inProgress,@FlexInt() int completed
+@FlexInt() int totalPo, String? poChange, bool poChangeUp,@FlexDouble() double totalRevenue, String? revenueChange, bool revenueChangeUp,@FlexInt() int activeCustomers, String? customerChange,@FlexInt() int totalOrdersThisMonth,@FlexInt() int draft,@FlexInt() int inProgress,@FlexInt() int completed
 });
 
 
@@ -288,7 +286,7 @@ class __$TodaySummaryCopyWithImpl<$Res>
 
 /// Create a copy of TodaySummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalPo = null,Object? poChange = freezed,Object? poChangeUp = null,Object? totalRevenue = null,Object? revenueChange = freezed,Object? revenueChangeUp = null,Object? activeCustomers = null,Object? customerChange = freezed,Object? totalOrdersThisMonth = null,Object? draft = null,Object? confirmed = null,Object? inProgress = null,Object? completed = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalPo = null,Object? poChange = freezed,Object? poChangeUp = null,Object? totalRevenue = null,Object? revenueChange = freezed,Object? revenueChangeUp = null,Object? activeCustomers = null,Object? customerChange = freezed,Object? totalOrdersThisMonth = null,Object? draft = null,Object? inProgress = null,Object? completed = null,}) {
   return _then(_TodaySummary(
 totalPo: null == totalPo ? _self.totalPo : totalPo // ignore: cast_nullable_to_non_nullable
 as int,poChange: freezed == poChange ? _self.poChange : poChange // ignore: cast_nullable_to_non_nullable
@@ -300,7 +298,6 @@ as bool,activeCustomers: null == activeCustomers ? _self.activeCustomers : activ
 as int,customerChange: freezed == customerChange ? _self.customerChange : customerChange // ignore: cast_nullable_to_non_nullable
 as String?,totalOrdersThisMonth: null == totalOrdersThisMonth ? _self.totalOrdersThisMonth : totalOrdersThisMonth // ignore: cast_nullable_to_non_nullable
 as int,draft: null == draft ? _self.draft : draft // ignore: cast_nullable_to_non_nullable
-as int,confirmed: null == confirmed ? _self.confirmed : confirmed // ignore: cast_nullable_to_non_nullable
 as int,inProgress: null == inProgress ? _self.inProgress : inProgress // ignore: cast_nullable_to_non_nullable
 as int,completed: null == completed ? _self.completed : completed // ignore: cast_nullable_to_non_nullable
 as int,

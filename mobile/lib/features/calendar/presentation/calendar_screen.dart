@@ -8,6 +8,7 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/async_states.dart';
+import '../../purchase_orders/data/po_models.dart';
 import '../../purchase_orders/presentation/widgets/po_badges.dart';
 import '../data/calendar_api.dart';
 import '../data/calendar_models.dart';
@@ -34,6 +35,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       map.putIfAbsent(key, () => []).add(event);
     }
     return map;
+  }
+
+  /// Warna representatif untuk sebuah tanggal: pilih status paling "aktif"
+  /// (Diproses > Baru > Selesai > Dibatalkan) agar tanggal yang perlu perhatian
+  /// menonjol. Warna mengikuti PoStatus.color (selaras dengan badge).
+  Color _dayStatusColor(List<CalendarEvent> events) {
+    int priority(PoStatus s) => switch (s) {
+          PoStatus.inProgress => 3,
+          PoStatus.draft => 2,
+          PoStatus.completed => 1,
+          PoStatus.cancelled => 0,
+        };
+    var best = events.first.props.status;
+    for (final e in events.skip(1)) {
+      if (priority(e.props.status) > priority(best)) best = e.props.status;
+    }
+    return best.color;
   }
 
   Future<void> _reschedule(CalendarEvent event) async {
@@ -112,8 +130,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ),
               calendarBuilders: CalendarBuilders(
+                // Tanggal yang punya PO diwarnai sesuai status (bukan sekadar
+                // dot). Hari terpilih & hari ini tetap pakai lingkaran default.
+                defaultBuilder: (context, day, focusedDay) {
+                  final dayEvents =
+                      byDay[DateTime.utc(day.year, day.month, day.day)];
+                  if (dayEvents == null || dayEvents.isEmpty) return null;
+                  final color = _dayStatusColor(dayEvents);
+                  return Container(
+                    margin: const EdgeInsets.all(5),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.16),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: color.withValues(alpha: 0.9), width: 1.4),
+                    ),
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                          color: color, fontWeight: FontWeight.w700),
+                    ),
+                  );
+                },
+                // Dot hanya saat ada >1 PO di tanggal itu (indikator jumlah/
+                // beda status); tanggal tunggal cukup dari warna sel.
                 markerBuilder: (context, day, events) {
-                  if (events.isEmpty) return null;
+                  if (events.length < 2) return null;
                   return Positioned(
                     bottom: 3,
                     child: Row(
@@ -121,8 +164,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       children: [
                         for (final event in events.take(4))
                           Container(
-                            width: 6,
-                            height: 6,
+                            width: 5,
+                            height: 5,
                             margin:
                                 const EdgeInsets.symmetric(horizontal: 1),
                             decoration: BoxDecoration(

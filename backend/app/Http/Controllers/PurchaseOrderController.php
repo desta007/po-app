@@ -90,7 +90,7 @@ class PurchaseOrderController extends Controller
             }
         }
 
-        $data = $request->except('items');
+        $data = $this->withoutNulls($request->except('items'));
         $items = $request->input('items');
 
         $po = $this->poService->create($data, $items);
@@ -110,7 +110,7 @@ class PurchaseOrderController extends Controller
 
     public function update(UpdatePurchaseOrderRequest $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
-        $data = $request->except('items');
+        $data = $this->withoutNulls($request->except('items'));
         $items = $request->input('items', []);
 
         $po = $this->poService->update($purchaseOrder, $data, $items);
@@ -119,6 +119,17 @@ class PurchaseOrderController extends Controller
             'data' => new PurchaseOrderResource($po->load('items', 'customer', 'statusHistory')),
             'message' => 'Purchase Order berhasil diperbarui.',
         ]);
+    }
+
+    /**
+     * Buang entri bernilai null dari payload PO. Kolom numerik seperti
+     * `dp_amount`/`paid_amount` bersifat NOT NULL DEFAULT 0, sehingga klien yang
+     * mengirim null (mis. field yang tidak diisi) akan memicu error DB. Dengan
+     * menghapus key null, kolom memakai nilai default / nilai lama saat update.
+     */
+    private function withoutNulls(array $data): array
+    {
+        return array_filter($data, fn ($value) => !is_null($value));
     }
 
     public function destroy(PurchaseOrder $purchaseOrder): JsonResponse

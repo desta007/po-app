@@ -35,7 +35,6 @@ abstract class TodaySummary with _$TodaySummary {
     String? customerChange,
     @FlexInt() @Default(0) int totalOrdersThisMonth,
     @FlexInt() @Default(0) int draft,
-    @FlexInt() @Default(0) int confirmed,
     @FlexInt() @Default(0) int inProgress,
     @FlexInt() @Default(0) int completed,
   }) = _TodaySummary;

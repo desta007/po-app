@@ -29,3 +29,26 @@ class FlexDoubleNullable implements JsonConverter<double?, Object?> {
   @override
   Object? toJson(double? value) => value;
 }
+
+/// Sebagian tabel (mis. `users`) memakai id integer auto-increment, sedangkan
+/// tabel lain memakai UUID (string). Converter ini menerima int maupun String
+/// agar `id` selalu terbaca sebagai String di sisi mobile.
+class FlexString implements JsonConverter<String, Object?> {
+  const FlexString();
+
+  @override
+  String fromJson(Object? json) => json?.toString() ?? '';
+
+  @override
+  Object toJson(String value) => value;
+}
+
+class FlexStringNullable implements JsonConverter<String?, Object?> {
+  const FlexStringNullable();
+
+  @override
+  String? fromJson(Object? json) => json?.toString();
+
+  @override
+  Object? toJson(String? value) => value;
+}

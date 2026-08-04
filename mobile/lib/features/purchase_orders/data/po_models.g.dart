@@ -45,7 +45,7 @@ _PoStatusHistory _$PoStatusHistoryFromJson(Map<String, dynamic> json) =>
         json['to_status'],
         unknownValue: PoStatus.draft,
       ),
-      changedBy: json['changed_by'] as String?,
+      changedBy: const FlexStringNullable().fromJson(json['changed_by']),
       reason: json['reason'] as String?,
       changedAt: json['changed_at'] as String?,
     );
@@ -55,14 +55,13 @@ Map<String, dynamic> _$PoStatusHistoryToJson(_PoStatusHistory instance) =>
       'id': instance.id,
       'from_status': _$PoStatusEnumMap[instance.fromStatus],
       'to_status': _$PoStatusEnumMap[instance.toStatus]!,
-      'changed_by': instance.changedBy,
+      'changed_by': const FlexStringNullable().toJson(instance.changedBy),
       'reason': instance.reason,
       'changed_at': instance.changedAt,
     };
 
 const _$PoStatusEnumMap = {
   PoStatus.draft: 'draft',
-  PoStatus.confirmed: 'confirmed',
   PoStatus.inProgress: 'in_progress',
   PoStatus.completed: 'completed',
   PoStatus.cancelled: 'cancelled',
@@ -108,6 +107,9 @@ _PurchaseOrder _$PurchaseOrderFromJson(
   total: json['total'] == null ? 0 : const FlexDouble().fromJson(json['total']),
   notes: json['notes'] as String?,
   paymentMethod: json['payment_method'] as String?,
+  source: json['source'] as String?,
+  shippingMethod: json['shipping_method'] as String?,
+  trackingNumber: json['tracking_number'] as String?,
   items:
       (json['items'] as List<dynamic>?)
           ?.map((e) => PurchaseOrderItem.fromJson(e as Map<String, dynamic>))
@@ -141,6 +143,9 @@ Map<String, dynamic> _$PurchaseOrderToJson(_PurchaseOrder instance) =>
       'total': const FlexDouble().toJson(instance.total),
       'notes': instance.notes,
       'payment_method': instance.paymentMethod,
+      'source': instance.source,
+      'shipping_method': instance.shippingMethod,
+      'tracking_number': instance.trackingNumber,
       'items': instance.items.map((e) => e.toJson()).toList(),
       'status_history': instance.statusHistory.map((e) => e.toJson()).toList(),
       'created_at': instance.createdAt,

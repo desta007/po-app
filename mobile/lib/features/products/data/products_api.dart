@@ -15,6 +15,7 @@ class ProductsApi {
 
   Future<Paginated<Product>> list({
     String? search,
+    String? category,
     bool? isActive,
     int page = 1,
     int perPage = 20,
@@ -23,6 +24,7 @@ class ProductsApi {
         final res = await _dio.get<Map<String, dynamic>>('/api/products',
             queryParameters: {
               if (search != null && search.isNotEmpty) 'search': search,
+              if (category != null && category.isNotEmpty) 'category': category,
               'is_active': ?isActive,
               'page': page,
               'per_page': perPage,
@@ -50,10 +52,20 @@ class ProductsApi {
   Future<void> delete(String id) =>
       guardApi(() => _dio.delete('/api/products/$id'));
 
-  Future<void> uploadImage(String id, String filePath) => guardApi(() async {
-        final form = FormData.fromMap({
-          'image': await MultipartFile.fromFile(filePath),
-        });
+  Future<void> uploadImage(String id, String filePath) =>
+      uploadImages(id, [filePath]);
+
+  /// Upload satu / beberapa gambar sekaligus (`images[]`), digabung ke galeri
+  /// produk yang sudah ada. Selaras dengan `uploadImages` di web.
+  Future<void> uploadImages(String id, List<String> filePaths) =>
+      guardApi(() async {
+        if (filePaths.isEmpty) return;
+        final form = FormData();
+        for (final path in filePaths) {
+          form.files.add(
+            MapEntry('images[]', await MultipartFile.fromFile(path)),
+          );
+        }
         await _dio.post('/api/products/$id/image', data: form);
       });
 

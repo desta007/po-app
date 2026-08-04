@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/api/json_converters.dart';
+
 part 'auth_models.freezed.dart';
 part 'auth_models.g.dart';
 
@@ -23,7 +25,7 @@ enum MemberRole {
 @freezed
 abstract class User with _$User {
   const factory User({
-    required String id,
+    @FlexString() required String id,
     required String email,
     required String fullName,
     String? phone,

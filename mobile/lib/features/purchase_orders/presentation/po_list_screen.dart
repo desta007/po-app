@@ -8,12 +8,16 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/async_states.dart';
+import '../../settings/data/settings_api.dart';
+import '../../settings/data/settings_models.dart';
 import '../data/po_models.dart';
 import '../data/purchase_orders_api.dart';
 import '../providers/po_providers.dart';
 import '../services/po_share_service.dart';
+import '../services/thermal_printer_service.dart';
 import 'widgets/label_size_sheet.dart';
 import 'widgets/po_badges.dart';
+import 'widgets/thermal_print_sheet.dart';
 
 class PoListScreen extends ConsumerStatefulWidget {
   const PoListScreen({super.key});
@@ -52,6 +56,20 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
     });
   }
 
+  /// Pilih semua PO yang termuat, atau batalkan bila sudah semua terpilih.
+  void _toggleSelectAll(List<PurchaseOrder> items) {
+    setState(() {
+      if (_selectedIds.length == items.length) {
+        _selectedIds.clear();
+        _selectionMode = false;
+      } else {
+        _selectedIds
+          ..clear()
+          ..addAll(items.map((e) => e.id));
+      }
+    });
+  }
+
   Future<void> _runBulk(Future<void> Function() action) async {
     if (_selectedIds.isEmpty || _bulkBusy) return;
     setState(() => _bulkBusy = true);
@@ -82,41 +100,69 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
         .shareLabels(ids: _selectedIds.toList(), size: size));
   }
 
+  Future<void> _bulkPrintThermal() async {
+    if (_selectedIds.isEmpty || _bulkBusy) return;
+    final orders = ref
+        .read(poListProvider)
+        .items
+        .where((p) => _selectedIds.contains(p.id))
+        .toList();
+    if (orders.isEmpty) return;
+    await showThermalPrintSheet(
+      context,
+      count: orders.length,
+      onPrint: () async {
+        Organization? org;
+        try {
+          org = await ref.read(organizationProvider.future);
+        } catch (_) {
+          org = null;
+        }
+        await ref
+            .read(thermalPrinterProvider.notifier)
+            .printReceipts(orders, org);
+      },
+    );
+  }
+
   Widget _buildBulkBar() {
     final enabled = _selectedIds.isNotEmpty && !_bulkBusy;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: enabled
-                    ? () => _bulkPrintPdf(PoBulkPdfFormat.receipt)
-                    : null,
-                icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                label: const Text('Struk'),
+    return Material(
+      elevation: 8,
+      color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            children: [
+              _BulkAction(
+                icon: Icons.receipt_long_outlined,
+                label: 'Struk',
+                enabled: enabled,
+                onTap: () => _bulkPrintPdf(PoBulkPdfFormat.receipt),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: enabled
-                    ? () => _bulkPrintPdf(PoBulkPdfFormat.corporate)
-                    : null,
-                icon: const Icon(Icons.description_outlined, size: 18),
-                label: const Text('Corporate'),
+              _BulkAction(
+                icon: Icons.description_outlined,
+                label: 'Corporate',
+                enabled: enabled,
+                onTap: () => _bulkPrintPdf(PoBulkPdfFormat.corporate),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: enabled ? _bulkPrintLabels : null,
-                icon: const Icon(Icons.label_outline, size: 18),
-                label: const Text('Label'),
+              _BulkAction(
+                icon: Icons.label_outline,
+                label: 'Label',
+                enabled: enabled,
+                onTap: _bulkPrintLabels,
               ),
-            ),
-          ],
+              _BulkAction(
+                icon: Icons.print_outlined,
+                label: 'Thermal',
+                enabled: enabled,
+                highlighted: true,
+                onTap: _bulkPrintThermal,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -135,7 +181,7 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
         if (!mounted) return;
         final notifier = ref.read(poListProvider.notifier);
         notifier.setFilters(
-            notifier.filters.copyWith(customerId: customerId));
+            notifier.filters.copyWith(customerId: () => customerId));
       });
     }
   }
@@ -151,6 +197,33 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
     _debounce = Timer(const Duration(milliseconds: 400), () {
       ref.read(poListProvider.notifier).setSearch(value.trim());
     });
+  }
+
+  Future<void> _exportExcel() async {
+    final notifier = ref.read(poListProvider.notifier);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+        const SnackBar(content: Text('Menyiapkan file Excel…')));
+    try {
+      await ref.read(poShareServiceProvider).shareExcel(
+            filters: notifier.filters,
+            sortBy: notifier.sortBy,
+            sortDir: notifier.sortDir,
+          );
+      messenger.hideCurrentSnackBar();
+    } on ApiException catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _showFilterSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _FilterSheet(),
+    );
   }
 
   @override
@@ -172,10 +245,35 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
                 onPressed: _exitSelection,
               ),
               title: Text('${_selectedIds.length} dipilih'),
+              actions: [
+                TextButton(
+                  onPressed: () => _toggleSelectAll(state.items),
+                  child: Text(
+                    _selectedIds.length == state.items.length &&
+                            state.items.isNotEmpty
+                        ? 'Batal semua'
+                        : 'Pilih semua',
+                  ),
+                ),
+              ],
             )
           : AppBar(
               title: const Text('Purchase Order'),
               actions: [
+                IconButton(
+                  tooltip: 'Export Excel',
+                  icon: const Icon(Icons.file_download_outlined),
+                  onPressed: _exportExcel,
+                ),
+                IconButton(
+                  tooltip: 'Filter & urutkan',
+                  icon: Badge(
+                    isLabelVisible: filters.hasActiveFilters,
+                    smallSize: 8,
+                    child: const Icon(Icons.tune),
+                  ),
+                  onPressed: () => _showFilterSheet(context),
+                ),
                 IconButton(
                   tooltip: 'Pilih untuk cetak',
                   icon: const Icon(Icons.checklist),
@@ -232,11 +330,8 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
                 alignment: Alignment.centerLeft,
                 child: InputChip(
                   label: const Text('Filter: pelanggan tertentu'),
-                  onDeleted: () => notifier.setFilters(PoFilters(
-                    search: filters.search,
-                    status: filters.status,
-                    paymentStatus: filters.paymentStatus,
-                  )),
+                  onDeleted: () => notifier
+                      .setFilters(filters.copyWith(customerId: () => null)),
                 ),
               ),
             ),
@@ -285,6 +380,210 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
           ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+/// Opsi urut daftar PO — nilai sama dengan `allowedSorts` di backend.
+const _sortOptions = <String, String>{
+  'created_at': 'Tanggal Dibuat',
+  'order_date': 'Tgl Order',
+  'delivery_date': 'Tgl Kirim',
+  'total': 'Total',
+  'po_number': 'No. PO',
+};
+
+/// Sheet filter & urutan: sumber, status pembayaran, dan pengurutan.
+/// Selaras dengan filter di daftar PO web (source + payment_status + sort).
+class _FilterSheet extends ConsumerWidget {
+  const _FilterSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch agar sheet ikut refresh saat pilihan berubah.
+    ref.watch(poListProvider);
+    final notifier = ref.read(poListProvider.notifier);
+    final filters = notifier.filters;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('Filter & Urutkan',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                const Spacer(),
+                if (filters.hasActiveFilters ||
+                    notifier.sortBy != 'created_at' ||
+                    notifier.sortDir != 'desc')
+                  TextButton(
+                    onPressed: () {
+                      notifier.setFilters(PoFilters(search: filters.search));
+                      notifier.setSort('created_at', 'desc');
+                    },
+                    child: const Text('Reset'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const _SheetLabel('Sumber'),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Semua'),
+                  selected: filters.source == null,
+                  onSelected: (_) =>
+                      notifier.setFilters(filters.copyWith(source: () => null)),
+                ),
+                for (final s in PoSource.values)
+                  ChoiceChip(
+                    label: Text(s.label),
+                    selected: filters.source == s,
+                    onSelected: (_) => notifier
+                        .setFilters(filters.copyWith(source: () => s)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _SheetLabel('Status Pembayaran'),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Semua'),
+                  selected: filters.paymentStatus == null,
+                  onSelected: (_) => notifier
+                      .setFilters(filters.copyWith(paymentStatus: () => null)),
+                ),
+                for (final p in PaymentStatus.values)
+                  ChoiceChip(
+                    label: Text(p.label),
+                    selected: filters.paymentStatus == p,
+                    onSelected: (_) => notifier
+                        .setFilters(filters.copyWith(paymentStatus: () => p)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _SheetLabel('Urutkan berdasarkan'),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final entry in _sortOptions.entries)
+                  ChoiceChip(
+                    label: Text(entry.value),
+                    selected: notifier.sortBy == entry.key,
+                    onSelected: (_) =>
+                        notifier.setSort(entry.key, notifier.sortDir),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                    value: 'desc',
+                    label: Text('Terbaru'),
+                    icon: Icon(Icons.arrow_downward, size: 16)),
+                ButtonSegment(
+                    value: 'asc',
+                    label: Text('Terlama'),
+                    icon: Icon(Icons.arrow_upward, size: 16)),
+              ],
+              selected: {notifier.sortDir},
+              onSelectionChanged: (s) =>
+                  notifier.setSort(notifier.sortBy, s.first),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Tutup'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetLabel extends StatelessWidget {
+  const _SheetLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+/// Aksi cetak massal: ikon di atas, label ringkas di bawah (satu baris, tidak
+/// terpotong). [highlighted] menandai aksi utama (Thermal).
+class _BulkAction extends StatelessWidget {
+  const _BulkAction({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+    this.highlighted = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = highlighted ? AppColors.primary : AppColors.textPrimary;
+    final color = enabled ? active : AppColors.textSecondary.withValues(alpha: 0.5);
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: enabled ? onTap : null,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: highlighted && enabled
+                ? AppColors.primary.withValues(alpha: 0.10)
+                : null,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

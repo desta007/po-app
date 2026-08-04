@@ -12,7 +12,6 @@ part 'po_models.g.dart';
 /// (`PurchaseOrderStatus.php`).
 enum PoStatus {
   draft,
-  confirmed,
   @JsonValue('in_progress')
   inProgress,
   completed,
@@ -24,8 +23,7 @@ enum PoStatus {
       };
 
   String get label => switch (this) {
-        draft => 'Draft',
-        confirmed => 'Dikonfirmasi',
+        draft => 'Baru',
         inProgress => 'Diproses',
         completed => 'Selesai',
         cancelled => 'Dibatalkan',
@@ -33,7 +31,6 @@ enum PoStatus {
 
   Color get color => switch (this) {
         draft => AppColors.textSecondary,
-        confirmed => AppColors.secondary,
         inProgress => AppColors.warning,
         completed => AppColors.accent,
         cancelled => AppColors.danger,
@@ -41,8 +38,7 @@ enum PoStatus {
 
   /// Transisi yang diizinkan backend (selain cancel via endpoint terpisah).
   List<PoStatus> get allowedTransitions => switch (this) {
-        draft => [confirmed, cancelled],
-        confirmed => [inProgress, cancelled],
+        draft => [inProgress, cancelled],
         inProgress => [completed, cancelled],
         completed || cancelled => const [],
       };
@@ -91,7 +87,7 @@ abstract class PoStatusHistory with _$PoStatusHistory {
     String? id,
     @JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? fromStatus,
     @JsonKey(unknownEnumValue: PoStatus.draft) required PoStatus toStatus,
-    String? changedBy,
+    @FlexStringNullable() String? changedBy,
     String? reason,
     String? changedAt,
   }) = _PoStatusHistory;
@@ -121,6 +117,9 @@ abstract class PurchaseOrder with _$PurchaseOrder {
     @FlexDouble() @Default(0) double total,
     String? notes,
     String? paymentMethod,
+    String? source,
+    String? shippingMethod,
+    String? trackingNumber,
     @Default([]) List<PurchaseOrderItem> items,
     @Default([]) List<PoStatusHistory> statusHistory,
     String? createdAt,
@@ -166,12 +165,26 @@ abstract class PoInput with _$PoInput {
       _$PoInputFromJson(json);
 }
 
+/// Sumber PO — sama dengan filter `source` di web ('internal' | 'catalog').
+enum PoSource {
+  internal,
+  catalog;
+
+  String get apiValue => name;
+
+  String get label => switch (this) {
+        internal => 'Internal',
+        catalog => 'Toko Online',
+      };
+}
+
 /// Filter list PO — parameter query sama dengan `POFilters` di web.
 class PoFilters {
   const PoFilters({
     this.search,
     this.status,
     this.paymentStatus,
+    this.source,
     this.customerId,
     this.dateFrom,
     this.dateTo,
@@ -180,14 +193,25 @@ class PoFilters {
   final String? search;
   final PoStatus? status;
   final PaymentStatus? paymentStatus;
+  final PoSource? source;
   final String? customerId;
   final String? dateFrom;
   final String? dateTo;
+
+  /// True bila ada filter selain pencarian teks (untuk badge indikator).
+  bool get hasActiveFilters =>
+      status != null ||
+      paymentStatus != null ||
+      source != null ||
+      customerId != null ||
+      dateFrom != null ||
+      dateTo != null;
 
   Map<String, dynamic> toQuery() => {
         if (search != null && search!.isNotEmpty) 'search': search,
         if (status != null) 'status': status!.apiValue,
         if (paymentStatus != null) 'payment_status': paymentStatus!.name,
+        if (source != null) 'source': source!.apiValue,
         if (customerId != null) 'customer_id': customerId,
         if (dateFrom != null) 'date_from': dateFrom,
         if (dateTo != null) 'date_to': dateTo,
@@ -197,16 +221,20 @@ class PoFilters {
     String? search,
     PoStatus? Function()? status,
     PaymentStatus? Function()? paymentStatus,
-    String? customerId,
+    PoSource? Function()? source,
+    String? Function()? customerId,
+    String? Function()? dateFrom,
+    String? Function()? dateTo,
   }) =>
       PoFilters(
         search: search ?? this.search,
         status: status != null ? status() : this.status,
         paymentStatus:
             paymentStatus != null ? paymentStatus() : this.paymentStatus,
-        customerId: customerId ?? this.customerId,
-        dateFrom: dateFrom,
-        dateTo: dateTo,
+        source: source != null ? source() : this.source,
+        customerId: customerId != null ? customerId() : this.customerId,
+        dateFrom: dateFrom != null ? dateFrom() : this.dateFrom,
+        dateTo: dateTo != null ? dateTo() : this.dateTo,
       );
 
   @override
@@ -215,11 +243,12 @@ class PoFilters {
       other.search == search &&
       other.status == status &&
       other.paymentStatus == paymentStatus &&
+      other.source == source &&
       other.customerId == customerId &&
       other.dateFrom == dateFrom &&
       other.dateTo == dateTo;
 
   @override
-  int get hashCode =>
-      Object.hash(search, status, paymentStatus, customerId, dateFrom, dateTo);
+  int get hashCode => Object.hash(
+      search, status, paymentStatus, source, customerId, dateFrom, dateTo);
 }

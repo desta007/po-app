@@ -6,12 +6,16 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/async_states.dart';
+import '../../settings/data/settings_api.dart';
+import '../../settings/data/settings_models.dart';
 import '../data/po_models.dart';
 import '../data/purchase_orders_api.dart';
 import '../providers/po_providers.dart';
 import '../services/po_share_service.dart';
+import '../services/thermal_printer_service.dart';
 import 'widgets/label_size_sheet.dart';
 import 'widgets/po_badges.dart';
+import 'widgets/thermal_print_sheet.dart';
 
 class PoDetailScreen extends ConsumerWidget {
   const PoDetailScreen({super.key, required this.poId});
@@ -238,6 +242,9 @@ class _PoDetailBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        // Pengiriman & nomor resi
+        _ShippingCard(po: po),
+        const SizedBox(height: 12),
         // Riwayat status
         if (po.statusHistory.isNotEmpty)
           Card(
@@ -428,10 +435,35 @@ class _ActionBar extends ConsumerWidget {
                 await _printLabels(context, ref);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.print_outlined),
+              title: const Text('Cetak Struk (Thermal)'),
+              subtitle: const Text('Printer thermal Bluetooth'),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                await _printThermal(context, ref);
+              },
+            ),
             const SizedBox(height: 8),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _printThermal(BuildContext context, WidgetRef ref) async {
+    await showThermalPrintSheet(
+      context,
+      count: 1,
+      onPrint: () async {
+        Organization? org;
+        try {
+          org = await ref.read(organizationProvider.future);
+        } catch (_) {
+          org = null;
+        }
+        await ref.read(thermalPrinterProvider.notifier).printReceipt(po, org);
+      },
     );
   }
 
@@ -561,6 +593,116 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                 : const Text('Simpan Pembayaran'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Kartu Pengiriman: metode kirim (read-only) + input nomor resi yang bisa
+/// disimpan. Selaras dengan card "Pengiriman" di web (PurchaseOrderDetailPage).
+class _ShippingCard extends ConsumerStatefulWidget {
+  const _ShippingCard({required this.po});
+
+  final PurchaseOrder po;
+
+  @override
+  ConsumerState<_ShippingCard> createState() => _ShippingCardState();
+}
+
+class _ShippingCardState extends ConsumerState<_ShippingCard> {
+  late final _tracking =
+      TextEditingController(text: widget.po.trackingNumber ?? '');
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _tracking.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final value = _tracking.text.trim();
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(poDetailProvider(widget.po.id).notifier)
+          .updateTracking(value);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Nomor resi disimpan.')));
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unchanged =
+        _tracking.text.trim() == (widget.po.trackingNumber ?? '');
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Icon(Icons.local_shipping_outlined, size: 18),
+                SizedBox(width: 6),
+                Text('Pengiriman',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            if (widget.po.shippingMethod?.isNotEmpty == true) ...[
+              const SizedBox(height: 8),
+              Text('Metode: ${widget.po.shippingMethod}',
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.textSecondary)),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _tracking,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Nomor Resi',
+                      hintText: 'Cth: JX1234567890',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: FilledButton.tonal(
+                    onPressed: (_saving || unchanged) ? null : _save,
+                    child: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2.5))
+                        : const Text('Simpan'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Resi otomatis tampil di halaman status pesanan pelanggan.',
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }

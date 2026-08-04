@@ -299,7 +299,7 @@ as int,
 /// @nodoc
 mixin _$PoStatusHistory {
 
- String? get id;@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? get fromStatus;@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus get toStatus; String? get changedBy; String? get reason; String? get changedAt;
+ String? get id;@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? get fromStatus;@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus get toStatus;@FlexStringNullable() String? get changedBy; String? get reason; String? get changedAt;
 /// Create a copy of PoStatusHistory
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -332,7 +332,7 @@ abstract mixin class $PoStatusHistoryCopyWith<$Res>  {
   factory $PoStatusHistoryCopyWith(PoStatusHistory value, $Res Function(PoStatusHistory) _then) = _$PoStatusHistoryCopyWithImpl;
 @useResult
 $Res call({
- String? id,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? fromStatus,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus toStatus, String? changedBy, String? reason, String? changedAt
+ String? id,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? fromStatus,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus toStatus,@FlexStringNullable() String? changedBy, String? reason, String? changedAt
 });
 
 
@@ -442,7 +442,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus? fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus toStatus,  String? changedBy,  String? reason,  String? changedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus? fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus toStatus, @FlexStringNullable()  String? changedBy,  String? reason,  String? changedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PoStatusHistory() when $default != null:
 return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedBy,_that.reason,_that.changedAt);case _:
@@ -463,7 +463,7 @@ return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedBy,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus? fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus toStatus,  String? changedBy,  String? reason,  String? changedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus? fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus toStatus, @FlexStringNullable()  String? changedBy,  String? reason,  String? changedAt)  $default,) {final _that = this;
 switch (_that) {
 case _PoStatusHistory():
 return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedBy,_that.reason,_that.changedAt);case _:
@@ -483,7 +483,7 @@ return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedBy,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus? fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus toStatus,  String? changedBy,  String? reason,  String? changedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus? fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus toStatus, @FlexStringNullable()  String? changedBy,  String? reason,  String? changedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PoStatusHistory() when $default != null:
 return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedBy,_that.reason,_that.changedAt);case _:
@@ -498,13 +498,13 @@ return $default(_that.id,_that.fromStatus,_that.toStatus,_that.changedBy,_that.r
 @JsonSerializable()
 
 class _PoStatusHistory implements PoStatusHistory {
-  const _PoStatusHistory({this.id, @JsonKey(unknownEnumValue: PoStatus.draft) this.fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft) required this.toStatus, this.changedBy, this.reason, this.changedAt});
+  const _PoStatusHistory({this.id, @JsonKey(unknownEnumValue: PoStatus.draft) this.fromStatus, @JsonKey(unknownEnumValue: PoStatus.draft) required this.toStatus, @FlexStringNullable() this.changedBy, this.reason, this.changedAt});
   factory _PoStatusHistory.fromJson(Map<String, dynamic> json) => _$PoStatusHistoryFromJson(json);
 
 @override final  String? id;
 @override@JsonKey(unknownEnumValue: PoStatus.draft) final  PoStatus? fromStatus;
 @override@JsonKey(unknownEnumValue: PoStatus.draft) final  PoStatus toStatus;
-@override final  String? changedBy;
+@override@FlexStringNullable() final  String? changedBy;
 @override final  String? reason;
 @override final  String? changedAt;
 
@@ -541,7 +541,7 @@ abstract mixin class _$PoStatusHistoryCopyWith<$Res> implements $PoStatusHistory
   factory _$PoStatusHistoryCopyWith(_PoStatusHistory value, $Res Function(_PoStatusHistory) _then) = __$PoStatusHistoryCopyWithImpl;
 @override @useResult
 $Res call({
- String? id,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? fromStatus,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus toStatus, String? changedBy, String? reason, String? changedAt
+ String? id,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? fromStatus,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus toStatus,@FlexStringNullable() String? changedBy, String? reason, String? changedAt
 });
 
 
@@ -577,7 +577,7 @@ as String?,
 /// @nodoc
 mixin _$PurchaseOrder {
 
- String get id; String get poNumber; String get customerId; Customer? get customer; String get orderDate; String get deliveryDate;@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus get status;@JsonKey(unknownEnumValue: PaymentStatus.unpaid) PaymentStatus get paymentStatus;@FlexDouble() double get dpAmount;@FlexDouble() double get paidAmount;@FlexDouble() double get subtotal;@FlexDouble() double get discount;@FlexDouble() double get tax;@FlexDouble() double get shippingCost;@FlexDouble() double get total; String? get notes; String? get paymentMethod; List<PurchaseOrderItem> get items; List<PoStatusHistory> get statusHistory; String? get createdAt; String? get updatedAt;
+ String get id; String get poNumber; String get customerId; Customer? get customer; String get orderDate; String get deliveryDate;@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus get status;@JsonKey(unknownEnumValue: PaymentStatus.unpaid) PaymentStatus get paymentStatus;@FlexDouble() double get dpAmount;@FlexDouble() double get paidAmount;@FlexDouble() double get subtotal;@FlexDouble() double get discount;@FlexDouble() double get tax;@FlexDouble() double get shippingCost;@FlexDouble() double get total; String? get notes; String? get paymentMethod; String? get source; String? get shippingMethod; String? get trackingNumber; List<PurchaseOrderItem> get items; List<PoStatusHistory> get statusHistory; String? get createdAt; String? get updatedAt;
 /// Create a copy of PurchaseOrder
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -590,16 +590,16 @@ $PurchaseOrderCopyWith<PurchaseOrder> get copyWith => _$PurchaseOrderCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PurchaseOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.poNumber, poNumber) || other.poNumber == poNumber)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.customer, customer) || other.customer == customer)&&(identical(other.orderDate, orderDate) || other.orderDate == orderDate)&&(identical(other.deliveryDate, deliveryDate) || other.deliveryDate == deliveryDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.dpAmount, dpAmount) || other.dpAmount == dpAmount)&&(identical(other.paidAmount, paidAmount) || other.paidAmount == paidAmount)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.discount, discount) || other.discount == discount)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.shippingCost, shippingCost) || other.shippingCost == shippingCost)&&(identical(other.total, total) || other.total == total)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&const DeepCollectionEquality().equals(other.items, items)&&const DeepCollectionEquality().equals(other.statusHistory, statusHistory)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PurchaseOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.poNumber, poNumber) || other.poNumber == poNumber)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.customer, customer) || other.customer == customer)&&(identical(other.orderDate, orderDate) || other.orderDate == orderDate)&&(identical(other.deliveryDate, deliveryDate) || other.deliveryDate == deliveryDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.dpAmount, dpAmount) || other.dpAmount == dpAmount)&&(identical(other.paidAmount, paidAmount) || other.paidAmount == paidAmount)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.discount, discount) || other.discount == discount)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.shippingCost, shippingCost) || other.shippingCost == shippingCost)&&(identical(other.total, total) || other.total == total)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.source, source) || other.source == source)&&(identical(other.shippingMethod, shippingMethod) || other.shippingMethod == shippingMethod)&&(identical(other.trackingNumber, trackingNumber) || other.trackingNumber == trackingNumber)&&const DeepCollectionEquality().equals(other.items, items)&&const DeepCollectionEquality().equals(other.statusHistory, statusHistory)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,poNumber,customerId,customer,orderDate,deliveryDate,status,paymentStatus,dpAmount,paidAmount,subtotal,discount,tax,shippingCost,total,notes,paymentMethod,const DeepCollectionEquality().hash(items),const DeepCollectionEquality().hash(statusHistory),createdAt,updatedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,poNumber,customerId,customer,orderDate,deliveryDate,status,paymentStatus,dpAmount,paidAmount,subtotal,discount,tax,shippingCost,total,notes,paymentMethod,source,shippingMethod,trackingNumber,const DeepCollectionEquality().hash(items),const DeepCollectionEquality().hash(statusHistory),createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'PurchaseOrder(id: $id, poNumber: $poNumber, customerId: $customerId, customer: $customer, orderDate: $orderDate, deliveryDate: $deliveryDate, status: $status, paymentStatus: $paymentStatus, dpAmount: $dpAmount, paidAmount: $paidAmount, subtotal: $subtotal, discount: $discount, tax: $tax, shippingCost: $shippingCost, total: $total, notes: $notes, paymentMethod: $paymentMethod, items: $items, statusHistory: $statusHistory, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'PurchaseOrder(id: $id, poNumber: $poNumber, customerId: $customerId, customer: $customer, orderDate: $orderDate, deliveryDate: $deliveryDate, status: $status, paymentStatus: $paymentStatus, dpAmount: $dpAmount, paidAmount: $paidAmount, subtotal: $subtotal, discount: $discount, tax: $tax, shippingCost: $shippingCost, total: $total, notes: $notes, paymentMethod: $paymentMethod, source: $source, shippingMethod: $shippingMethod, trackingNumber: $trackingNumber, items: $items, statusHistory: $statusHistory, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -610,7 +610,7 @@ abstract mixin class $PurchaseOrderCopyWith<$Res>  {
   factory $PurchaseOrderCopyWith(PurchaseOrder value, $Res Function(PurchaseOrder) _then) = _$PurchaseOrderCopyWithImpl;
 @useResult
 $Res call({
- String id, String poNumber, String customerId, Customer? customer, String orderDate, String deliveryDate,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus status,@JsonKey(unknownEnumValue: PaymentStatus.unpaid) PaymentStatus paymentStatus,@FlexDouble() double dpAmount,@FlexDouble() double paidAmount,@FlexDouble() double subtotal,@FlexDouble() double discount,@FlexDouble() double tax,@FlexDouble() double shippingCost,@FlexDouble() double total, String? notes, String? paymentMethod, List<PurchaseOrderItem> items, List<PoStatusHistory> statusHistory, String? createdAt, String? updatedAt
+ String id, String poNumber, String customerId, Customer? customer, String orderDate, String deliveryDate,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus status,@JsonKey(unknownEnumValue: PaymentStatus.unpaid) PaymentStatus paymentStatus,@FlexDouble() double dpAmount,@FlexDouble() double paidAmount,@FlexDouble() double subtotal,@FlexDouble() double discount,@FlexDouble() double tax,@FlexDouble() double shippingCost,@FlexDouble() double total, String? notes, String? paymentMethod, String? source, String? shippingMethod, String? trackingNumber, List<PurchaseOrderItem> items, List<PoStatusHistory> statusHistory, String? createdAt, String? updatedAt
 });
 
 
@@ -627,7 +627,7 @@ class _$PurchaseOrderCopyWithImpl<$Res>
 
 /// Create a copy of PurchaseOrder
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? poNumber = null,Object? customerId = null,Object? customer = freezed,Object? orderDate = null,Object? deliveryDate = null,Object? status = null,Object? paymentStatus = null,Object? dpAmount = null,Object? paidAmount = null,Object? subtotal = null,Object? discount = null,Object? tax = null,Object? shippingCost = null,Object? total = null,Object? notes = freezed,Object? paymentMethod = freezed,Object? items = null,Object? statusHistory = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? poNumber = null,Object? customerId = null,Object? customer = freezed,Object? orderDate = null,Object? deliveryDate = null,Object? status = null,Object? paymentStatus = null,Object? dpAmount = null,Object? paidAmount = null,Object? subtotal = null,Object? discount = null,Object? tax = null,Object? shippingCost = null,Object? total = null,Object? notes = freezed,Object? paymentMethod = freezed,Object? source = freezed,Object? shippingMethod = freezed,Object? trackingNumber = freezed,Object? items = null,Object? statusHistory = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,poNumber: null == poNumber ? _self.poNumber : poNumber // ignore: cast_nullable_to_non_nullable
@@ -646,6 +646,9 @@ as double,shippingCost: null == shippingCost ? _self.shippingCost : shippingCost
 as double,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as double,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,paymentMethod: freezed == paymentMethod ? _self.paymentMethod : paymentMethod // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,shippingMethod: freezed == shippingMethod ? _self.shippingMethod : shippingMethod // ignore: cast_nullable_to_non_nullable
+as String?,trackingNumber: freezed == trackingNumber ? _self.trackingNumber : trackingNumber // ignore: cast_nullable_to_non_nullable
 as String?,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<PurchaseOrderItem>,statusHistory: null == statusHistory ? _self.statusHistory : statusHistory // ignore: cast_nullable_to_non_nullable
 as List<PoStatusHistory>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -747,10 +750,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String poNumber,  String customerId,  Customer? customer,  String orderDate,  String deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid)  PaymentStatus paymentStatus, @FlexDouble()  double dpAmount, @FlexDouble()  double paidAmount, @FlexDouble()  double subtotal, @FlexDouble()  double discount, @FlexDouble()  double tax, @FlexDouble()  double shippingCost, @FlexDouble()  double total,  String? notes,  String? paymentMethod,  List<PurchaseOrderItem> items,  List<PoStatusHistory> statusHistory,  String? createdAt,  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String poNumber,  String customerId,  Customer? customer,  String orderDate,  String deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid)  PaymentStatus paymentStatus, @FlexDouble()  double dpAmount, @FlexDouble()  double paidAmount, @FlexDouble()  double subtotal, @FlexDouble()  double discount, @FlexDouble()  double tax, @FlexDouble()  double shippingCost, @FlexDouble()  double total,  String? notes,  String? paymentMethod,  String? source,  String? shippingMethod,  String? trackingNumber,  List<PurchaseOrderItem> items,  List<PoStatusHistory> statusHistory,  String? createdAt,  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PurchaseOrder() when $default != null:
-return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.orderDate,_that.deliveryDate,_that.status,_that.paymentStatus,_that.dpAmount,_that.paidAmount,_that.subtotal,_that.discount,_that.tax,_that.shippingCost,_that.total,_that.notes,_that.paymentMethod,_that.items,_that.statusHistory,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.orderDate,_that.deliveryDate,_that.status,_that.paymentStatus,_that.dpAmount,_that.paidAmount,_that.subtotal,_that.discount,_that.tax,_that.shippingCost,_that.total,_that.notes,_that.paymentMethod,_that.source,_that.shippingMethod,_that.trackingNumber,_that.items,_that.statusHistory,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -768,10 +771,10 @@ return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.or
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String poNumber,  String customerId,  Customer? customer,  String orderDate,  String deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid)  PaymentStatus paymentStatus, @FlexDouble()  double dpAmount, @FlexDouble()  double paidAmount, @FlexDouble()  double subtotal, @FlexDouble()  double discount, @FlexDouble()  double tax, @FlexDouble()  double shippingCost, @FlexDouble()  double total,  String? notes,  String? paymentMethod,  List<PurchaseOrderItem> items,  List<PoStatusHistory> statusHistory,  String? createdAt,  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String poNumber,  String customerId,  Customer? customer,  String orderDate,  String deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid)  PaymentStatus paymentStatus, @FlexDouble()  double dpAmount, @FlexDouble()  double paidAmount, @FlexDouble()  double subtotal, @FlexDouble()  double discount, @FlexDouble()  double tax, @FlexDouble()  double shippingCost, @FlexDouble()  double total,  String? notes,  String? paymentMethod,  String? source,  String? shippingMethod,  String? trackingNumber,  List<PurchaseOrderItem> items,  List<PoStatusHistory> statusHistory,  String? createdAt,  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _PurchaseOrder():
-return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.orderDate,_that.deliveryDate,_that.status,_that.paymentStatus,_that.dpAmount,_that.paidAmount,_that.subtotal,_that.discount,_that.tax,_that.shippingCost,_that.total,_that.notes,_that.paymentMethod,_that.items,_that.statusHistory,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.orderDate,_that.deliveryDate,_that.status,_that.paymentStatus,_that.dpAmount,_that.paidAmount,_that.subtotal,_that.discount,_that.tax,_that.shippingCost,_that.total,_that.notes,_that.paymentMethod,_that.source,_that.shippingMethod,_that.trackingNumber,_that.items,_that.statusHistory,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -788,10 +791,10 @@ return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.or
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String poNumber,  String customerId,  Customer? customer,  String orderDate,  String deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid)  PaymentStatus paymentStatus, @FlexDouble()  double dpAmount, @FlexDouble()  double paidAmount, @FlexDouble()  double subtotal, @FlexDouble()  double discount, @FlexDouble()  double tax, @FlexDouble()  double shippingCost, @FlexDouble()  double total,  String? notes,  String? paymentMethod,  List<PurchaseOrderItem> items,  List<PoStatusHistory> statusHistory,  String? createdAt,  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String poNumber,  String customerId,  Customer? customer,  String orderDate,  String deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft)  PoStatus status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid)  PaymentStatus paymentStatus, @FlexDouble()  double dpAmount, @FlexDouble()  double paidAmount, @FlexDouble()  double subtotal, @FlexDouble()  double discount, @FlexDouble()  double tax, @FlexDouble()  double shippingCost, @FlexDouble()  double total,  String? notes,  String? paymentMethod,  String? source,  String? shippingMethod,  String? trackingNumber,  List<PurchaseOrderItem> items,  List<PoStatusHistory> statusHistory,  String? createdAt,  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PurchaseOrder() when $default != null:
-return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.orderDate,_that.deliveryDate,_that.status,_that.paymentStatus,_that.dpAmount,_that.paidAmount,_that.subtotal,_that.discount,_that.tax,_that.shippingCost,_that.total,_that.notes,_that.paymentMethod,_that.items,_that.statusHistory,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.orderDate,_that.deliveryDate,_that.status,_that.paymentStatus,_that.dpAmount,_that.paidAmount,_that.subtotal,_that.discount,_that.tax,_that.shippingCost,_that.total,_that.notes,_that.paymentMethod,_that.source,_that.shippingMethod,_that.trackingNumber,_that.items,_that.statusHistory,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -803,7 +806,7 @@ return $default(_that.id,_that.poNumber,_that.customerId,_that.customer,_that.or
 @JsonSerializable()
 
 class _PurchaseOrder implements PurchaseOrder {
-  const _PurchaseOrder({required this.id, required this.poNumber, required this.customerId, this.customer, required this.orderDate, required this.deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft) required this.status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid) required this.paymentStatus, @FlexDouble() this.dpAmount = 0, @FlexDouble() this.paidAmount = 0, @FlexDouble() this.subtotal = 0, @FlexDouble() this.discount = 0, @FlexDouble() this.tax = 0, @FlexDouble() this.shippingCost = 0, @FlexDouble() this.total = 0, this.notes, this.paymentMethod, final  List<PurchaseOrderItem> items = const [], final  List<PoStatusHistory> statusHistory = const [], this.createdAt, this.updatedAt}): _items = items,_statusHistory = statusHistory;
+  const _PurchaseOrder({required this.id, required this.poNumber, required this.customerId, this.customer, required this.orderDate, required this.deliveryDate, @JsonKey(unknownEnumValue: PoStatus.draft) required this.status, @JsonKey(unknownEnumValue: PaymentStatus.unpaid) required this.paymentStatus, @FlexDouble() this.dpAmount = 0, @FlexDouble() this.paidAmount = 0, @FlexDouble() this.subtotal = 0, @FlexDouble() this.discount = 0, @FlexDouble() this.tax = 0, @FlexDouble() this.shippingCost = 0, @FlexDouble() this.total = 0, this.notes, this.paymentMethod, this.source, this.shippingMethod, this.trackingNumber, final  List<PurchaseOrderItem> items = const [], final  List<PoStatusHistory> statusHistory = const [], this.createdAt, this.updatedAt}): _items = items,_statusHistory = statusHistory;
   factory _PurchaseOrder.fromJson(Map<String, dynamic> json) => _$PurchaseOrderFromJson(json);
 
 @override final  String id;
@@ -823,6 +826,9 @@ class _PurchaseOrder implements PurchaseOrder {
 @override@JsonKey()@FlexDouble() final  double total;
 @override final  String? notes;
 @override final  String? paymentMethod;
+@override final  String? source;
+@override final  String? shippingMethod;
+@override final  String? trackingNumber;
  final  List<PurchaseOrderItem> _items;
 @override@JsonKey() List<PurchaseOrderItem> get items {
   if (_items is EqualUnmodifiableListView) return _items;
@@ -853,16 +859,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PurchaseOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.poNumber, poNumber) || other.poNumber == poNumber)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.customer, customer) || other.customer == customer)&&(identical(other.orderDate, orderDate) || other.orderDate == orderDate)&&(identical(other.deliveryDate, deliveryDate) || other.deliveryDate == deliveryDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.dpAmount, dpAmount) || other.dpAmount == dpAmount)&&(identical(other.paidAmount, paidAmount) || other.paidAmount == paidAmount)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.discount, discount) || other.discount == discount)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.shippingCost, shippingCost) || other.shippingCost == shippingCost)&&(identical(other.total, total) || other.total == total)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&const DeepCollectionEquality().equals(other._items, _items)&&const DeepCollectionEquality().equals(other._statusHistory, _statusHistory)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PurchaseOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.poNumber, poNumber) || other.poNumber == poNumber)&&(identical(other.customerId, customerId) || other.customerId == customerId)&&(identical(other.customer, customer) || other.customer == customer)&&(identical(other.orderDate, orderDate) || other.orderDate == orderDate)&&(identical(other.deliveryDate, deliveryDate) || other.deliveryDate == deliveryDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.dpAmount, dpAmount) || other.dpAmount == dpAmount)&&(identical(other.paidAmount, paidAmount) || other.paidAmount == paidAmount)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.discount, discount) || other.discount == discount)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.shippingCost, shippingCost) || other.shippingCost == shippingCost)&&(identical(other.total, total) || other.total == total)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.source, source) || other.source == source)&&(identical(other.shippingMethod, shippingMethod) || other.shippingMethod == shippingMethod)&&(identical(other.trackingNumber, trackingNumber) || other.trackingNumber == trackingNumber)&&const DeepCollectionEquality().equals(other._items, _items)&&const DeepCollectionEquality().equals(other._statusHistory, _statusHistory)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,poNumber,customerId,customer,orderDate,deliveryDate,status,paymentStatus,dpAmount,paidAmount,subtotal,discount,tax,shippingCost,total,notes,paymentMethod,const DeepCollectionEquality().hash(_items),const DeepCollectionEquality().hash(_statusHistory),createdAt,updatedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,poNumber,customerId,customer,orderDate,deliveryDate,status,paymentStatus,dpAmount,paidAmount,subtotal,discount,tax,shippingCost,total,notes,paymentMethod,source,shippingMethod,trackingNumber,const DeepCollectionEquality().hash(_items),const DeepCollectionEquality().hash(_statusHistory),createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'PurchaseOrder(id: $id, poNumber: $poNumber, customerId: $customerId, customer: $customer, orderDate: $orderDate, deliveryDate: $deliveryDate, status: $status, paymentStatus: $paymentStatus, dpAmount: $dpAmount, paidAmount: $paidAmount, subtotal: $subtotal, discount: $discount, tax: $tax, shippingCost: $shippingCost, total: $total, notes: $notes, paymentMethod: $paymentMethod, items: $items, statusHistory: $statusHistory, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'PurchaseOrder(id: $id, poNumber: $poNumber, customerId: $customerId, customer: $customer, orderDate: $orderDate, deliveryDate: $deliveryDate, status: $status, paymentStatus: $paymentStatus, dpAmount: $dpAmount, paidAmount: $paidAmount, subtotal: $subtotal, discount: $discount, tax: $tax, shippingCost: $shippingCost, total: $total, notes: $notes, paymentMethod: $paymentMethod, source: $source, shippingMethod: $shippingMethod, trackingNumber: $trackingNumber, items: $items, statusHistory: $statusHistory, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -873,7 +879,7 @@ abstract mixin class _$PurchaseOrderCopyWith<$Res> implements $PurchaseOrderCopy
   factory _$PurchaseOrderCopyWith(_PurchaseOrder value, $Res Function(_PurchaseOrder) _then) = __$PurchaseOrderCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String poNumber, String customerId, Customer? customer, String orderDate, String deliveryDate,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus status,@JsonKey(unknownEnumValue: PaymentStatus.unpaid) PaymentStatus paymentStatus,@FlexDouble() double dpAmount,@FlexDouble() double paidAmount,@FlexDouble() double subtotal,@FlexDouble() double discount,@FlexDouble() double tax,@FlexDouble() double shippingCost,@FlexDouble() double total, String? notes, String? paymentMethod, List<PurchaseOrderItem> items, List<PoStatusHistory> statusHistory, String? createdAt, String? updatedAt
+ String id, String poNumber, String customerId, Customer? customer, String orderDate, String deliveryDate,@JsonKey(unknownEnumValue: PoStatus.draft) PoStatus status,@JsonKey(unknownEnumValue: PaymentStatus.unpaid) PaymentStatus paymentStatus,@FlexDouble() double dpAmount,@FlexDouble() double paidAmount,@FlexDouble() double subtotal,@FlexDouble() double discount,@FlexDouble() double tax,@FlexDouble() double shippingCost,@FlexDouble() double total, String? notes, String? paymentMethod, String? source, String? shippingMethod, String? trackingNumber, List<PurchaseOrderItem> items, List<PoStatusHistory> statusHistory, String? createdAt, String? updatedAt
 });
 
 
@@ -890,7 +896,7 @@ class __$PurchaseOrderCopyWithImpl<$Res>
 
 /// Create a copy of PurchaseOrder
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? poNumber = null,Object? customerId = null,Object? customer = freezed,Object? orderDate = null,Object? deliveryDate = null,Object? status = null,Object? paymentStatus = null,Object? dpAmount = null,Object? paidAmount = null,Object? subtotal = null,Object? discount = null,Object? tax = null,Object? shippingCost = null,Object? total = null,Object? notes = freezed,Object? paymentMethod = freezed,Object? items = null,Object? statusHistory = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? poNumber = null,Object? customerId = null,Object? customer = freezed,Object? orderDate = null,Object? deliveryDate = null,Object? status = null,Object? paymentStatus = null,Object? dpAmount = null,Object? paidAmount = null,Object? subtotal = null,Object? discount = null,Object? tax = null,Object? shippingCost = null,Object? total = null,Object? notes = freezed,Object? paymentMethod = freezed,Object? source = freezed,Object? shippingMethod = freezed,Object? trackingNumber = freezed,Object? items = null,Object? statusHistory = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_PurchaseOrder(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,poNumber: null == poNumber ? _self.poNumber : poNumber // ignore: cast_nullable_to_non_nullable
@@ -909,6 +915,9 @@ as double,shippingCost: null == shippingCost ? _self.shippingCost : shippingCost
 as double,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as double,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,paymentMethod: freezed == paymentMethod ? _self.paymentMethod : paymentMethod // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,shippingMethod: freezed == shippingMethod ? _self.shippingMethod : shippingMethod // ignore: cast_nullable_to_non_nullable
+as String?,trackingNumber: freezed == trackingNumber ? _self.trackingNumber : trackingNumber // ignore: cast_nullable_to_non_nullable
 as String?,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<PurchaseOrderItem>,statusHistory: null == statusHistory ? _self._statusHistory : statusHistory // ignore: cast_nullable_to_non_nullable
 as List<PoStatusHistory>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable

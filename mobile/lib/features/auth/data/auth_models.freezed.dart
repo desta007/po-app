@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$User {
 
- String get id; String get email; String get fullName; String? get phone; String? get avatarUrl; String? get currentOrgId; bool get isSuperAdmin;@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? get role; String? get lastLoginAt; String? get createdAt;
+@FlexString() String get id; String get email; String get fullName; String? get phone; String? get avatarUrl; String? get currentOrgId; bool get isSuperAdmin;@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? get role; String? get lastLoginAt; String? get createdAt;
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $UserCopyWith<$Res>  {
   factory $UserCopyWith(User value, $Res Function(User) _then) = _$UserCopyWithImpl;
 @useResult
 $Res call({
- String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
+@FlexString() String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
 });
 
 
@@ -162,7 +162,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
 return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.role,_that.lastLoginAt,_that.createdAt);case _:
@@ -183,7 +183,7 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _User():
 return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.role,_that.lastLoginAt,_that.createdAt);case _:
@@ -203,7 +203,7 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
 return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.role,_that.lastLoginAt,_that.createdAt);case _:
@@ -218,10 +218,10 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 @JsonSerializable()
 
 class _User implements User {
-  const _User({required this.id, required this.email, required this.fullName, this.phone, this.avatarUrl, this.currentOrgId, this.isSuperAdmin = false, @JsonKey(unknownEnumValue: MemberRole.viewer) this.role, this.lastLoginAt, this.createdAt});
+  const _User({@FlexString() required this.id, required this.email, required this.fullName, this.phone, this.avatarUrl, this.currentOrgId, this.isSuperAdmin = false, @JsonKey(unknownEnumValue: MemberRole.viewer) this.role, this.lastLoginAt, this.createdAt});
   factory _User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
-@override final  String id;
+@override@FlexString() final  String id;
 @override final  String email;
 @override final  String fullName;
 @override final  String? phone;
@@ -265,7 +265,7 @@ abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$UserCopyWith(_User value, $Res Function(_User) _then) = __$UserCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
+@FlexString() String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
 });
 
 

@@ -66,5 +66,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Izin Bluetooth untuk cetak struk ke printer thermal (print_bluetooth_thermal). -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Aplikasi memakai Bluetooth untuk mencetak struk ke printer thermal.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Aplikasi memakai Bluetooth untuk mencetak struk ke printer thermal.</string>
+	<!-- Izin galeri & kamera untuk upload foto produk (image_picker). -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikasi memerlukan akses galeri untuk memilih foto produk.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikasi memerlukan akses kamera untuk memotret foto produk.</string>
 </dict>
 </plist>

@@ -54,8 +54,8 @@ Map<String, dynamic> _$PaymentMethodItemToJson(_PaymentMethodItem instance) =>
     <String, dynamic>{'name': instance.name, 'is_active': instance.isActive};
 
 _TeamMember _$TeamMemberFromJson(Map<String, dynamic> json) => _TeamMember(
-  id: json['id'] as String,
-  userId: json['user_id'] as String?,
+  id: const FlexString().fromJson(json['id']),
+  userId: const FlexStringNullable().fromJson(json['user_id']),
   userName: json['user_name'] as String,
   userEmail: json['user_email'] as String,
   userPhone: json['user_phone'] as String?,
@@ -68,8 +68,8 @@ _TeamMember _$TeamMemberFromJson(Map<String, dynamic> json) => _TeamMember(
 
 Map<String, dynamic> _$TeamMemberToJson(_TeamMember instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'user_id': instance.userId,
+      'id': const FlexString().toJson(instance.id),
+      'user_id': const FlexStringNullable().toJson(instance.userId),
       'user_name': instance.userName,
       'user_email': instance.userEmail,
       'user_phone': instance.userPhone,

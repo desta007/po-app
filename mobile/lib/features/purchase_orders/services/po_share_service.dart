@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../data/po_models.dart';
 import '../data/purchase_orders_api.dart';
 
 final poShareServiceProvider = Provider<PoShareService>(
@@ -50,6 +51,20 @@ class PoShareService {
     await _shareBytes(bytes,
         fileName: 'Label-${size.apiValue}-${ids.length}.pdf',
         subject: subject ?? 'Label PO (${ids.length})');
+  }
+
+  /// Export daftar PO (sesuai filter & urutan) ke Excel lalu buka share sheet.
+  Future<void> shareExcel({
+    PoFilters filters = const PoFilters(),
+    String sortBy = 'created_at',
+    String sortDir = 'desc',
+  }) async {
+    final bytes = await _api.exportExcelBytes(
+        filters: filters, sortBy: sortBy, sortDir: sortDir);
+    final stamp = DateTime.now().toIso8601String().split('T').first;
+    await _shareBytes(bytes,
+        fileName: 'purchase-orders-$stamp.xlsx',
+        subject: 'Daftar Purchase Order');
   }
 
   Future<void> _shareBytes(

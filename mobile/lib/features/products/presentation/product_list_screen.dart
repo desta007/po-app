@@ -91,6 +91,33 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ),
             ),
           ),
+          if (notifier.knownCategories.isNotEmpty)
+            SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ChoiceChip(
+                      label: const Text('Semua'),
+                      selected: notifier.category == null,
+                      onSelected: (_) => notifier.setCategory(null),
+                    ),
+                  ),
+                  for (final cat in notifier.knownCategories)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: ChoiceChip(
+                        label: Text(cat),
+                        selected: notifier.category == cat,
+                        onSelected: (_) => notifier.setCategory(cat),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           Expanded(
             child: Builder(builder: (context) {
               if (state.isLoading) return const LoadingView();

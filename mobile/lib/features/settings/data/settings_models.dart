@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/api/json_converters.dart';
+
 part 'settings_models.freezed.dart';
 part 'settings_models.g.dart';
 
@@ -55,8 +57,8 @@ abstract class PaymentMethodItem with _$PaymentMethodItem {
 @freezed
 abstract class TeamMember with _$TeamMember {
   const factory TeamMember({
-    required String id,
-    String? userId,
+    @FlexString() required String id,
+    @FlexStringNullable() String? userId,
     required String userName,
     required String userEmail,
     String? userPhone,

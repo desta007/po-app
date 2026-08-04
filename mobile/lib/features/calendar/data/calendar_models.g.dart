@@ -54,7 +54,6 @@ Map<String, dynamic> _$CalendarEventPropsToJson(_CalendarEventProps instance) =>
 
 const _$PoStatusEnumMap = {
   PoStatus.draft: 'draft',
-  PoStatus.confirmed: 'confirmed',
   PoStatus.inProgress: 'in_progress',
   PoStatus.completed: 'completed',
   PoStatus.cancelled: 'cancelled',

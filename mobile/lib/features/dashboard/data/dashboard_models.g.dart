@@ -28,9 +28,6 @@ _TodaySummary _$TodaySummaryFromJson(Map<String, dynamic> json) =>
       draft: json['draft'] == null
           ? 0
           : const FlexInt().fromJson(json['draft']),
-      confirmed: json['confirmed'] == null
-          ? 0
-          : const FlexInt().fromJson(json['confirmed']),
       inProgress: json['in_progress'] == null
           ? 0
           : const FlexInt().fromJson(json['in_progress']),
@@ -53,7 +50,6 @@ Map<String, dynamic> _$TodaySummaryToJson(_TodaySummary instance) =>
         instance.totalOrdersThisMonth,
       ),
       'draft': const FlexInt().toJson(instance.draft),
-      'confirmed': const FlexInt().toJson(instance.confirmed),
       'in_progress': const FlexInt().toJson(instance.inProgress),
       'completed': const FlexInt().toJson(instance.completed),
     };

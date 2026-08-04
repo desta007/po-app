@@ -7,7 +7,7 @@ part of 'auth_models.dart';
 // **************************************************************************
 
 _User _$UserFromJson(Map<String, dynamic> json) => _User(
-  id: json['id'] as String,
+  id: const FlexString().fromJson(json['id']),
   email: json['email'] as String,
   fullName: json['full_name'] as String,
   phone: json['phone'] as String?,
@@ -24,7 +24,7 @@ _User _$UserFromJson(Map<String, dynamic> json) => _User(
 );
 
 Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
-  'id': instance.id,
+  'id': const FlexString().toJson(instance.id),
   'email': instance.email,
   'full_name': instance.fullName,
   'phone': instance.phone,

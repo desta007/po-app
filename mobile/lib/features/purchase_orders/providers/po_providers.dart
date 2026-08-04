@@ -11,9 +11,13 @@ final poListProvider =
 
 class PoListNotifier extends Notifier<PagedListState<PurchaseOrder>> {
   PoFilters _filters = const PoFilters();
+  String _sortBy = 'created_at';
+  String _sortDir = 'desc';
   int _requestId = 0;
 
   PoFilters get filters => _filters;
+  String get sortBy => _sortBy;
+  String get sortDir => _sortDir;
   PurchaseOrdersApi get _api => ref.read(purchaseOrdersApiProvider);
 
   @override
@@ -26,7 +30,8 @@ class PoListNotifier extends Notifier<PagedListState<PurchaseOrder>> {
     final id = ++_requestId;
     state = state.copyWith(isLoading: true, error: () => null);
     try {
-      final result = await _api.list(filters: _filters, page: 1);
+      final result = await _api.list(
+          filters: _filters, page: 1, sortBy: _sortBy, sortDir: _sortDir);
       if (id != _requestId) return;
       state = PagedListState.firstPage(result);
     } on ApiException catch (e) {
@@ -40,7 +45,11 @@ class PoListNotifier extends Notifier<PagedListState<PurchaseOrder>> {
     final id = ++_requestId;
     state = state.copyWith(isLoadingMore: true);
     try {
-      final result = await _api.list(filters: _filters, page: state.page + 1);
+      final result = await _api.list(
+          filters: _filters,
+          page: state.page + 1,
+          sortBy: _sortBy,
+          sortDir: _sortDir);
       if (id != _requestId) return;
       state = state.appendPage(result);
     } on ApiException {
@@ -52,6 +61,13 @@ class PoListNotifier extends Notifier<PagedListState<PurchaseOrder>> {
   void setFilters(PoFilters filters) {
     if (filters == _filters) return;
     _filters = filters;
+    refresh();
+  }
+
+  void setSort(String sortBy, String sortDir) {
+    if (sortBy == _sortBy && sortDir == _sortDir) return;
+    _sortBy = sortBy;
+    _sortDir = sortDir;
     refresh();
   }
 
@@ -91,6 +107,12 @@ class PoDetailNotifier extends AsyncNotifier<PurchaseOrder> {
       paidAmount: paidAmount,
       paymentMethod: paymentMethod,
     );
+    state = AsyncData(po);
+    ref.read(poListProvider.notifier).refresh();
+  }
+
+  Future<void> updateTracking(String trackingNumber) async {
+    final po = await _api.updateTracking(poId, trackingNumber);
     state = AsyncData(po);
     ref.read(poListProvider.notifier).refresh();
   }
