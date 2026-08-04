@@ -40,11 +40,7 @@ _PoStatusHistory _$PoStatusHistoryFromJson(Map<String, dynamic> json) =>
         json['from_status'],
         unknownValue: PoStatus.draft,
       ),
-      toStatus: $enumDecode(
-        _$PoStatusEnumMap,
-        json['to_status'],
-        unknownValue: PoStatus.draft,
-      ),
+      toStatus: const _PoStatusConverter().fromJson(json['to_status']),
       changedBy: const FlexStringNullable().fromJson(json['changed_by']),
       reason: json['reason'] as String?,
       changedAt: json['changed_at'] as String?,
@@ -54,7 +50,7 @@ Map<String, dynamic> _$PoStatusHistoryToJson(_PoStatusHistory instance) =>
     <String, dynamic>{
       'id': instance.id,
       'from_status': _$PoStatusEnumMap[instance.fromStatus],
-      'to_status': _$PoStatusEnumMap[instance.toStatus]!,
+      'to_status': const _PoStatusConverter().toJson(instance.toStatus),
       'changed_by': const FlexStringNullable().toJson(instance.changedBy),
       'reason': instance.reason,
       'changed_at': instance.changedAt,
@@ -78,15 +74,9 @@ _PurchaseOrder _$PurchaseOrderFromJson(
       : Customer.fromJson(json['customer'] as Map<String, dynamic>),
   orderDate: json['order_date'] as String,
   deliveryDate: json['delivery_date'] as String,
-  status: $enumDecode(
-    _$PoStatusEnumMap,
-    json['status'],
-    unknownValue: PoStatus.draft,
-  ),
-  paymentStatus: $enumDecode(
-    _$PaymentStatusEnumMap,
+  status: const _PoStatusConverter().fromJson(json['status']),
+  paymentStatus: const _PaymentStatusConverter().fromJson(
     json['payment_status'],
-    unknownValue: PaymentStatus.unpaid,
   ),
   dpAmount: json['dp_amount'] == null
       ? 0
@@ -132,8 +122,10 @@ Map<String, dynamic> _$PurchaseOrderToJson(_PurchaseOrder instance) =>
       'customer': instance.customer?.toJson(),
       'order_date': instance.orderDate,
       'delivery_date': instance.deliveryDate,
-      'status': _$PoStatusEnumMap[instance.status]!,
-      'payment_status': _$PaymentStatusEnumMap[instance.paymentStatus]!,
+      'status': const _PoStatusConverter().toJson(instance.status),
+      'payment_status': const _PaymentStatusConverter().toJson(
+        instance.paymentStatus,
+      ),
       'dp_amount': const FlexDouble().toJson(instance.dpAmount),
       'paid_amount': const FlexDouble().toJson(instance.paidAmount),
       'subtotal': const FlexDouble().toJson(instance.subtotal),
@@ -151,12 +143,6 @@ Map<String, dynamic> _$PurchaseOrderToJson(_PurchaseOrder instance) =>
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
     };
-
-const _$PaymentStatusEnumMap = {
-  PaymentStatus.unpaid: 'unpaid',
-  PaymentStatus.dp: 'dp',
-  PaymentStatus.paid: 'paid',
-};
 
 _PoItemInput _$PoItemInputFromJson(Map<String, dynamic> json) => _PoItemInput(
   productId: json['product_id'] as String?,
