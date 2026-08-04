@@ -64,6 +64,38 @@ enum PaymentStatus {
       };
 }
 
+/// Converter enum yang tahan `null`/nilai tak dikenal. Backend bisa membalas
+/// `status`/`payment_status` = null pada respons create (model belum di-refresh
+/// sehingga default kolom DB belum termuat); `$enumDecode` bawaan melempar saat
+/// menerima null meski `unknownValue` diberikan. Converter ini jatuh ke default.
+class _PoStatusConverter implements JsonConverter<PoStatus, Object?> {
+  const _PoStatusConverter();
+
+  @override
+  PoStatus fromJson(Object? json) {
+    final value = json?.toString();
+    return PoStatus.values.firstWhere((e) => e.apiValue == value,
+        orElse: () => PoStatus.draft);
+  }
+
+  @override
+  Object? toJson(PoStatus value) => value.apiValue;
+}
+
+class _PaymentStatusConverter implements JsonConverter<PaymentStatus, Object?> {
+  const _PaymentStatusConverter();
+
+  @override
+  PaymentStatus fromJson(Object? json) {
+    final value = json?.toString();
+    return PaymentStatus.values.firstWhere((e) => e.name == value,
+        orElse: () => PaymentStatus.unpaid);
+  }
+
+  @override
+  Object? toJson(PaymentStatus value) => value.name;
+}
+
 @freezed
 abstract class PurchaseOrderItem with _$PurchaseOrderItem {
   const factory PurchaseOrderItem({
@@ -86,7 +118,7 @@ abstract class PoStatusHistory with _$PoStatusHistory {
   const factory PoStatusHistory({
     String? id,
     @JsonKey(unknownEnumValue: PoStatus.draft) PoStatus? fromStatus,
-    @JsonKey(unknownEnumValue: PoStatus.draft) required PoStatus toStatus,
+    @_PoStatusConverter() required PoStatus toStatus,
     @FlexStringNullable() String? changedBy,
     String? reason,
     String? changedAt,
@@ -105,9 +137,8 @@ abstract class PurchaseOrder with _$PurchaseOrder {
     Customer? customer,
     required String orderDate,
     required String deliveryDate,
-    @JsonKey(unknownEnumValue: PoStatus.draft) required PoStatus status,
-    @JsonKey(unknownEnumValue: PaymentStatus.unpaid)
-    required PaymentStatus paymentStatus,
+    @_PoStatusConverter() required PoStatus status,
+    @_PaymentStatusConverter() required PaymentStatus paymentStatus,
     @FlexDouble() @Default(0) double dpAmount,
     @FlexDouble() @Default(0) double paidAmount,
     @FlexDouble() @Default(0) double subtotal,

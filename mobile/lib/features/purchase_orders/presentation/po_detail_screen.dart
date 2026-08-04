@@ -514,6 +514,8 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
   }
 
   Future<void> _submit() async {
+    // Ditangkap sebelum pop agar snackbar tetap tampil setelah sheet ditutup.
+    final messenger = ScaffoldMessenger.of(context);
     final amount = _status == PaymentStatus.paid
         ? widget.po.total
         : double.tryParse(_amount.text.replaceAll('.', '')) ?? 0;
@@ -528,6 +530,8 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
       if (mounted) {
         Navigator.of(context).pop();
       }
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Pembayaran berhasil diperbarui.')));
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _submitting = false);

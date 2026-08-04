@@ -24,6 +24,10 @@ class PurchaseOrderService
             $data['organization_id'] = $orgId;
             $data['created_by'] = auth()->id();
             $data['status'] = 'draft';
+            // Set eksplisit agar model yang dikembalikan (belum di-refresh dari DB)
+            // tidak mem-balas null untuk kolom ber-default ini pada respons create.
+            $data['payment_status'] = $data['payment_status'] ?? 'unpaid';
+            $data['source'] = $data['source'] ?? 'internal';
 
             $calculated = $this->calculateTotals($items, $data['discount'] ?? 0, $data['tax'] ?? 0, $data['shipping_cost'] ?? 0);
             $data = array_merge($data, $calculated);
