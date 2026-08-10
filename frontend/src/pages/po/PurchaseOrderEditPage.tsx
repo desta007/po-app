@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
-import { customersApi } from '@/api/customers';
 import { productsApi } from '@/api/products';
+import type { Customer } from '@/types/customer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Trash2, Check } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { CustomerSelect } from '@/components/ui/customer-select';
 import { DeliveryDatePicker, OrderDateDisplay, formatTanggal } from '@/components/ui/delivery-date-picker';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
@@ -25,6 +26,7 @@ export default function PurchaseOrderEditPage() {
 
   const [step, setStep] = useState(0);
   const [customerId, setCustomerId] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [orderDate, setOrderDate] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -39,15 +41,14 @@ export default function PurchaseOrderEditPage() {
     enabled: !!id,
   });
 
-  const { data: customersData } = useQuery({ queryKey: ['customers-all'], queryFn: () => customersApi.list({ per_page: 100 }) });
   const { data: productsData } = useQuery({ queryKey: ['products-all'], queryFn: () => productsApi.list({ per_page: 100 }) });
-  const customers = customersData?.data?.data || [];
   const products = productsData?.data?.data || [];
 
   useEffect(() => {
     if (poData?.data?.data) {
       const po = poData.data.data;
       setCustomerId(po.customer_id);
+      if (po.customer) setSelectedCustomer(po.customer);
       setOrderDate(po.order_date.slice(0, 10));
       setDeliveryDate(po.delivery_date.slice(0, 10));
       setDiscount(Number(po.discount));
@@ -89,7 +90,6 @@ export default function PurchaseOrderEditPage() {
   const total = subtotal - discount + tax + shippingCost;
   const handleSubmit = () => { updatePO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, notes, items }); };
   const steps = ['Customer', 'Items', 'Jadwal & Bayar', 'Review'];
-  const selectedCustomer = customers.find((c: any) => c.id === customerId);
 
   if (isLoadingPo) {
     return <div className="flex justify-center p-12"><LoadingSpinner size="lg" /></div>;
@@ -113,11 +113,10 @@ export default function PurchaseOrderEditPage() {
       {step === 0 && (
         <Card className="max-w-xl mx-auto" padding="lg">
           <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Customer</label>
-          <SearchableSelect
-            options={customers.map((c: any) => ({ value: c.id, label: `${c.name} — ${c.phone || '-'}` }))}
+          <CustomerSelect
             value={customerId}
-            onChange={setCustomerId}
-            placeholder="-- Pilih Customer --"
+            selected={selectedCustomer}
+            onChange={(id, c) => { setCustomerId(id); setSelectedCustomer(c); }}
           />
           <div className="flex justify-end mt-6"><Button disabled={!customerId} onClick={() => setStep(1)}>Lanjut →</Button></div>
         </Card>

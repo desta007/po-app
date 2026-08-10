@@ -12,20 +12,55 @@ interface SearchableSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  /**
+   * Bila diisi, tampilkan opsi "+ Tambah '<query>'" ketika teks pencarian belum
+   * cocok persis dengan opsi mana pun. Dipanggil dengan query yang sedang diketik.
+   */
+  onCreate?: (query: string) => void;
+  createLabel?: (query: string) => string;
+  /**
+   * Mode async: bila diisi, pencarian dilakukan di server. Komponen tidak
+   * memfilter `options` di sisi klien (parent yang menyuplai hasil), dan
+   * memanggil callback ini (dengan debounce) tiap teks pencarian berubah.
+   */
+  onSearchChange?: (query: string) => void;
+  /** Tampilkan indikator loading di dalam dropdown (untuk mode async). */
+  loading?: boolean;
 }
 
-export function SearchableSelect({ options, value, onChange, placeholder = '-- Pilih --', className = '' }: SearchableSelectProps) {
+export function SearchableSelect({ options, value, onChange, placeholder = '-- Pilih --', className = '', onCreate, createLabel, onSearchChange, loading = false }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const async = !!onSearchChange;
   const selectedLabel = options.find(o => o.value === value)?.label || '';
 
-  const filtered = search
-    ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
-    : options;
+  // Debounce teks pencarian ke parent saat mode async. Simpan callback di ref
+  // agar perubahan identitas fungsi tidak memicu ulang efek tiap render.
+  const onSearchChangeRef = useRef(onSearchChange);
+  onSearchChangeRef.current = onSearchChange;
+  useEffect(() => {
+    if (!async) return;
+    const t = setTimeout(() => onSearchChangeRef.current?.(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search, async]);
+
+  const filtered = async
+    ? options
+    : (search ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())) : options);
+
+  const trimmedQuery = search.trim();
+  const hasExactMatch = options.some(o => o.label.toLowerCase() === trimmedQuery.toLowerCase());
+  const showCreate = !!onCreate && trimmedQuery.length > 0 && !hasExactMatch;
+
+  const handleCreate = () => {
+    onCreate?.(trimmedQuery);
+    setOpen(false);
+    setSearch('');
+  };
 
   const updatePosition = useCallback(() => {
     if (!open || !buttonRef.current || !dropdownRef.current) return;
@@ -105,7 +140,10 @@ export function SearchableSelect({ options, value, onChange, placeholder = '-- P
             />
           </div>
           <div className="overflow-y-auto flex-1">
-            {filtered.length === 0 ? (
+            {loading && (
+              <div className="px-3 py-4 text-[13px] text-gray-400 text-center">Mencari…</div>
+            )}
+            {!loading && filtered.length === 0 && !showCreate ? (
               <div className="px-3 py-4 text-[13px] text-gray-400 text-center">Tidak ditemukan</div>
             ) : (
               filtered.map(o => (
@@ -118,6 +156,21 @@ export function SearchableSelect({ options, value, onChange, placeholder = '-- P
                   {o.label}
                 </button>
               ))
+            )}
+            {showCreate && (
+              <>
+                {filtered.length > 0 && (
+                  <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-t border-gray-100">Belum ada yang cocok?</div>
+                )}
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2.5 text-[13px] text-accent font-semibold hover:bg-accent-light transition-colors flex items-center gap-1.5"
+                  onClick={handleCreate}
+                >
+                  <span className="text-base leading-none">+</span>
+                  {createLabel ? createLabel(trimmedQuery) : `Tambah "${trimmedQuery}"`}
+                </button>
+              </>
             )}
           </div>
         </div>,

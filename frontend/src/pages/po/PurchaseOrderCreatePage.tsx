@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
-import { customersApi } from '@/api/customers';
 import { productsApi } from '@/api/products';
 import { settingsApi } from '@/api/settings';
+import type { Customer } from '@/types/customer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { formatRupiah } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Plus, Trash2, Check } from 'lucide-react';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { CustomerSelect } from '@/components/ui/customer-select';
 import { DeliveryDatePicker, OrderDateDisplay, toLocalISO, formatTanggal } from '@/components/ui/delivery-date-picker';
 
 interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
@@ -22,6 +23,7 @@ export default function PurchaseOrderCreatePage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [customerId, setCustomerId] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [deliveryDate, setDeliveryDate] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 1); return toLocalISO(d); });
   const [orderDate] = useState(() => toLocalISO(new Date())); // otomatis dari tanggal sistem, read-only
   const [discount, setDiscount] = useState(0);
@@ -31,9 +33,7 @@ export default function PurchaseOrderCreatePage() {
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<ItemRow[]>([{ product_id: null, product_name: '', quantity: 1, unit_price: 0, notes: '' }]);
 
-  const { data: customersData } = useQuery({ queryKey: ['customers-all'], queryFn: () => customersApi.list({ per_page: 100 }) });
   const { data: productsData } = useQuery({ queryKey: ['products-all'], queryFn: () => productsApi.list({ per_page: 100 }) });
-  const customers = customersData?.data?.data || [];
   const products = productsData?.data?.data || [];
 
   const { data: paymentMethodsData } = useQuery({ queryKey: ['payment-methods'], queryFn: () => settingsApi.getPaymentMethods() });
@@ -58,7 +58,6 @@ export default function PurchaseOrderCreatePage() {
   const total = subtotal - discount + tax + shippingCost;
   const handleSubmit = () => { createPO.mutate({ customer_id: customerId, order_date: orderDate, delivery_date: deliveryDate, discount, tax, shipping_cost: shippingCost, payment_method: paymentMethod, notes, items }); };
   const steps = ['Customer', 'Items', 'Jadwal & Bayar', 'Review'];
-  const selectedCustomer = customers.find((c: any) => c.id === customerId);
 
   return (
     <div>
@@ -78,12 +77,12 @@ export default function PurchaseOrderCreatePage() {
       {step === 0 && (
         <Card className="max-w-xl mx-auto" padding="lg">
           <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih Customer</label>
-          <SearchableSelect
-            options={customers.map((c: any) => ({ value: c.id, label: `${c.name} — ${c.phone || '-'}` }))}
+          <CustomerSelect
             value={customerId}
-            onChange={setCustomerId}
-            placeholder="-- Pilih Customer --"
+            selected={selectedCustomer}
+            onChange={(id, c) => { setCustomerId(id); setSelectedCustomer(c); }}
           />
+          <p className="text-[11px] text-gray-400 mt-1.5">Ketik nama pelanggan. Jika belum terdaftar, pilih "Tambah pelanggan baru".</p>
           <div className="flex justify-end mt-6"><Button disabled={!customerId} onClick={() => setStep(1)}>Lanjut →</Button></div>
         </Card>
       )}
