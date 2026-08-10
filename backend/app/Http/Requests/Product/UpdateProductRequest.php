@@ -8,6 +8,18 @@ class UpdateProductRequest extends FormRequest
 {
     public function authorize(): bool { return true; }
 
+    /**
+     * Normalise a blank SKU to null so products without a SKU do not collide
+     * on the (organization_id, sku) unique index (Postgres treats NULL as
+     * distinct, but '' as a concrete value that may only appear once).
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('sku') && trim((string) $this->input('sku')) === '') {
+            $this->merge(['sku' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [
