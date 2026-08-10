@@ -54,7 +54,7 @@ export default async function handler(req: Request) {
   // Ambil shell HTML hasil build (berisi referensi asset ber-hash + script SPA).
   let html = '';
   try {
-    const res = await fetchWithTimeout(`${origin}/index.html`, 2000, { headers: { 'x-og-shell': '1' } });
+    const res = await fetchWithTimeout(`${origin}/index.html`, 8000, { headers: { 'x-og-shell': '1' } });
     html = res ? await res.text() : '';
   } catch {
     html = '';
