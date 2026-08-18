@@ -134,6 +134,14 @@ class PurchaseOrderController extends Controller
 
     public function destroy(PurchaseOrder $purchaseOrder): JsonResponse
     {
+        // Kembalikan statistik pelanggan jika PO sempat dihitung (status completed),
+        // agar counter total_orders/total_revenue tidak menjadi basi setelah dihapus.
+        if ($purchaseOrder->status === PurchaseOrderStatus::COMPLETED && $purchaseOrder->customer) {
+            $customer = $purchaseOrder->customer;
+            $customer->decrement('total_orders');
+            $customer->decrement('total_revenue', $purchaseOrder->total);
+        }
+
         $purchaseOrder->delete();
 
         return response()->json(['message' => 'Purchase Order berhasil dihapus.']);

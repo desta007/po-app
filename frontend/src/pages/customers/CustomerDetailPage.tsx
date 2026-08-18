@@ -47,8 +47,6 @@ export default function CustomerDetailPage() {
   const c = data?.data?.data || data?.data;
   if (!c) return <p className="text-gray-500">Pelanggan tidak ditemukan.</p>;
 
-  const hasOrders = Number((c as any).total_orders ?? 0) > 0;
-
   const openEditDialog = () => {
     setEditForm({
       name: (c as any).name || '',
@@ -139,23 +137,13 @@ export default function CustomerDetailPage() {
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Hapus Customer</DialogTitle></DialogHeader>
-          {hasOrders ? (
-            <p className="text-[14px] text-gray-600">
-              Pelanggan <strong>{(c as any).name}</strong> tidak dapat dihapus karena masih memiliki{' '}
-              <strong>{(c as any).total_orders} data PO</strong>. Hapus atau alihkan PO tersebut terlebih dahulu.
-            </p>
-          ) : (
-            <p className="text-[14px] text-gray-600">
-              Yakin ingin menghapus pelanggan <strong>{(c as any).name}</strong>? Tindakan ini tidak dapat dibatalkan.
-            </p>
-          )}
+          <p className="text-[14px] text-gray-600">
+            Yakin ingin menghapus pelanggan <strong>{(c as any).name}</strong>? Tindakan ini tidak dapat dibatalkan.
+            Pelanggan yang masih memiliki PO tidak dapat dihapus.
+          </p>
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="secondary" type="button" onClick={() => setDeleteOpen(false)}>
-              {hasOrders ? 'Tutup' : 'Batal'}
-            </Button>
-            {!hasOrders && (
-              <Button variant="danger" onClick={() => deleteCustomer.mutate()} loading={deleteCustomer.isPending}>Hapus</Button>
-            )}
+            <Button variant="secondary" type="button" onClick={() => setDeleteOpen(false)}>Batal</Button>
+            <Button variant="danger" onClick={() => deleteCustomer.mutate()} loading={deleteCustomer.isPending}>Hapus</Button>
           </div>
         </DialogContent>
       </Dialog>
