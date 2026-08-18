@@ -556,6 +556,17 @@ export default function PurchaseOrderListPage() {
                 );
               })}
             </TableBody>
+            <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+              <tr>
+                <td colSpan={6} className="px-3.5 py-3 text-right font-bold text-gray-700 uppercase text-[11px] tracking-wider">
+                  Grand Total{meta && meta.last_page > 1 ? ' (halaman ini)' : ''}
+                </td>
+                <td className="px-3.5 py-3 text-right font-extrabold tabular-nums text-[13px] text-gray-900">
+                  {formatRupiah(pos.reduce((s, p) => s + (p.total || 0), 0))}
+                </td>
+                <td colSpan={3} />
+              </tr>
+            </tfoot>
           </Table>
 
           {/* Pagination */}
