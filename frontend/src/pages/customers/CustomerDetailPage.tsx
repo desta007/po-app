@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRupiah, getInitials } from '@/lib/utils';
-import { MessageCircle, Edit, Plus } from 'lucide-react';
+import { MessageCircle, Edit, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ export default function CustomerDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', phone: '', email: '', address: '', notes: '' });
   const { data, isLoading } = useQuery({ queryKey: ['customer', id], queryFn: () => customersApi.show(id!), enabled: !!id });
 
@@ -31,9 +32,22 @@ export default function CustomerDetailPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal memperbarui data customer.'),
   });
 
+  const deleteCustomer = useMutation({
+    mutationFn: () => customersApi.delete(id!),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['customers'], refetchType: 'all' });
+      setDeleteOpen(false);
+      toast.success('Pelanggan berhasil dihapus.');
+      navigate('/pelanggan');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal menghapus pelanggan.'),
+  });
+
   if (isLoading) return <Skeleton className="h-64 rounded-[10px]" />;
   const c = data?.data?.data || data?.data;
   if (!c) return <p className="text-gray-500">Pelanggan tidak ditemukan.</p>;
+
+  const hasOrders = Number((c as any).total_orders ?? 0) > 0;
 
   const openEditDialog = () => {
     setEditForm({
@@ -70,6 +84,7 @@ export default function CustomerDetailPage() {
               }
             }}><MessageCircle size={15} /> Kirim WA</Button>
             <Button variant="secondary" onClick={openEditDialog}><Edit size={15} /> Edit</Button>
+            <Button variant="danger" onClick={() => setDeleteOpen(true)}><Trash2 size={15} /> Hapus</Button>
             <Button onClick={() => navigate('/pesanan/baru')}><Plus size={15} /> PO Baru</Button>
           </div>
         </div>
@@ -117,6 +132,31 @@ export default function CustomerDetailPage() {
               <Button type="submit" loading={updateCustomer.isPending}>Simpan</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Hapus Customer</DialogTitle></DialogHeader>
+          {hasOrders ? (
+            <p className="text-[14px] text-gray-600">
+              Pelanggan <strong>{(c as any).name}</strong> tidak dapat dihapus karena masih memiliki{' '}
+              <strong>{(c as any).total_orders} data PO</strong>. Hapus atau alihkan PO tersebut terlebih dahulu.
+            </p>
+          ) : (
+            <p className="text-[14px] text-gray-600">
+              Yakin ingin menghapus pelanggan <strong>{(c as any).name}</strong>? Tindakan ini tidak dapat dibatalkan.
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="secondary" type="button" onClick={() => setDeleteOpen(false)}>
+              {hasOrders ? 'Tutup' : 'Batal'}
+            </Button>
+            {!hasOrders && (
+              <Button variant="danger" onClick={() => deleteCustomer.mutate()} loading={deleteCustomer.isPending}>Hapus</Button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -60,6 +60,16 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer): JsonResponse
     {
+        // Cegah penghapusan bila pelanggan masih memiliki PO agar tidak
+        // meninggalkan PO "yatim" yang kehilangan referensi nama pelanggan.
+        if ($customer->purchaseOrders()->exists()) {
+            $poCount = $customer->purchaseOrders()->count();
+
+            return response()->json([
+                'message' => "Pelanggan tidak dapat dihapus karena masih memiliki {$poCount} data PO. Hapus atau alihkan PO tersebut terlebih dahulu.",
+            ], 422);
+        }
+
         $customer->delete(); // soft delete
 
         return response()->json(['message' => 'Pelanggan berhasil dihapus.']);

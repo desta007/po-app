@@ -55,6 +55,7 @@ class ReportController extends Controller
         $data = PurchaseOrderItem::join('purchase_orders', 'purchase_order_items.po_id', '=', 'purchase_orders.id')
             ->leftJoin('products', 'purchase_order_items.product_id', '=', 'products.id')
             ->where('purchase_orders.organization_id', $orgId)
+            ->whereNull('purchase_orders.deleted_at')
             ->where('purchase_orders.status', 'completed')
             ->whereBetween('purchase_orders.delivery_date', [$from, $to])
             ->select(
@@ -72,6 +73,7 @@ class ReportController extends Controller
         $summary = PurchaseOrderItem::join('purchase_orders', 'purchase_order_items.po_id', '=', 'purchase_orders.id')
             ->leftJoin('products', 'purchase_order_items.product_id', '=', 'products.id')
             ->where('purchase_orders.organization_id', $orgId)
+            ->whereNull('purchase_orders.deleted_at')
             ->where('purchase_orders.status', 'completed')
             ->whereBetween('purchase_orders.delivery_date', [$from, $to])
             ->select(
@@ -86,6 +88,7 @@ class ReportController extends Controller
         $topProducts = PurchaseOrderItem::join('purchase_orders', 'purchase_order_items.po_id', '=', 'purchase_orders.id')
             ->leftJoin('products', 'purchase_order_items.product_id', '=', 'products.id')
             ->where('purchase_orders.organization_id', $orgId)
+            ->whereNull('purchase_orders.deleted_at')
             ->where('purchase_orders.status', 'completed')
             ->whereBetween('purchase_orders.delivery_date', [$from, $to])
             ->select(

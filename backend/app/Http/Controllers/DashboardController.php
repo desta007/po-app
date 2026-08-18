@@ -110,6 +110,7 @@ class DashboardController extends Controller
 
         $products = PurchaseOrderItem::join('purchase_orders', 'purchase_order_items.po_id', '=', 'purchase_orders.id')
             ->where('purchase_orders.organization_id', $orgId)
+            ->whereNull('purchase_orders.deleted_at')
             ->where('purchase_orders.delivery_date', '>=', $from)
             ->where('purchase_orders.status', '!=', 'cancelled')
             ->select(
