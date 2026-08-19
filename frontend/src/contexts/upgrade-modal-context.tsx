@@ -13,7 +13,7 @@ const UpgradeModalContext = createContext<UpgradeModalContextType | undefined>(u
 
 export function UpgradeModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { organizationPlan, isSuperAdmin } = useAuth();
+  const { organizationPlan, isSuperAdmin, subscription } = useAuth();
 
   const openModal = useCallback(() => setOpen(true), []);
   const closeModal = useCallback(() => {
@@ -23,15 +23,17 @@ export function UpgradeModalProvider({ children }: { children: ReactNode }) {
 
   // Auto-popup sekali per sesi untuk member free.
   // Pemicu manual (badge header / menu sidebar) tetap bekerja walau flag ini sudah diset.
+  // Jangan tampilkan jika sudah premium, super admin, atau ada permintaan upgrade yang menunggu verifikasi.
   useEffect(() => {
-    if (organizationPlan === 'premium' || isSuperAdmin) return;
+    if (organizationPlan === 'premium' || isSuperAdmin || subscription?.status === 'pending') return;
 
     const alreadyShown = sessionStorage.getItem(SESSION_KEY);
     if (!alreadyShown) {
-      const timer = setTimeout(() => setOpen(true), 1500);
+      // Beri jeda beberapa detik setelah login sebelum popup muncul.
+      const timer = setTimeout(() => setOpen(true), 4000);
       return () => clearTimeout(timer);
     }
-  }, [organizationPlan, isSuperAdmin]);
+  }, [organizationPlan, isSuperAdmin, subscription?.status]);
 
   return (
     <UpgradeModalContext.Provider value={{ open, openModal, closeModal }}>

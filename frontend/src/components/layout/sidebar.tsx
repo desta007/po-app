@@ -58,9 +58,9 @@ function NavItem({ to, icon: Icon, label, onClose }: { to: string; icon: any; la
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { isSuperAdmin, organizationPlan } = useAuth();
+  const { isSuperAdmin, organizationPlan, subscription } = useAuth();
   const { openModal } = useUpgradeModal();
-  const showUpgrade = !isSuperAdmin && organizationPlan !== 'premium';
+  const showUpgrade = !isSuperAdmin && organizationPlan !== 'premium' && subscription?.status !== 'pending';
 
   return (
     <>
