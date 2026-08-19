@@ -1,5 +1,6 @@
 import { Menu, LogOut, User, Crown, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useUpgradeModal } from '@/contexts/upgrade-modal-context';
 import { getInitials } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 function SubscriptionBadge() {
   const { organizationPlan, subscription, isSuperAdmin } = useAuth();
+  const { openModal } = useUpgradeModal();
 
   if (isSuperAdmin) return null;
 
@@ -42,9 +44,14 @@ function SubscriptionBadge() {
   }
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg">
-      <span className="text-xs font-semibold text-gray-500">Free</span>
-    </div>
+    <button
+      onClick={openModal}
+      className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-lg shadow-sm hover:from-amber-500 hover:to-yellow-600 hover:shadow transition-all"
+      title="Upgrade ke Premium"
+    >
+      <Crown size={14} className="text-white shrink-0" />
+      <span className="text-xs font-bold text-white whitespace-nowrap">Upgrade</span>
+    </button>
   );
 }
 

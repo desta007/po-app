@@ -3,6 +3,7 @@ import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, Tr
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/auth-context';
+import { useUpgradeModal } from '@/contexts/upgrade-modal-context';
 
 const mainNav = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
@@ -57,7 +58,9 @@ function NavItem({ to, icon: Icon, label, onClose }: { to: string; icon: any; la
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, organizationPlan } = useAuth();
+  const { openModal } = useUpgradeModal();
+  const showUpgrade = !isSuperAdmin && organizationPlan !== 'premium';
 
   return (
     <>
@@ -113,6 +116,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               ))}
             </div>
           </div>
+
+          {/* Upgrade ke Premium (member free) */}
+          {showUpgrade && (
+            <div className="mt-5">
+              <button
+                onClick={() => {
+                  onClose();
+                  openModal();
+                }}
+                className={cn(
+                  'flex w-full items-center gap-3 px-3.5 py-2.5 rounded-[10px] text-[14px] font-semibold transition-all duration-150 cursor-pointer',
+                  'bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-sm',
+                  'hover:from-amber-500 hover:to-yellow-600 hover:shadow'
+                )}
+              >
+                <Crown size={18} />
+                Upgrade ke Premium
+              </button>
+            </div>
+          )}
 
           {/* Super Admin Section */}
           {isSuperAdmin && (

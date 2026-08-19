@@ -32,12 +32,14 @@ class DashboardController extends Controller
         $poChangeUp = $poChange >= 0;
 
         $revenueThisMonth = PurchaseOrder::where('organization_id', $orgId)
-            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
             ->where('delivery_date', '>=', $thisMonth)
             ->sum('total');
 
         $revenueLastMonth = PurchaseOrder::where('organization_id', $orgId)
-            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('delivery_date', [$lastMonthStart, $lastMonthEnd])
             ->sum('total');
 
@@ -77,7 +79,8 @@ class DashboardController extends Controller
         $from = now()->subDays(30)->toDateString();
 
         $data = PurchaseOrder::where('organization_id', $orgId)
-            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
             ->where('delivery_date', '>=', $from)
             ->select(
                 DB::raw("delivery_date as date"),

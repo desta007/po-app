@@ -4,6 +4,7 @@ import { Header } from './header';
 import { BottomNav } from './bottom-nav';
 import { PremiumUpgradeModal, WA_NUMBER, WA_MESSAGE } from '@/components/premium-upgrade-modal';
 import { UpgradeLimitModal } from '@/components/upgrade-limit-modal';
+import { UpgradeModalProvider } from '@/contexts/upgrade-modal-context';
 import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 import { useState, useRef, useCallback } from 'react';
 
@@ -82,29 +83,31 @@ export function AppShell() {
   const { promptData, dismiss } = useUpgradePrompt();
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <UpgradeModalProvider>
+      <div className="flex min-h-screen">
+        {/* Desktop sidebar */}
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-60">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 lg:px-8 lg:py-6 pb-20 lg:pb-6">
-          <Outlet />
-        </main>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0 lg:ml-60">
+          <Header onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-y-auto bg-gray-50 p-4 lg:px-8 lg:py-6 pb-20 lg:pb-6">
+            <Outlet />
+          </main>
+        </div>
+
+        {/* Mobile bottom nav */}
+        <BottomNav />
+
+        {/* Draggable WhatsApp floating button */}
+        <DraggableWhatsAppButton />
+
+        {/* Premium upgrade modal */}
+        <PremiumUpgradeModal />
+
+        {/* Upgrade limit modal (shown when free tier limit is hit) */}
+        <UpgradeLimitModal data={promptData} onDismiss={dismiss} />
       </div>
-
-      {/* Mobile bottom nav */}
-      <BottomNav />
-
-      {/* Draggable WhatsApp floating button */}
-      <DraggableWhatsAppButton />
-
-      {/* Premium upgrade modal */}
-      <PremiumUpgradeModal />
-
-      {/* Upgrade limit modal (shown when free tier limit is hit) */}
-      <UpgradeLimitModal data={promptData} onDismiss={dismiss} />
-    </div>
+    </UpgradeModalProvider>
   );
 }

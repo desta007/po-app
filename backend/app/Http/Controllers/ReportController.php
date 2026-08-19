@@ -24,7 +24,8 @@ class ReportController extends Controller
         };
 
         $data = PurchaseOrder::where('organization_id', $orgId)
-            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('delivery_date', [$from, $to])
             ->select(
                 DB::raw("{$dateFormat} as date"),
@@ -56,7 +57,8 @@ class ReportController extends Controller
             ->leftJoin('products', 'purchase_order_items.product_id', '=', 'products.id')
             ->where('purchase_orders.organization_id', $orgId)
             ->whereNull('purchase_orders.deleted_at')
-            ->where('purchase_orders.status', 'completed')
+            ->where('purchase_orders.payment_status', 'paid')
+            ->where('purchase_orders.status', '!=', 'cancelled')
             ->whereBetween('purchase_orders.delivery_date', [$from, $to])
             ->select(
                 DB::raw("{$dateFormat} as date"),
@@ -74,7 +76,8 @@ class ReportController extends Controller
             ->leftJoin('products', 'purchase_order_items.product_id', '=', 'products.id')
             ->where('purchase_orders.organization_id', $orgId)
             ->whereNull('purchase_orders.deleted_at')
-            ->where('purchase_orders.status', 'completed')
+            ->where('purchase_orders.payment_status', 'paid')
+            ->where('purchase_orders.status', '!=', 'cancelled')
             ->whereBetween('purchase_orders.delivery_date', [$from, $to])
             ->select(
                 DB::raw("SUM(purchase_order_items.subtotal) as total_revenue"),
@@ -89,7 +92,8 @@ class ReportController extends Controller
             ->leftJoin('products', 'purchase_order_items.product_id', '=', 'products.id')
             ->where('purchase_orders.organization_id', $orgId)
             ->whereNull('purchase_orders.deleted_at')
-            ->where('purchase_orders.status', 'completed')
+            ->where('purchase_orders.payment_status', 'paid')
+            ->where('purchase_orders.status', '!=', 'cancelled')
             ->whereBetween('purchase_orders.delivery_date', [$from, $to])
             ->select(
                 'purchase_order_items.product_name as name',

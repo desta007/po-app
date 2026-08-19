@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Crown, Check, Zap, BarChart3, Users, ShieldCheck, Headphones, Star, Loader2, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import { useUpgradeModal } from '@/contexts/upgrade-modal-context';
 import { subscriptionApi } from '@/api/subscription';
 import { toast } from 'sonner';
 
@@ -39,7 +40,6 @@ const PREMIUM_FEATURES = [
   },
 ];
 
-const SESSION_KEY = 'premium_modal_shown';
 export const WA_NUMBER = '6281573254497';
 export const WA_MESSAGE = 'Halo, saya tertarik dengan paket Premium PO App. Bisa info lebih lanjut?';
 const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MESSAGE)}`;
@@ -47,27 +47,16 @@ const WA_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MESSAGE)
 type ModalStep = 'info' | 'confirm';
 
 export function PremiumUpgradeModal() {
-  const [open, setOpen] = useState(false);
   const [step, setStep] = useState<ModalStep>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentNote, setPaymentNote] = useState('');
   const { organizationPlan, isSuperAdmin, refreshUser } = useAuth();
-
-  useEffect(() => {
-    if (organizationPlan === 'premium' || isSuperAdmin) return;
-
-    const alreadyShown = sessionStorage.getItem(SESSION_KEY);
-    if (!alreadyShown) {
-      const timer = setTimeout(() => setOpen(true), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [organizationPlan]);
+  const { open, closeModal } = useUpgradeModal();
 
   const handleClose = () => {
-    setOpen(false);
     setStep('info');
     setPaymentNote('');
-    sessionStorage.setItem(SESSION_KEY, 'true');
+    closeModal();
   };
 
   const handleConfirmTransfer = async () => {
