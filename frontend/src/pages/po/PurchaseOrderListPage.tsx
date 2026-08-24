@@ -266,7 +266,7 @@ export default function PurchaseOrderListPage() {
     }
   };
 
-  const handleBulkPrintAddressLabels = async (size: '100x150' | '100x100' | '80x50' | '50x50') => {
+  const handleBulkPrintAddressLabels = async (size: '100x150' | '100x100' | '80x50' | '60x50' | '50x50') => {
     if (selectedIds.size === 0) return;
     const win = openBlankTab();
     setBulkPrinting(true);
@@ -282,7 +282,7 @@ export default function PurchaseOrderListPage() {
   };
 
   // Cetak label alamat untuk satu PO (memakai endpoint bulk dengan satu id).
-  const handlePrintAddressLabel = async (po: PurchaseOrder, size: '100x150' | '100x100' | '80x50' | '50x50' = '100x150') => {
+  const handlePrintAddressLabel = async (po: PurchaseOrder, size: '100x150' | '100x100' | '80x50' | '60x50' | '50x50' = '100x150') => {
     const win = openBlankTab();
     try {
       const response = await purchaseOrdersApi.bulkExportAddressLabels([po.id], size) as any;
@@ -760,6 +760,9 @@ export default function PurchaseOrderListPage() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleBulkPrintAddressLabels('80x50')}>
                 <MapPin className="mr-2" size={14} /> 80 x 50 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkPrintAddressLabels('60x50')}>
+                <MapPin className="mr-2" size={14} /> 60 x 50 mm
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleBulkPrintAddressLabels('50x50')}>
                 <MapPin className="mr-2" size={14} /> 50 x 50 mm
