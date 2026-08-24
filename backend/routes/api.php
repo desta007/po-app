@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
     // Purchase order reads + exports (read-only, all members)
     Route::post('purchase-orders/bulk-export-pdf', [PurchaseOrderController::class, 'bulkExportPdf']);
     Route::post('purchase-orders/bulk-export-labels', [PurchaseOrderController::class, 'bulkExportLabels']);
+    Route::post('purchase-orders/bulk-export-address-labels', [PurchaseOrderController::class, 'bulkExportAddressLabels']);
     Route::get('purchase-orders/export-excel', [PurchaseOrderController::class, 'exportExcel']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class)->only(['index', 'show']);
     Route::get('purchase-orders/{purchase_order}/export-pdf', [PurchaseOrderController::class, 'exportPdf']);

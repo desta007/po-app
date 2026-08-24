@@ -278,6 +278,33 @@ class PurchaseOrderController extends Controller
         return $pdf->stream($filename);
     }
 
+    public function bulkExportAddressLabels(Request $request)
+    {
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:50'],
+            'ids.*' => ['required', 'uuid'],
+            'size' => ['required', 'in:100x150,100x100,80x50'],
+        ]);
+
+        $pos = PurchaseOrder::whereIn('id', $request->ids)
+            ->with('customer', 'organization')
+            ->get();
+
+        if ($pos->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada PO yang ditemukan.'], 404);
+        }
+
+        $ordered = collect($request->ids)
+            ->map(fn($id) => $pos->firstWhere('id', $id))
+            ->filter();
+
+        $pdf = $this->pdfService->generateAddressLabels($ordered, $request->size);
+
+        $filename = 'AddressLabels-' . now()->format('Ymd-His') . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
     public function exportPdf(PurchaseOrder $purchaseOrder)
     {
         $pdf = $this->pdfService->generateInvoice($purchaseOrder);

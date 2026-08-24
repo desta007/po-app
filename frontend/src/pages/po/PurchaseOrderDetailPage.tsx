@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
-import { formatRupiah, formatDate, getInitials } from '@/lib/utils';
+import { formatRupiah, formatDate, getInitials, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth, Usb } from 'lucide-react';
+import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth, Usb, MapPin } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 
@@ -175,6 +175,17 @@ export default function PurchaseOrderDetailPage() {
     }
   };
 
+  const handlePrintAddressLabel = async (size: '100x150' | '100x100' | '80x50') => {
+    const win = openBlankTab();
+    try {
+      const response = await purchaseOrdersApi.bulkExportAddressLabels([id!], size) as any;
+      fillPdfTab(win, response.data, `LabelAlamat-${po?.po_number}.pdf`);
+    } catch (err: any) {
+      win?.close();
+      toast.error(err.response?.data?.message || 'Gagal mencetak label alamat');
+    }
+  };
+
   if (isLoading) return <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-[10px]" />)}</div>;
   if (!po) return <p className="text-gray-500">PO tidak ditemukan.</p>;
 
@@ -237,6 +248,25 @@ export default function PurchaseOrderDetailPage() {
           <Button variant="secondary" onClick={handleDownloadCorporatePdf}>
             <Download size={15} /> Download PDF Corporate
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary">
+                <MapPin size={15} /> Print Label Alamat
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel>Label Alamat Pengiriman</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handlePrintAddressLabel('100x150')}>
+                <MapPin className="mr-2" size={14} /> 100 x 150 mm (A6)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePrintAddressLabel('100x100')}>
+                <MapPin className="mr-2" size={14} /> 100 x 100 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePrintAddressLabel('80x50')}>
+                <MapPin className="mr-2" size={14} /> 80 x 50 mm
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="accent" onClick={() => {
             if (po.customer?.phone) {
               let phone = po.customer.phone.replace(/[^0-9]/g, '');

@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check, MapPin } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -263,6 +263,33 @@ export default function PurchaseOrderListPage() {
       toast.error(err.response?.data?.message || 'Gagal mencetak label');
     } finally {
       setBulkPrinting(false);
+    }
+  };
+
+  const handleBulkPrintAddressLabels = async (size: '100x150' | '100x100' | '80x50') => {
+    if (selectedIds.size === 0) return;
+    const win = openBlankTab();
+    setBulkPrinting(true);
+    try {
+      const response = await purchaseOrdersApi.bulkExportAddressLabels(Array.from(selectedIds), size) as any;
+      fillPdfTab(win, response.data, `LabelAlamat-${size}-${selectedIds.size}.pdf`);
+    } catch (err: any) {
+      win?.close();
+      toast.error(err.response?.data?.message || 'Gagal mencetak label alamat');
+    } finally {
+      setBulkPrinting(false);
+    }
+  };
+
+  // Cetak label alamat untuk satu PO (memakai endpoint bulk dengan satu id).
+  const handlePrintAddressLabel = async (po: PurchaseOrder, size: '100x150' | '100x100' | '80x50' = '100x150') => {
+    const win = openBlankTab();
+    try {
+      const response = await purchaseOrdersApi.bulkExportAddressLabels([po.id], size) as any;
+      fillPdfTab(win, response.data, `LabelAlamat-${po.po_number}.pdf`);
+    } catch (err: any) {
+      win?.close();
+      toast.error(err.response?.data?.message || 'Gagal mencetak label alamat');
     }
   };
 
@@ -521,6 +548,9 @@ export default function PurchaseOrderListPage() {
                           <DropdownMenuItem onClick={() => handlePrintCorporatePdf(po)}>
                             <FileText className="mr-2" /> Invoice Corporate (A4)
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintAddressLabel(po)}>
+                            <MapPin className="mr-2" /> Print Label Alamat
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/pesanan/${po.id}/edit`)}>
                             <Pencil className="mr-2" /> Edit PO
                           </DropdownMenuItem>
@@ -704,6 +734,32 @@ export default function PurchaseOrderListPage() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleBulkPrintLabels('50x30')}>
                 <Tag className="mr-2" size={14} /> Label 50 x 30 mm
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="w-px h-6 bg-gray-600" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/10 hover:bg-white/20 text-white border-0"
+                disabled={bulkPrinting}
+              >
+                {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                Label Alamat
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" side="top" className="w-52">
+              <DropdownMenuLabel>Label Alamat Pengiriman</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleBulkPrintAddressLabels('100x150')}>
+                <MapPin className="mr-2" size={14} /> 100 x 150 mm (A6)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkPrintAddressLabels('100x100')}>
+                <MapPin className="mr-2" size={14} /> 100 x 100 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkPrintAddressLabels('80x50')}>
+                <MapPin className="mr-2" size={14} /> 80 x 50 mm
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

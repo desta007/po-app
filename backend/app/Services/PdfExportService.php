@@ -217,6 +217,55 @@ class PdfExportService
     }
 
     /**
+     * Generate shipping address labels PDF from multiple POs.
+     * One label per PO (recipient = customer address, sender = organization).
+     *
+     * @param Collection<int, PurchaseOrder> $purchaseOrders
+     * @param string $size '100x150', '100x100', or '80x50'
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function generateAddressLabels(Collection $purchaseOrders, string $size): \Barryvdh\DomPDF\PDF
+    {
+        $dimensionsMap = [
+            '100x150' => ['width' => 100, 'height' => 150],
+            '100x100' => ['width' => 100, 'height' => 100],
+            '80x50' => ['width' => 80, 'height' => 50],
+        ];
+        $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['100x150'];
+
+        $labels = [];
+        foreach ($purchaseOrders as $po) {
+            $po->load('customer', 'organization');
+            $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M Y') : '-';
+
+            $labels[] = [
+                'po_number' => $po->po_number,
+                'delivery_date' => $deliveryDate,
+                'sender_name' => $po->organization->name ?? '-',
+                'sender_phone' => $po->organization->phone ?? '',
+                'sender_address' => $po->organization->address ?? '',
+                'recipient_name' => $po->customer->name ?? '-',
+                'recipient_phone' => $po->customer->phone ?? '',
+                'recipient_address' => $po->customer->address ?? '',
+            ];
+        }
+
+        $labelWidth = $dimensions['width'];
+        $labelHeight = $dimensions['height'];
+
+        // Convert mm to points (1mm = 2.835pt)
+        $mmToPt = 2.835;
+        $paperWidthPt = round($labelWidth * $mmToPt, 2);
+        $paperHeightPt = round($labelHeight * $mmToPt, 2);
+
+        return Pdf::loadView('pdf.address-labels', [
+            'labels' => $labels,
+            'labelWidth' => $labelWidth,
+            'labelHeight' => $labelHeight,
+        ])->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
+    }
+
+    /**
      * Generate receipt-style invoice as PNG image.
      */
     public function generateInvoiceImage(PurchaseOrder $po): string
