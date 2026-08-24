@@ -175,7 +175,7 @@ export default function PurchaseOrderDetailPage() {
     }
   };
 
-  const handlePrintAddressLabel = async (size: '100x150' | '100x100' | '80x50') => {
+  const handlePrintAddressLabel = async (size: '100x150' | '100x100' | '80x50' | '50x50') => {
     const win = openBlankTab();
     try {
       const response = await purchaseOrdersApi.bulkExportAddressLabels([id!], size) as any;
@@ -264,6 +264,9 @@ export default function PurchaseOrderDetailPage() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handlePrintAddressLabel('80x50')}>
                 <MapPin className="mr-2" size={14} /> 80 x 50 mm
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePrintAddressLabel('50x50')}>
+                <MapPin className="mr-2" size={14} /> 50 x 50 mm
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -221,7 +221,7 @@ class PdfExportService
      * One label per PO (recipient = customer address, sender = organization).
      *
      * @param Collection<int, PurchaseOrder> $purchaseOrders
-     * @param string $size '100x150', '100x100', or '80x50'
+     * @param string $size '100x150', '100x100', '80x50', or '50x50'
      * @return \Barryvdh\DomPDF\PDF
      */
     public function generateAddressLabels(Collection $purchaseOrders, string $size): \Barryvdh\DomPDF\PDF
@@ -230,6 +230,7 @@ class PdfExportService
             '100x150' => ['width' => 100, 'height' => 150],
             '100x100' => ['width' => 100, 'height' => 100],
             '80x50' => ['width' => 80, 'height' => 50],
+            '50x50' => ['width' => 50, 'height' => 50],
         ];
         $dimensions = $dimensionsMap[$size] ?? $dimensionsMap['100x150'];
 
