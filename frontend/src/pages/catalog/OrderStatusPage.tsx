@@ -161,7 +161,7 @@ export default function OrderStatusPage() {
         )}
 
         <div className="text-center">
-          <Link to={`/katalog/${slug}`} className="text-[13px] text-primary font-semibold hover:underline">← Kembali ke katalog</Link>
+          <Link to={`/katalog/${slug}/lacak`} className="text-[13px] text-primary font-semibold hover:underline">← Kembali ke lacak pesanan</Link>
         </div>
       </main>
     </div>

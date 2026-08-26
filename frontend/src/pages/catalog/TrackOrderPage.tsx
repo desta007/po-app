@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { publicCatalogApi } from '@/api/public-catalog';
@@ -15,25 +15,9 @@ export default function TrackOrderPage() {
 
   const [poNumber, setPoNumber] = useState('');
   const [phone, setPhone] = useState('');
-  const [hasLast, setHasLast] = useState<{ poNumber: string; phone: string } | null>(null);
 
   // The phone we've actually searched a list for (only set when PO is left blank).
   const [searchPhone, setSearchPhone] = useState('');
-
-  // Prefill from the most recent order made on this device, if any.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(`catalog-last-order-${slug}`);
-      if (raw) {
-        const last = JSON.parse(raw) as { poNumber: string; phone: string };
-        if (last?.poNumber) {
-          setHasLast(last);
-          setPoNumber(last.poNumber);
-          setPhone(last.phone || '');
-        }
-      }
-    } catch { /* ignore */ }
-  }, [slug]);
 
   const { data: orders, isLoading, isError } = useQuery({
     queryKey: ['public-order-list', slug, searchPhone],
@@ -76,16 +60,6 @@ export default function TrackOrderPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-        {hasLast && (
-          <Card className="border-primary-100 bg-primary-50">
-            <p className="text-[12px] text-gray-600 mb-2">Pesanan terakhir Anda dari perangkat ini:</p>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[14px] font-bold text-gray-900 font-mono">{hasLast.poNumber}</span>
-              <Button size="sm" onClick={() => goToStatus(hasLast.poNumber, hasLast.phone)}>Lihat Status</Button>
-            </div>
-          </Card>
-        )}
-
         <Card>
           <div className="flex items-center gap-2 mb-1">
             <PackageSearch size={18} className="text-primary" />
