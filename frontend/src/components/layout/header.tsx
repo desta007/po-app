@@ -71,10 +71,9 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const handleLogout = async () => {
     await logout();
-    // Full navigation ke landing page. Menghindari race dengan ProtectedRoute
-    // yang me-redirect ke /login saat state auth ter-clear, sekaligus
-    // membersihkan seluruh state di memori.
-    window.location.href = '/';
+    // Full navigation ke halaman login. Menghindari race dengan ProtectedRoute
+    // saat state auth ter-clear, sekaligus membersihkan seluruh state di memori.
+    window.location.href = '/login';
   };
 
   return (

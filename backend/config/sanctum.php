@@ -50,7 +50,9 @@ return [
     |
     */
 
-    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 120), // 2 hours in minutes
+    // null = token tidak pernah kadaluarsa dengan sendirinya; sesi hanya
+    // berakhir saat user menekan tombol logout (token dihapus dari DB).
+    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', null),
 
     /*
     |--------------------------------------------------------------------------
