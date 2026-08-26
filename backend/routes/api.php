@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 // Public routes (no auth)
 Route::get('catalog/{slug}', [PublicCatalogController::class, 'show']);
 Route::post('catalog/{slug}/checkout', [PublicCatalogController::class, 'checkout'])->middleware('throttle:catalog-checkout');
+Route::get('catalog/{slug}/orders', [PublicCatalogController::class, 'orderList'])->middleware('throttle:catalog-order-status');
 Route::get('catalog/{slug}/orders/{po_number}', [PublicCatalogController::class, 'orderStatus'])->middleware('throttle:catalog-order-status');
 Route::post('catalog/{slug}/orders/{po_number}/pay', [PublicPaymentController::class, 'pay'])->middleware('throttle:catalog-pay');
 

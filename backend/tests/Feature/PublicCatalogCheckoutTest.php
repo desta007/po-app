@@ -191,4 +191,63 @@ class PublicCatalogCheckoutTest extends TestCase
 
         Queue::assertNothingPushed();
     }
+
+    public function test_order_list_returns_all_orders_for_a_phone(): void
+    {
+        [$org, $product] = $this->makeStore();
+
+        // Two orders from the same customer, one from another.
+        foreach (['0811111111', '0811111111', '0899999999'] as $phone) {
+            $this->postJson("/api/catalog/{$org->slug}/checkout", [
+                'customer_name' => 'Budi',
+                'customer_phone' => $phone,
+                'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            ])->assertCreated();
+        }
+
+        $response = $this->getJson("/api/catalog/{$org->slug}/orders?phone=0811111111");
+
+        $response->assertOk();
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_order_list_matches_phone_across_0_and_62_prefix(): void
+    {
+        [$org, $product] = $this->makeStore();
+
+        $this->postJson("/api/catalog/{$org->slug}/checkout", [
+            'customer_name' => 'Budi',
+            'customer_phone' => '0811111111',
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertCreated();
+
+        // Same number, entered with the +62 country prefix.
+        $response = $this->getJson("/api/catalog/{$org->slug}/orders?phone=62811111111");
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+    }
+
+    public function test_order_list_returns_empty_for_unknown_phone(): void
+    {
+        [$org, $product] = $this->makeStore();
+
+        $this->postJson("/api/catalog/{$org->slug}/checkout", [
+            'customer_name' => 'Budi',
+            'customer_phone' => '0811111111',
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertCreated();
+
+        $response = $this->getJson("/api/catalog/{$org->slug}/orders?phone=0800000000");
+
+        $response->assertOk();
+        $this->assertCount(0, $response->json('data'));
+    }
+
+    public function test_order_list_requires_phone(): void
+    {
+        [$org] = $this->makeStore();
+
+        $this->getJson("/api/catalog/{$org->slug}/orders")->assertStatus(422);
+    }
 }

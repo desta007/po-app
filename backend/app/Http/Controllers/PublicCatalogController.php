@@ -387,6 +387,57 @@ class PublicCatalogController extends Controller
     }
 
     /**
+     * Public order-listing endpoint. Returns every catalog order placed with a
+     * given WhatsApp number so a customer can track their orders without having
+     * to remember a specific PO number. The phone is the only key: it is not
+     * enumerable the way sequential PO numbers are.
+     */
+    public function orderList(Request $request, string $slug): JsonResponse
+    {
+        $request->validate(['phone' => ['required', 'string', 'max:20']]);
+
+        $org = Organization::where('slug', $slug)->firstOrFail();
+
+        $canonical = $this->normalizePhone($request->input('phone'));
+        if ($canonical === '') {
+            return response()->json(['data' => [], 'organization' => ['name' => $org->name]]);
+        }
+
+        // Narrow candidates by the last significant digits at the DB level, then
+        // verify each precisely (handles the 0/62 prefix and stray formatting).
+        $suffix = substr($canonical, -8);
+        $customerIds = Customer::where('organization_id', $org->id)
+            ->where('phone', 'like', "%{$suffix}%")
+            ->get()
+            ->filter(fn (Customer $c) => $this->phonesMatch($request->input('phone'), $c->phone))
+            ->pluck('id');
+
+        if ($customerIds->isEmpty()) {
+            return response()->json(['data' => [], 'organization' => ['name' => $org->name]]);
+        }
+
+        $orders = PurchaseOrder::where('organization_id', $org->id)
+            ->whereIn('customer_id', $customerIds)
+            ->where('source', 'catalog')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'data' => $orders->map(fn (PurchaseOrder $po) => [
+                'po_number' => $po->po_number,
+                'status' => $po->status->value,
+                'status_label' => $po->status->label(),
+                'payment_status' => $po->payment_status->value,
+                'payment_status_label' => $po->payment_status->label(),
+                'total' => (float) $po->total,
+                'created_at' => $po->created_at,
+            ]),
+            'organization' => ['name' => $org->name],
+        ]);
+    }
+
+    /**
      * Public order-tracking endpoint. Requires the matching customer phone to
      * prevent order enumeration.
      */

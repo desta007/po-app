@@ -26,6 +26,16 @@ export interface PublicOrder {
   online_payment_available: boolean;
 }
 
+export interface PublicOrderSummary {
+  po_number: string;
+  status: string;
+  status_label: string;
+  payment_status: string;
+  payment_status_label: string;
+  total: number;
+  created_at: string;
+}
+
 export interface CheckoutItem {
   product_id: string;
   product_name: string;
@@ -66,6 +76,11 @@ export const publicCatalogApi = {
 
   orderStatus: (slug: string, poNumber: string, phone: string) =>
     apiClient.get<{ data: PublicOrder }>(`/api/catalog/${slug}/orders/${encodeURIComponent(poNumber)}`, {
+      params: { phone },
+    }),
+
+  orderList: (slug: string, phone: string) =>
+    apiClient.get<{ data: PublicOrderSummary[]; organization: { name: string } }>(`/api/catalog/${slug}/orders`, {
       params: { phone },
     }),
 };
