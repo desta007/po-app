@@ -436,6 +436,15 @@ class _ActionBar extends ConsumerWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.local_shipping_outlined),
+              title: const Text('Cetak Label Alamat'),
+              subtitle: const Text('Label alamat pengiriman'),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                await _printAddressLabels(context, ref);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.print_outlined),
               title: const Text('Cetak Struk (Thermal)'),
               subtitle: const Text('Printer thermal Bluetooth'),
@@ -476,6 +485,21 @@ class _ActionBar extends ConsumerWidget {
       await ref
           .read(poShareServiceProvider)
           .shareLabels(ids: [poId], size: size, subject: 'Label ${po.poNumber}');
+      messenger.hideCurrentSnackBar();
+    } on ApiException catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _printAddressLabels(BuildContext context, WidgetRef ref) async {
+    final size = await showAddressLabelSizeSheet(context);
+    if (size == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Menyiapkan label…')));
+    try {
+      await ref.read(poShareServiceProvider).shareAddressLabels(
+          ids: [poId], size: size, subject: 'Label Alamat ${po.poNumber}');
       messenger.hideCurrentSnackBar();
     } on ApiException catch (e) {
       messenger.hideCurrentSnackBar();

@@ -53,6 +53,18 @@ class PoShareService {
         subject: subject ?? 'Label PO (${ids.length})');
   }
 
+  /// Cetak label alamat pengiriman untuk satu / beberapa PO (satu label per PO).
+  Future<void> shareAddressLabels({
+    required List<String> ids,
+    required PoAddressLabelSize size,
+    String? subject,
+  }) async {
+    final bytes = await _api.bulkExportAddressLabelsBytes(ids, size);
+    await _shareBytes(bytes,
+        fileName: 'LabelAlamat-${size.apiValue}-${ids.length}.pdf',
+        subject: subject ?? 'Label Alamat PO (${ids.length})');
+  }
+
   /// Export daftar PO (sesuai filter & urutan) ke Excel lalu buka share sheet.
   Future<void> shareExcel({
     PoFilters filters = const PoFilters(),

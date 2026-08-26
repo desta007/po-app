@@ -240,8 +240,12 @@ class PdfExportService
             $po->load('customer', 'organization');
             $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M Y') : '-';
 
+            // Show only the sequence part of the PO number (e.g. "001" from "PO-20260822-001").
+            $poParts = explode('-', $po->po_number);
+            $poSeq = end($poParts) ?: $po->po_number;
+
             $labels[] = [
-                'po_number' => $po->po_number,
+                'po_number' => $poSeq,
                 'delivery_date' => $deliveryDate,
                 'sender_name' => $po->organization->name ?? '-',
                 'sender_phone' => $po->organization->phone ?? '',

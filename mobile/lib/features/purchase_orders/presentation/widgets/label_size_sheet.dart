@@ -29,3 +29,31 @@ Future<PoLabelSize?> showLabelSizeSheet(BuildContext context) {
     ),
   );
 }
+
+/// Bottom sheet pemilih ukuran label alamat pengiriman. Mengembalikan
+/// [PoAddressLabelSize] yang dipilih atau `null` bila dibatalkan.
+Future<PoAddressLabelSize?> showAddressLabelSizeSheet(BuildContext context) {
+  return showModalBottomSheet<PoAddressLabelSize>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 4),
+            child: Text('Pilih ukuran label alamat',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          for (final size in PoAddressLabelSize.values)
+            ListTile(
+              leading: const Icon(Icons.local_shipping_outlined),
+              title: Text(size.label),
+              onTap: () => Navigator.of(ctx).pop(size),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}

@@ -161,6 +161,18 @@ class PurchaseOrdersApi {
         );
         return Uint8List.fromList(res.data!);
       });
+
+  /// Cetak label alamat pengiriman untuk satu / beberapa PO (satu label per PO).
+  Future<Uint8List> bulkExportAddressLabelsBytes(
+          List<String> ids, PoAddressLabelSize size) =>
+      guardApi(() async {
+        final res = await _dio.post<List<int>>(
+          '/api/purchase-orders/bulk-export-address-labels',
+          data: {'ids': ids, 'size': size.apiValue},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return Uint8List.fromList(res.data!);
+      });
 }
 
 enum PoExportKind {
@@ -220,5 +232,31 @@ enum PoLabelSize {
         s30x15 => '30 × 15 mm',
         s30x20 => '30 × 20 mm',
         s50x30 => '50 × 30 mm',
+      };
+}
+
+/// Ukuran label alamat (mm) — daftar sama persis dengan web
+/// (`address-labels`): 100×150, 100×100, 80×50, 60×50, 50×50.
+enum PoAddressLabelSize {
+  s100x150,
+  s100x100,
+  s80x50,
+  s60x50,
+  s50x50;
+
+  String get apiValue => switch (this) {
+        s100x150 => '100x150',
+        s100x100 => '100x100',
+        s80x50 => '80x50',
+        s60x50 => '60x50',
+        s50x50 => '50x50',
+      };
+
+  String get label => switch (this) {
+        s100x150 => '100 × 150 mm (A6)',
+        s100x100 => '100 × 100 mm',
+        s80x50 => '80 × 50 mm',
+        s60x50 => '60 × 50 mm',
+        s50x50 => '50 × 50 mm',
       };
 }

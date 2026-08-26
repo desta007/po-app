@@ -100,6 +100,15 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
         .shareLabels(ids: _selectedIds.toList(), size: size));
   }
 
+  Future<void> _bulkPrintAddressLabels() async {
+    if (_selectedIds.isEmpty || _bulkBusy) return;
+    final size = await showAddressLabelSizeSheet(context);
+    if (size == null) return;
+    await _runBulk(() => ref
+        .read(poShareServiceProvider)
+        .shareAddressLabels(ids: _selectedIds.toList(), size: size));
+  }
+
   Future<void> _bulkPrintThermal() async {
     if (_selectedIds.isEmpty || _bulkBusy) return;
     final orders = ref
@@ -153,6 +162,12 @@ class _PoListScreenState extends ConsumerState<PoListScreen> {
                 label: 'Label',
                 enabled: enabled,
                 onTap: _bulkPrintLabels,
+              ),
+              _BulkAction(
+                icon: Icons.local_shipping_outlined,
+                label: 'Alamat',
+                enabled: enabled,
+                onTap: _bulkPrintAddressLabels,
               ),
               _BulkAction(
                 icon: Icons.print_outlined,
