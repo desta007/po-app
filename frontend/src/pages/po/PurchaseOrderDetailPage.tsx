@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Download, MessageCircle, Check, X, DollarSign, Pencil, ShoppingBag, Truck, Printer, Bluetooth, Usb, MapPin } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, describePrintError, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 
 const STATUS_ORDER = ['draft', 'in_progress', 'completed'] as const;
 
@@ -66,7 +66,7 @@ export default function PurchaseOrderDetailPage() {
       toast.success('Struk terkirim ke printer.');
     } catch (err: any) {
       if (err?.name === 'NotFoundError') return; // user membatalkan dialog perangkat
-      toast.error(err?.message || 'Gagal mencetak ke printer thermal.');
+      toast.error(describePrintError(err));
     } finally {
       setPrinting(false);
     }

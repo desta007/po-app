@@ -76,6 +76,27 @@ export function bluetoothUnsupportedReason(): string {
   return 'Browser tidak mendukung Bluetooth. Gunakan Chrome atau Edge terbaru.';
 }
 
+/**
+ * Ubah error cetak jadi pesan siap-tampil yang MENYERTAKAN tipe error
+ * (mis. NetworkError / SecurityError / NotSupportedError). Penting untuk
+ * diagnosa di iOS/Bluefy, karena banyak DOMException Web Bluetooth punya
+ * `message` kosong sehingga pesan aslinya tertelan jadi teks generik.
+ */
+export function describePrintError(err: any): string {
+  const name = err?.name ? String(err.name) : '';
+  const msg = err?.message ? String(err.message) : '';
+  if (name === 'NotSupportedError' || name === 'SecurityError') {
+    return `Cetak Bluetooth ditolak browser (${name}). Di iOS pakai Bluefy dan pastikan izin Bluetooth aktif; halaman harus HTTPS.`;
+  }
+  if (name === 'NetworkError') {
+    return 'Gagal terhubung ke printer (NetworkError). Pastikan printer menyala, dalam jangkauan, dan tidak sedang terpasang ke perangkat/aplikasi lain.';
+  }
+  if (msg && name) return `${msg} (${name})`;
+  if (msg) return msg;
+  if (name) return `Gagal mencetak ke printer thermal (${name}).`;
+  return 'Gagal mencetak ke printer thermal.';
+}
+
 export function isPrinterConnected(): boolean {
   return !!(device && device.gatt && device.gatt.connected && characteristic);
 }

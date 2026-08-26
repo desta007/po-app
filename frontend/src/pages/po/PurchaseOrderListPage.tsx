@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
 import { settingsApi } from '@/api/settings';
-import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, describePrintError, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -209,7 +209,7 @@ export default function PurchaseOrderListPage() {
       toast.success('Struk terkirim ke printer.');
     } catch (err: any) {
       if (err?.name === 'NotFoundError') return;
-      toast.error(err?.message || 'Gagal mencetak ke printer thermal.');
+      toast.error(describePrintError(err));
     }
   };
 
@@ -229,7 +229,7 @@ export default function PurchaseOrderListPage() {
       toast.success(`${selectedIds.size} struk terkirim ke printer.`);
     } catch (err: any) {
       if (err?.name !== 'NotFoundError') {
-        toast.error(err?.message || 'Gagal mencetak ke printer thermal.');
+        toast.error(describePrintError(err));
       }
     } finally {
       setBulkPrinting(false);
