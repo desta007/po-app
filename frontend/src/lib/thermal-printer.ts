@@ -117,6 +117,17 @@ export function getDiscoveredServices(): string[] {
 export async function runPrinterDiagnostics(): Promise<string> {
   const nav: any = typeof navigator !== 'undefined' ? navigator : {};
   const lines: string[] = [];
+
+  // Di iOS, Web Bluetooth hanya tersedia lewat browser seperti Bluefy yang
+  // menyuntikkan API-nya. Kalau `navigator.bluetooth` tidak ada, berarti ini
+  // Safari (atau app yang membuka lewat Safari), bukan Bluefy — sebutkan tegas
+  // di atas agar tidak salah kira sudah pakai Bluefy.
+  if (isIOS() && !isBluetoothPrintingSupported()) {
+    lines.push('>> Ini Safari — BUKAN Bluefy. Web Bluetooth tidak tersedia di sini.');
+    lines.push('>> Buka aplikasi Bluefy, ketik alamat situs di address bar Bluefy, lalu ulangi diagnosa.');
+    lines.push('');
+  }
+
   lines.push(`UA: ${nav.userAgent || '-'}`);
   lines.push(`iOS: ${isIOS() ? 'ya' : 'tidak'}`);
   lines.push(`Web Bluetooth: ${isBluetoothPrintingSupported() ? 'ada' : 'tidak ada'}`);
