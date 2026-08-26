@@ -31,16 +31,27 @@ export function setPaperWidth(width: PaperWidth): void {
 // Koneksi Web Bluetooth
 // ---------------------------------------------------------------------------
 
+// Ubah UUID 16-bit (mis. 0xffe0) ke bentuk 128-bit standar
+// (0000ffe0-0000-1000-8000-00805f9b34fb). PENTING: Bluefy (satu-satunya jalur
+// Web Bluetooth di iOS) tidak bisa mem-parse UUID numerik di optionalServices —
+// requestDevice gagal dengan "Request payload could not be parsed" sehingga
+// dialog printer tak pernah muncul. Chrome/Edge menerima kedua bentuk, jadi
+// menormalkan semua ke string 128-bit aman untuk semua browser.
+function toUuidString(v: number | string): string {
+  if (typeof v === 'string') return v.toLowerCase();
+  return `0000${v.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb`;
+}
+
 // Daftar service GATT yang umum dipakai printer thermal BLE murah. Dipakai untuk
 // `optionalServices` agar karakteristik tulisnya bisa ditemukan setelah connect.
 // Web Bluetooth menyembunyikan service yang tidak didaftarkan di sini, jadi
 // daftar ini sengaja lengkap agar mencakup mayoritas printer ESC/POS BLE.
-const KNOWN_SERVICES: (number | string)[] = [
+const KNOWN_SERVICES: string[] = [
   0xffe0, 0xffe5, 0xff00, 0xfff0, 0xfee0, 0xfea0, 0x18f0, 0xff12, 0xffb0, 0xff80,
   '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Microchip ISSC / banyak printer BT
   '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
   'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // sebagian printer thermal
-];
+].map(toUuidString);
 
 // UUID service yang berhasil ditemukan saat koneksi terakhir — untuk diagnostik
 // bila karakteristik tulis tidak ketemu.
@@ -86,7 +97,7 @@ export function describePrintError(err: any): string {
   const name = err?.name ? String(err.name) : '';
   const msg = err?.message ? String(err.message) : '';
   if (name === 'NotSupportedError' || name === 'SecurityError') {
-    return `Cetak Bluetooth ditolak browser (${name}). Di iOS pakai Bluefy dan pastikan izin Bluetooth aktif; halaman harus HTTPS.`;
+    return `Cetak Bluetooth ditolak browser (${name}). Pastikan halaman HTTPS, izin Bluetooth aktif, tombol cetak ditekan langsung (bukan otomatis), dan di iOS memakai Bluefy.`;
   }
   if (name === 'NetworkError') {
     return 'Gagal terhubung ke printer (NetworkError). Pastikan printer menyala, dalam jangkauan, dan tidak sedang terpasang ke perangkat/aplikasi lain.';
