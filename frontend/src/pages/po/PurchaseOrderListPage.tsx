@@ -1,15 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchaseOrdersApi } from '@/api/purchase-orders';
 import { settingsApi } from '@/api/settings';
-import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, describePrintError, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
+import { ensurePrinterReady, connectPrinter, connectSerialPrinter, printReceipt, isBluetoothPrintingSupported, isSerialPrintingSupported, bluetoothUnsupportedReason, connectedTransport, describePrintError, runPrinterDiagnostics, getPaperWidth, setPaperWidth, type PaperWidth } from '@/lib/thermal-printer';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check, MapPin } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check, MapPin, Stethoscope, Copy } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -165,6 +166,34 @@ export default function PurchaseOrderListPage() {
   const changePaperWidth = (w: PaperWidth) => {
     setPaperWidth(w);
     setPaperWidthState(w);
+  };
+
+  // Diagnosa printer — dijalankan langsung dari HP user (mis. iPhone/Bluefy)
+  // untuk melihat apakah printer terlihat sebagai BLE (ada service) atau tidak.
+  const [diagOpen, setDiagOpen] = useState(false);
+  const [diagText, setDiagText] = useState('');
+  const [diagRunning, setDiagRunning] = useState(false);
+  const handleDiagnostics = async () => {
+    setDiagText('Menjalankan diagnosa… pilih printer di dialog bila muncul.');
+    setDiagRunning(true);
+    setDiagOpen(true);
+    try {
+      // requestDevice butuh gesture: jangan `await` apa pun sebelum ini.
+      const report = await runPrinterDiagnostics();
+      setDiagText(report);
+    } catch (err: any) {
+      setDiagText(describePrintError(err));
+    } finally {
+      setDiagRunning(false);
+    }
+  };
+  const copyDiagnostics = async () => {
+    try {
+      await navigator.clipboard.writeText(diagText);
+      toast.success('Hasil diagnosa disalin.');
+    } catch {
+      toast.error('Gagal menyalin — salin manual dari teks di atas.');
+    }
   };
 
   const handleConnectPrinter = async () => {
@@ -699,6 +728,9 @@ export default function PurchaseOrderListPage() {
               <DropdownMenuItem onClick={handleConnectSerial}>
                 <Usb className="mr-2" size={14} /> USB / COM (Serial){connectedTransport() === 'serial' ? ' ✓' : ''}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDiagnostics}>
+                <Stethoscope className="mr-2" size={14} /> Diagnosa printer
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Lebar kertas</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => changePaperWidth('58')}>
@@ -779,6 +811,24 @@ export default function PurchaseOrderListPage() {
           </button>
         </div>
       )}
+
+      <Dialog open={diagOpen} onClose={() => setDiagOpen(false)} size="lg">
+        <DialogHeader onClose={() => setDiagOpen(false)}>Diagnosa Printer Thermal</DialogHeader>
+        <DialogBody>
+          <p className="text-[13px] text-gray-500 mb-3">
+            Kirim hasil ini ke pengembang untuk membantu mendiagnosa masalah cetak.
+          </p>
+          <pre className="text-[12px] leading-relaxed text-gray-800 bg-gray-50 border border-gray-200 rounded-lg p-3 whitespace-pre-wrap break-words max-h-[50vh] overflow-y-auto">
+            {diagText}
+          </pre>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={copyDiagnostics} disabled={diagRunning || !diagText}>
+            <Copy size={14} className="mr-1.5" /> Salin
+          </Button>
+          <Button size="sm" onClick={() => setDiagOpen(false)}>Tutup</Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 }

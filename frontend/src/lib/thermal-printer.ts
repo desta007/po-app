@@ -101,6 +101,47 @@ export function isPrinterConnected(): boolean {
   return !!(device && device.gatt && device.gatt.connected && characteristic);
 }
 
+/** UUID service GATT yang ditemukan saat koneksi terakhir (untuk diagnostik). */
+export function getDiscoveredServices(): string[] {
+  return [...lastDiscoveredServices];
+}
+
+/**
+ * Jalankan diagnosa printer dan kembalikan laporan siap-tampil. Mencoba
+ * menghubungkan printer (memicu dialog pemilih + penemuan service) lalu
+ * melaporkan dukungan browser, secure context, service GATT yang terdeteksi,
+ * dan apakah jalur tulis ketemu. Tujuannya: dari HP-nya sendiri kita bisa tahu
+ * apakah printer itu BLE (kelihatan service-nya) atau Bluetooth Classic (tidak
+ * terjangkau Web Bluetooth). Panggil dari handler klik — koneksi butuh gesture.
+ */
+export async function runPrinterDiagnostics(): Promise<string> {
+  const nav: any = typeof navigator !== 'undefined' ? navigator : {};
+  const lines: string[] = [];
+  lines.push(`UA: ${nav.userAgent || '-'}`);
+  lines.push(`iOS: ${isIOS() ? 'ya' : 'tidak'}`);
+  lines.push(`Web Bluetooth: ${isBluetoothPrintingSupported() ? 'ada' : 'tidak ada'}`);
+  lines.push(`Web Serial: ${isSerialPrintingSupported() ? 'ada' : 'tidak ada'}`);
+  const secure = typeof window !== 'undefined' && !!(window as any).isSecureContext;
+  lines.push(`HTTPS (secure context): ${secure ? 'ya' : 'tidak'}`);
+
+  try {
+    const name = await ensurePrinterConnected();
+    lines.push(`Terhubung ke: ${name}`);
+    if (characteristic) {
+      const p = characteristic.properties || {};
+      lines.push(`Jalur tulis: ditemukan (write=${!!p.write}, writeNoResp=${!!p.writeWithoutResponse})`);
+    } else {
+      lines.push('Jalur tulis: TIDAK ditemukan');
+    }
+  } catch (e: any) {
+    lines.push(`Koneksi gagal: ${describePrintError(e)}`);
+  }
+  lines.push(
+    `Service terdeteksi: ${lastDiscoveredServices.length ? lastDiscoveredServices.join(', ') : '(tidak ada — kemungkinan printer Bluetooth Classic, bukan BLE)'}`,
+  );
+  return lines.join('\n');
+}
+
 export function connectedPrinterName(): string | null {
   return device?.name ?? null;
 }
