@@ -678,15 +678,15 @@ export default function PurchaseOrderListPage() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-200">
-          <span className="text-sm font-medium whitespace-nowrap">
+        <div className="fixed bottom-4 z-50 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex flex-col items-stretch gap-2 left-3 right-3 max-h-[75vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-200 sm:flex-row sm:items-center sm:gap-4 sm:left-1/2 sm:right-auto sm:bottom-6 sm:-translate-x-1/2 sm:max-h-none sm:overflow-visible">
+          <span className="text-sm font-medium whitespace-nowrap text-center sm:text-left">
             {selectedIds.size} PO dipilih
           </span>
-          <div className="w-px h-6 bg-gray-600" />
+          <div className="hidden sm:block w-px h-6 bg-gray-600" />
           <Button
             variant="secondary"
             size="sm"
-            className="bg-white/10 hover:bg-white/20 text-white border-0"
+            className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
             disabled={bulkPrinting}
             onClick={() => handleBulkPrint('receipt')}
           >
@@ -696,20 +696,20 @@ export default function PurchaseOrderListPage() {
           <Button
             variant="secondary"
             size="sm"
-            className="bg-white/10 hover:bg-white/20 text-white border-0"
+            className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
             disabled={bulkPrinting}
             onClick={() => handleBulkPrint('corporate')}
           >
             {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
             Print Corporate (A4)
           </Button>
-          <div className="w-px h-6 bg-gray-600" />
+          <div className="hidden sm:block w-px h-6 bg-gray-600" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
                 size="sm"
-                className="bg-white/10 hover:bg-white/20 text-white border-0"
+                className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
                 disabled={bulkPrinting}
               >
                 {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
@@ -741,13 +741,13 @@ export default function PurchaseOrderListPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="w-px h-6 bg-gray-600" />
+          <div className="hidden sm:block w-px h-6 bg-gray-600" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
                 size="sm"
-                className="bg-white/10 hover:bg-white/20 text-white border-0"
+                className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
                 disabled={bulkPrinting}
               >
                 {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <Tag size={14} />}
@@ -769,13 +769,13 @@ export default function PurchaseOrderListPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="w-px h-6 bg-gray-600" />
+          <div className="hidden sm:block w-px h-6 bg-gray-600" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
                 size="sm"
-                className="bg-white/10 hover:bg-white/20 text-white border-0"
+                className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
                 disabled={bulkPrinting}
               >
                 {bulkPrinting ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
@@ -801,9 +801,9 @@ export default function PurchaseOrderListPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="w-px h-6 bg-gray-600" />
+          <div className="hidden sm:block w-px h-6 bg-gray-600" />
           <button
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-white transition-colors self-center sm:self-auto"
             onClick={() => setSelectedIds(new Set())}
             title="Batal pilih"
           >
