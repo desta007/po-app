@@ -184,13 +184,17 @@ class PdfExportService
                 $poTotal += max(1, (int) $item->quantity);
             }
 
+            // Show only the sequence part of the PO number (e.g. "001" from
+            // "PO-20260822-001"), matching the address labels.
+            $poSeq = $po->po_number_seq;
+
             $pageIndex = 0;
             foreach ($po->items as $item) {
                 $qty = max(1, (int) $item->quantity);
                 for ($i = 0; $i < $qty; $i++) {
                     $pageIndex++;
                     $labels[] = [
-                        'po_number' => $po->po_number,
+                        'po_number' => $poSeq,
                         'delivery_date' => $deliveryDate,
                         'customer' => $po->customer->name ?? '-',
                         'product' => $item->product_name,
@@ -241,8 +245,7 @@ class PdfExportService
             $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M Y') : '-';
 
             // Show only the sequence part of the PO number (e.g. "001" from "PO-20260822-001").
-            $poParts = explode('-', $po->po_number);
-            $poSeq = end($poParts) ?: $po->po_number;
+            $poSeq = $po->po_number_seq;
 
             $labels[] = [
                 'po_number' => $poSeq,

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PaymentStatus;
 use App\Enums\PurchaseOrderStatus;
 use App\Traits\BelongsToOrganization;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -54,6 +55,21 @@ class PurchaseOrder extends Model
             'shipping_cost' => 'decimal:2',
             'total' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Sequence-only PO number, e.g. "001" from "PO-20260822-001".
+     * Used on printed labels & invoices where the full number is redundant.
+     */
+    protected function poNumberSeq(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $parts = explode('-', (string) $this->po_number);
+                $seq = end($parts);
+                return ($seq !== false && $seq !== '') ? $seq : $this->po_number;
+            },
+        );
     }
 
     public function organization(): BelongsTo

@@ -130,7 +130,9 @@ List<int> buildReceiptBytes(
     }
   }
 
-  e.line('INVOICE').line(po.poNumber);
+  // Tampilkan hanya nomor urut PO (mis. "001" dari "PO-20260822-001").
+  final poSeq = po.poNumber.split('-').last;
+  e.line('INVOICE').line(poSeq.isEmpty ? po.poNumber : poSeq);
   e.align(0).line(_divider(cols));
 
   // Info pesanan

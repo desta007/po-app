@@ -55,7 +55,7 @@
 
     <div class="info">
         <div class="text-center font-bold" style="margin-bottom:5px; font-size: 12px;">INVOICE</div>
-        <div class="text-center" style="margin-bottom:10px;">{{ $po->po_number }}</div>
+        <div class="text-center" style="margin-bottom:10px;">{{ $po->po_number_seq }}</div>
         
         <table>
             <tr><td class="label">Tgl Order</td><td>: {{ $po->order_date->format('d M Y') }}</td></tr>

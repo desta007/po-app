@@ -196,7 +196,7 @@
             <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $organization->logo_url)) }}" class="logo" alt="Logo"><br>
             @endif
             <div class="invoice-title">INVOICE</div>
-            <div class="po-number">{{ $po->po_number }}</div>
+            <div class="po-number">{{ $po->po_number_seq }}</div>
         </div>
         <div class="header-right">
             <div class="org-name">{{ $organization->name }}</div>

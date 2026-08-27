@@ -455,7 +455,9 @@ export function buildReceipt(
   if (org?.phone) e.line(org.phone);
   if (org?.address) for (const l of wrap(org.address, cols)) e.line(l);
 
-  e.line('INVOICE').line(po.po_number);
+  // Tampilkan hanya nomor urut PO (mis. "001" dari "PO-20260822-001").
+  const poSeq = po.po_number.split('-').pop() || po.po_number;
+  e.line('INVOICE').line(poSeq);
   e.align(0).line(divider(cols));
 
   // Info pesanan
