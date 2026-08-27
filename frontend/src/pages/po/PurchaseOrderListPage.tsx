@@ -678,7 +678,7 @@ export default function PurchaseOrderListPage() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-4 z-50 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex flex-col items-stretch gap-2 left-3 right-3 max-h-[75vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-200 sm:flex-row sm:items-center sm:gap-4 sm:left-1/2 sm:right-auto sm:bottom-6 sm:-translate-x-1/2 sm:max-h-none sm:overflow-visible">
+        <div className="fixed z-50 bg-gray-900 text-white rounded-xl shadow-2xl px-3 py-3 flex flex-col items-stretch gap-2 right-2 top-1/2 -translate-y-1/2 max-h-[90vh] overflow-y-auto animate-in slide-in-from-right-4 duration-200 sm:px-5 sm:flex-row sm:items-center sm:gap-4 sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6 sm:translate-y-0 sm:-translate-x-1/2 sm:max-h-none sm:overflow-visible">
           <span className="text-sm font-medium whitespace-nowrap text-center sm:text-left">
             {selectedIds.size} PO dipilih
           </span>
