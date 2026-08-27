@@ -23,7 +23,10 @@ class FreeTierLimitService
 
     public function getMonthlyPoCount(string $orgId): int
     {
-        return PurchaseOrder::withoutGlobalScopes()
+        // Hanya lepas scope tenant ('organization') — bukan withoutGlobalScopes()
+        // yang juga melepas SoftDeletes sehingga PO terhapus ikut terhitung.
+        // Kuota bulanan hanya menghitung PO yang masih ada (belum dihapus).
+        return PurchaseOrder::withoutGlobalScope('organization')
             ->where('organization_id', $orgId)
             ->whereYear('created_at', now()->year)
             ->whereMonth('created_at', now()->month)
@@ -46,7 +49,9 @@ class FreeTierLimitService
 
     public function getProductCount(string $orgId): int
     {
-        return Product::withoutGlobalScopes()
+        // Sama seperti getMonthlyPoCount: hanya lepas scope tenant, pertahankan
+        // SoftDeletes agar produk yang sudah dihapus tidak ikut terhitung kuota.
+        return Product::withoutGlobalScope('organization')
             ->where('organization_id', $orgId)
             ->count();
     }
