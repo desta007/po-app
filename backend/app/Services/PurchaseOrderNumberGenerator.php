@@ -9,26 +9,38 @@ class PurchaseOrderNumberGenerator
 {
     /**
      * Generate PO number: PO-YYYYMMDD-XXX
+     *
+     * Nomor urut (XXX) adalah penghitung berjalan per-organisasi yang TIDAK
+     * pernah reset — terus bertambah walaupun berganti hari, bulan, atau tahun.
+     * Prefix tanggal tetap dipertahankan hanya sebagai penanda kapan PO dibuat.
      */
     public function generate(string $organizationId): string
     {
         $today = now()->format('Ymd');
         $prefix = "PO-{$today}-";
 
-        $lastPo = DB::table('purchase_orders')
+        // Ambil semua nomor PO milik organisasi ini (lock agar aman dari race
+        // condition saat dua PO dibuat bersamaan) lalu cari nomor urut tertinggi.
+        // Diproses di PHP supaya portabel antara PostgreSQL (produksi) dan
+        // SQLite (test), dan tetap benar untuk data lama yang dulunya reset
+        // harian — urutan cukup diambil dari segmen terakhir setiap nomor.
+        $poNumbers = DB::table('purchase_orders')
             ->where('organization_id', $organizationId)
-            ->where('po_number', 'like', $prefix . '%')
-            ->orderByDesc('po_number')
             ->lockForUpdate()
-            ->first();
+            ->pluck('po_number');
 
-        if ($lastPo) {
-            $lastSeq = (int) substr($lastPo->po_number, -3);
-            $nextSeq = $lastSeq + 1;
-        } else {
-            $nextSeq = 1;
+        $maxSeq = 0;
+        foreach ($poNumbers as $poNumber) {
+            $poNumber = (string) $poNumber;
+            $lastDash = strrpos($poNumber, '-');
+            $seq = (int) ($lastDash === false ? $poNumber : substr($poNumber, $lastDash + 1));
+            if ($seq > $maxSeq) {
+                $maxSeq = $seq;
+            }
         }
 
-        return $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+        $nextSeq = $maxSeq + 1;
+
+        return $prefix . str_pad((string) $nextSeq, 3, '0', STR_PAD_LEFT);
     }
 }
