@@ -64,12 +64,35 @@ export function storageUrl(path: string | null | undefined): string {
 }
 
 /**
+ * Deteksi browser WebKit di iOS yang punya Web Bluetooth (mis. Bluefy / WebBLE).
+ * Browser ini dipakai user iPhone agar bisa cetak struk thermal (Safari tak punya
+ * Web Bluetooth), TAPI ia lemah menangani tab baru + `blob:` PDF: `window.open`
+ * sering mengembalikan tab kosong dan atribut `download` diabaikan, sehingga
+ * cetak PDF (Corporate/Label/Label Alamat) seolah tak terjadi apa-apa. Untuk
+ * kasus ini kita navigasikan tab SAAT INI ke blob URL — jalur yang andal di
+ * WebKit iOS. Safari biasa (tanpa Web Bluetooth) tetap pakai jalur tab baru.
+ */
+function isBluefyLike(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const iOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    // iPadOS 13+ menyamar sebagai Mac; deteksi lewat touch point
+    ((navigator as any).platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1);
+  return iOS && (!!(navigator as any).bluetooth || /Bluefy|WebBLE/i.test(ua));
+}
+
+/**
  * Buka tab kosong SEBELUM operasi async (mis. fetch PDF). Chrome/Edge memblokir
  * `window.open` yang dipanggil setelah `await` karena user gesture sudah hilang
  * (Safari lebih longgar). Panggil ini langsung di awal handler klik, lalu isi
  * hasilnya lewat `fillPdfTab`.
+ *
+ * Di Bluefy tab baru tidak andal, jadi jangan buka tab (kembalikan null) —
+ * `fillPdfTab` akan menavigasi tab saat ini ke PDF.
  */
 export function openBlankTab(): Window | null {
+  if (isBluefyLike()) return null;
   const win = window.open('', '_blank');
   if (win) {
     win.document.write(
@@ -86,6 +109,15 @@ export function openBlankTab(): Window | null {
 export function fillPdfTab(win: Window | null, data: BlobPart, filename: string): void {
   const blob = new Blob([data], { type: 'application/pdf' });
   const url = window.URL.createObjectURL(blob);
+
+  // Bluefy (iOS): navigasikan tab SAAT INI ke blob URL. Tab baru + blob sering
+  // gagal dirender di sini. Setelah navigasi, dokumen ini dibongkar sehingga
+  // revoke tak perlu (dan tak akan jalan) — blob dilepas saat tab ditutup.
+  if (isBluefyLike()) {
+    window.location.href = url;
+    return;
+  }
+
   if (win && !win.closed) {
     win.location.href = url;
   } else {
