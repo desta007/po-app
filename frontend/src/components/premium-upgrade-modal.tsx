@@ -132,7 +132,7 @@ export function PremiumUpgradeModal() {
             <span className="text-sm text-blue-200/80 line-through decoration-red-400 decoration-2">Rp 200.000</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xs font-medium text-blue-100">Rp</span>
-              <span className="text-2xl font-extrabold text-white">35.000</span>
+              <span className="text-2xl font-extrabold text-white">50.000</span>
               <span className="text-xs font-medium text-blue-200">/ bulan</span>
             </div>
           </div>
@@ -214,7 +214,7 @@ export function PremiumUpgradeModal() {
 
               <div className="bg-blue-50 rounded-xl p-3.5 mb-4">
                 <p className="text-[12px] text-blue-800 leading-relaxed">
-                  Pastikan Anda sudah melakukan transfer sebesar <strong>Rp 35.000</strong> ke rekening yang diberikan via WhatsApp. Admin akan memverifikasi pembayaran Anda.
+                  Pastikan Anda sudah melakukan transfer sebesar <strong>Rp 50.000</strong> ke rekening yang diberikan via WhatsApp. Admin akan memverifikasi pembayaran Anda.
                 </p>
               </div>
 

@@ -468,7 +468,7 @@ export default function LandingPage() {
               </span>
               <h3 className="text-[15px] font-bold text-primary">Premium</h3>
               <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-gray-900">Rp 35.000</span>
+                <span className="text-4xl font-extrabold text-gray-900">Rp 50.000</span>
                 <span className="text-[14px] text-gray-400">/bulan</span>
               </div>
               <p className="mt-2 text-[14px] text-gray-500">Untuk bisnis yang siap tumbuh tanpa batasan.</p>

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->uuid('organization_id');
             $table->string('plan', 50)->default('premium');
             $table->string('status', 50)->default('pending');
-            $table->decimal('amount', 12, 2)->default(35000);
+            $table->decimal('amount', 12, 2)->default(50000);
             $table->unsignedBigInteger('requested_by');
             $table->unsignedBigInteger('approved_by')->nullable();
             $table->text('payment_proof_note')->nullable();

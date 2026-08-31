@@ -77,7 +77,7 @@ class SubscriptionController extends Controller
             'organization_id' => $organization->id,
             'plan' => SubscriptionPlan::PREMIUM,
             'status' => SubscriptionStatus::PENDING,
-            'amount' => 35000,
+            'amount' => 50000,
             'requested_by' => $user->id,
             'payment_proof_note' => $request->input('payment_proof_note'),
             'requested_at' => now(),
