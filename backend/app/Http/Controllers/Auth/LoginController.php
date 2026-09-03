@@ -49,6 +49,7 @@ class LoginController extends Controller
             'role' => $membership?->role?->value,
             'is_super_admin' => (bool) $user->is_super_admin,
             'organization_plan' => $organization?->plan?->value ?? 'free',
+            'modules' => $organization ? $organization->activeModules() : [],
             'subscription' => $subscription ? [
                 'status' => $subscription->status->value,
                 'status_label' => $subscription->status->label(),
@@ -102,6 +103,7 @@ class LoginController extends Controller
             'role' => $membership?->role?->value,
             'is_super_admin' => (bool) $user->is_super_admin,
             'organization_plan' => $organization?->plan?->value ?? 'free',
+            'modules' => $organization ? $organization->activeModules() : [],
             'subscription' => $subscription ? [
                 'status' => $subscription->status->value,
                 'status_label' => $subscription->status->label(),

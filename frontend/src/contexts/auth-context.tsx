@@ -8,6 +8,8 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   organizationPlan: SubscriptionPlan;
   subscription: SubscriptionInfo | null;
+  modules: string[];
+  hasModule: (module: string) => boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [organizationPlan, setOrganizationPlan] = useState<SubscriptionPlan>('free');
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [modules, setModules] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
@@ -34,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSuperAdmin(response.data.is_super_admin ?? false);
       setOrganizationPlan(response.data.organization_plan ?? 'free');
       setSubscription(response.data.subscription ?? null);
+      setModules(response.data.modules ?? []);
     } catch {
       localStorage.removeItem('auth_token');
       setUser(null);
@@ -41,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSuperAdmin(false);
       setOrganizationPlan('free');
       setSubscription(null);
+      setModules([]);
     }
   }, []);
 
@@ -59,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSuperAdmin(response.data.is_super_admin ?? false);
         setOrganizationPlan(response.data.organization_plan ?? 'free');
         setSubscription(response.data.subscription ?? null);
+        setModules(response.data.modules ?? []);
       } catch {
         localStorage.removeItem('auth_token');
         setUser(null);
@@ -77,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(response.data.is_super_admin ?? false);
     setOrganizationPlan(response.data.organization_plan ?? 'free');
     setSubscription(response.data.subscription ?? null);
+    setModules(response.data.modules ?? []);
   };
 
   const register = async (data: RegisterData) => {
@@ -87,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(false);
     setOrganizationPlan('free');
     setSubscription(null);
+    setModules([]);
   };
 
   const logout = async () => {
@@ -102,7 +110,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(false);
     setOrganizationPlan('free');
     setSubscription(null);
+    setModules([]);
   };
+
+  const hasModule = useCallback(
+    (module: string) => isSuperAdmin || modules.includes(module),
+    [isSuperAdmin, modules]
+  );
 
   return (
     <AuthContext.Provider
@@ -112,6 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin,
         organizationPlan,
         subscription,
+        modules,
+        hasModule,
         isLoading,
         isAuthenticated: !!user,
         login,

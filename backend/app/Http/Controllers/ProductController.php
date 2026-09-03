@@ -7,6 +7,7 @@ use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Services\FreeTierLimitService;
+use App\Services\PdfExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -15,7 +16,28 @@ class ProductController extends Controller
 {
     public function __construct(
         private FreeTierLimitService $limitService,
+        private PdfExportService $pdfService,
     ) {}
+
+    /**
+     * Download a PDF catalog of the organization's catalog-visible products.
+     * Products are auto-scoped to the authenticated user's organization by the
+     * global organization scope, so no explicit org filter is needed here.
+     */
+    public function exportCatalogPdf(Request $request)
+    {
+        $org = $request->user()->currentOrganization;
+
+        $products = Product::where('is_active', true)
+            ->where('show_in_catalog', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        $filename = 'Katalog-' . \Illuminate\Support\Str::slug($org->name ?: 'produk') . '.pdf';
+
+        return $this->pdfService->generateCatalog($org, $products)->download($filename);
+    }
 
     public function index(Request $request): AnonymousResourceCollection
     {

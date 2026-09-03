@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Organization;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
@@ -272,6 +274,61 @@ class PdfExportService
             'labelWidth' => $labelWidth,
             'labelHeight' => $labelHeight,
         ])->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
+    }
+
+    /**
+     * Generate a product-catalog PDF (A4) for an organization.
+     *
+     * Only active products flagged for the catalog are included, grouped by
+     * category. Product photos are embedded from the local public disk when the
+     * file exists; otherwise a "Tanpa Foto" placeholder is shown (never errors).
+     *
+     * @param  Collection<int, Product>  $products
+     */
+    public function generateCatalog(Organization $organization, Collection $products): \Barryvdh\DomPDF\PDF
+    {
+        $groups = [];
+        foreach ($products as $product) {
+            $category = $product->category ?: 'Lainnya';
+            $groups[$category][] = [
+                'name' => $product->name,
+                'price' => (float) $product->price,
+                'unit' => $product->unit ?: 'pcs',
+                'description' => $product->description,
+                'out_of_stock' => $product->track_stock && (float) $product->stock_qty <= 0,
+                'image_path' => $this->resolveLocalImagePath($product->image_url),
+            ];
+        }
+
+        return Pdf::loadView('pdf.catalog', [
+            'organization' => $organization,
+            'groups' => $groups,
+            'logoPath' => $this->resolveLocalImagePath($organization->logo_url),
+            'generatedAt' => \Carbon\Carbon::now()->translatedFormat('d M Y'),
+        ])->setPaper('a4', 'portrait');
+    }
+
+    /**
+     * Resolve a stored image URL (e.g. "/storage/products/x.jpg") to an absolute
+     * local filesystem path DomPDF can embed. Returns null when the value is empty,
+     * points at a remote/non-local location, or the file does not exist on disk.
+     */
+    private function resolveLocalImagePath(?string $imageUrl): ?string
+    {
+        if (! $imageUrl) {
+            return null;
+        }
+
+        // Remote images (e.g. S3 absolute URLs) can't be embedded because DomPDF
+        // has remote loading disabled — fall back to the placeholder instead.
+        if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
+            return null;
+        }
+
+        $relative = ltrim(str_replace('/storage/', '', $imageUrl), '/');
+        $path = storage_path('app/public/' . $relative);
+
+        return is_file($path) ? $path : null;
     }
 
     /**

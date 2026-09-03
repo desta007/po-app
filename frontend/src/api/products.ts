@@ -69,4 +69,7 @@ export const productsApi = {
 
   categories: () =>
     apiClient.get<{ data: string[] }>('/api/products/categories'),
+
+  exportCatalogPdf: () =>
+    apiClient.get('/api/products/catalog-pdf', { responseType: 'blob' }),
 };

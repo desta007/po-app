@@ -7,9 +7,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X, Boxes } from 'lucide-react';
+import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X, Boxes, FileText } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { formatRupiah, storageUrl } from '@/lib/utils';
+import { formatRupiah, storageUrl, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuota } from '@/hooks/use-quota';
 import { Crown } from 'lucide-react';
@@ -48,6 +48,7 @@ export default function ProductListPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [downloadingCatalog, setDownloadingCatalog] = useState(false);
   const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([]);
   const [pendingImagePreviews, setPendingImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -199,6 +200,20 @@ export default function ProductListPage() {
     }
   }
 
+  async function handleDownloadCatalog() {
+    const win = openBlankTab();
+    setDownloadingCatalog(true);
+    try {
+      const response = await productsApi.exportCatalogPdf() as any;
+      fillPdfTab(win, response.data, 'Katalog-Produk.pdf');
+    } catch (err: any) {
+      win?.close();
+      toast.error(err?.response?.data?.message || 'Gagal membuat katalog PDF');
+    } finally {
+      setDownloadingCatalog(false);
+    }
+  }
+
   const products: Product[] = data?.data?.data || [];
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
   const isSubmitting = createProduct.isPending || updateProduct.isPending;
@@ -210,6 +225,7 @@ export default function ProductListPage() {
         description={`${products.length} produk aktif${categories.length > 0 ? ` · ${categories.length} kategori` : ''}`}
         actions={
           <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleDownloadCatalog} loading={downloadingCatalog}><FileText size={15} /> Katalog PDF</Button>
             <Button variant="secondary"><Download size={15} /> Import CSV</Button>
             <Button onClick={openCreate}><Plus size={15} /> Produk Baru</Button>
           </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrganizationModule as OrganizationModuleEnum;
 use App\Enums\SubscriptionPlan;
 use App\Enums\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,6 +16,7 @@ class Subscription extends Model
     protected $fillable = [
         'organization_id',
         'plan',
+        'module',
         'status',
         'amount',
         'requested_by',
@@ -31,6 +33,7 @@ class Subscription extends Model
     {
         return [
             'plan' => SubscriptionPlan::class,
+            'module' => OrganizationModuleEnum::class,
             'status' => SubscriptionStatus::class,
             'amount' => 'decimal:2',
             'starts_at' => 'datetime',

@@ -80,8 +80,9 @@ export default function AdminSubscriptionsPage() {
   const lastPage = meta?.last_page ?? 1;
   const total = meta?.total ?? 0;
 
-  const handleApprove = (id: string, orgName: string) => {
-    if (window.confirm(`Setujui upgrade Premium untuk "${orgName}"?`)) {
+  const handleApprove = (id: string, orgName: string, moduleLabel?: string | null) => {
+    const what = moduleLabel ? `langganan ${moduleLabel}` : 'upgrade Premium';
+    if (window.confirm(`Setujui ${what} untuk "${orgName}"?`)) {
       approveMutation.mutate(id);
     }
   };
@@ -197,6 +198,14 @@ export default function AdminSubscriptionsPage() {
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold text-gray-900 truncate">{sub.requester_name}</p>
                       <p className="text-[11px] text-gray-400 truncate">{sub.organization_name}</p>
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1 mt-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide',
+                          sub.module ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                        )}
+                      >
+                        {sub.module ? `Modul: ${sub.module_label ?? sub.module}` : 'Upgrade Premium'}
+                      </span>
                       <p className="text-[10px] text-gray-400 lg:hidden">{sub.requester_email}</p>
                     </div>
                   </div>
@@ -240,7 +249,7 @@ export default function AdminSubscriptionsPage() {
                     {sub.status === 'pending' && (
                       <>
                         <button
-                          onClick={() => handleApprove(sub.id, sub.organization_name)}
+                          onClick={() => handleApprove(sub.id, sub.organization_name, sub.module_label)}
                           disabled={approveMutation.isPending}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
                         >
@@ -279,7 +288,7 @@ export default function AdminSubscriptionsPage() {
                           Invoice
                         </button>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-600">
-                          <Crown size={12} /> Premium
+                          <Crown size={12} /> {sub.module_label ?? 'Premium'}
                         </span>
                       </>
                     )}

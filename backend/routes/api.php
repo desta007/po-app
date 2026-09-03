@@ -21,6 +21,8 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicPaymentController;
 use App\Http\Controllers\QuotaController;
+use App\Http\Controllers\WaitlistController;
+use App\Http\Controllers\RestoTableController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes (no auth)
@@ -64,6 +66,7 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
      */
     Route::apiResource('customers', CustomerController::class)->only(['index', 'show']);
 
+    Route::get('products/catalog-pdf', [ProductController::class, 'exportCatalogPdf']);
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
 
     // Purchase order reads + exports (read-only, all members)
@@ -143,6 +146,32 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
         Route::apiResource('team-members', TeamMemberController::class)->except(['show']);
         Route::put('settings/online-store', [OnlineStoreSettingController::class, 'update']);
         Route::post('settings/online-store/test-midtrans', [OnlineStoreSettingController::class, 'testMidtrans']);
+    });
+
+    /*
+     |-------------------------------------------------------------------
+     | Resto module — waiting list + table map (gated by 'module:resto')
+     |-------------------------------------------------------------------
+     */
+    Route::middleware('module:resto')->group(function () {
+        // Reads — available to every member (incl. viewer)
+        Route::get('waitlist', [WaitlistController::class, 'index']);
+        Route::get('waitlist/display', [WaitlistController::class, 'display']);
+        Route::get('resto-tables', [RestoTableController::class, 'index']);
+
+        // Writes — owner / admin / staff
+        Route::middleware('role:owner,admin,staff')->group(function () {
+            Route::post('waitlist', [WaitlistController::class, 'store']);
+            Route::put('waitlist/{id}', [WaitlistController::class, 'update']);
+            Route::post('waitlist/{id}/call', [WaitlistController::class, 'call']);
+            Route::post('waitlist/{id}/seat', [WaitlistController::class, 'seat']);
+            Route::post('waitlist/{id}/cancel', [WaitlistController::class, 'cancel']);
+
+            Route::post('resto-tables', [RestoTableController::class, 'store']);
+            Route::put('resto-tables/{id}', [RestoTableController::class, 'update']);
+            Route::patch('resto-tables/{id}/status', [RestoTableController::class, 'updateStatus']);
+            Route::delete('resto-tables/{id}', [RestoTableController::class, 'destroy']);
+        });
     });
 });
 

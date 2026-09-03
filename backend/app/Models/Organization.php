@@ -63,9 +63,41 @@ class Organization extends Model
         return $this->hasMany(Subscription::class);
     }
 
+    public function modules(): HasMany
+    {
+        return $this->hasMany(OrganizationModule::class);
+    }
+
     public function isPremium(): bool
     {
         return $this->plan === SubscriptionPlan::PREMIUM;
+    }
+
+    /**
+     * Whether this organization has an active (non-expired) add-on module.
+     */
+    public function hasModule(string $module): bool
+    {
+        return $this->modules()
+            ->where('module', $module)
+            ->where('status', 'active')
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists();
+    }
+
+    /**
+     * List of active (non-expired) module codes for this organization.
+     *
+     * @return array<int, string>
+     */
+    public function activeModules(): array
+    {
+        return $this->modules()
+            ->where('status', 'active')
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->pluck('module')
+            ->map(fn ($m) => $m instanceof \App\Enums\OrganizationModule ? $m->value : $m)
+            ->all();
     }
 
     /**

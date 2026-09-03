@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrganizationModule as OrganizationModuleEnum;
 use App\Enums\SubscriptionPlan;
 use App\Enums\SubscriptionStatus;
+use App\Models\Organization;
+use App\Models\OrganizationModule;
 use App\Models\Subscription;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +36,18 @@ class SubscriptionController extends Controller
             'plan' => $organization->plan?->value ?? 'free',
             'plan_label' => $organization->plan?->label() ?? 'Gratis',
             'is_premium' => $organization->isPremium(),
+            'modules' => $organization->modules()
+                ->orderBy('module')
+                ->get()
+                ->map(fn ($m) => [
+                    'module' => $m->module instanceof OrganizationModuleEnum ? $m->module->value : $m->module,
+                    'label' => $m->module instanceof OrganizationModuleEnum ? $m->module->label() : $m->module,
+                    'status' => $m->status,
+                    'starts_at' => $m->starts_at,
+                    'expires_at' => $m->expires_at,
+                    'is_active' => $organization->hasModule($m->module instanceof OrganizationModuleEnum ? $m->module->value : $m->module),
+                ]),
+            'active_modules' => $organization->activeModules(),
             'latest_subscription' => $latestSubscription ? [
                 'id' => $latestSubscription->id,
                 'status' => $latestSubscription->status->value,
@@ -51,6 +67,7 @@ class SubscriptionController extends Controller
     {
         $request->validate([
             'payment_proof_note' => ['nullable', 'string', 'max:1000'],
+            'module' => ['nullable', 'string', 'in:' . implode(',', array_column(OrganizationModuleEnum::cases(), 'value'))],
         ]);
 
         $user = $request->user();
@@ -60,12 +77,21 @@ class SubscriptionController extends Controller
             return response()->json(['message' => 'Organisasi tidak ditemukan.'], 404);
         }
 
+        $module = $request->filled('module')
+            ? OrganizationModuleEnum::from($request->input('module'))
+            : null;
+
+        if ($module) {
+            return $this->requestModule($request, $organization, $user, $module);
+        }
+
         if ($organization->isPremium()) {
             return response()->json(['message' => 'Organisasi Anda sudah berlangganan Premium.'], 422);
         }
 
-        // Check if there's already a pending request
+        // Check if there's already a pending plan-upgrade request (module requests excluded)
         $pendingExists = Subscription::where('organization_id', $organization->id)
+            ->whereNull('module')
             ->where('status', SubscriptionStatus::PENDING)
             ->exists();
 
@@ -86,6 +112,41 @@ class SubscriptionController extends Controller
         return response()->json([
             'data' => $subscription,
             'message' => 'Permintaan upgrade berhasil dikirim. Silakan tunggu konfirmasi dari admin.',
+        ], 201);
+    }
+
+    /**
+     * Request a subscription for an add-on module (e.g. Resto).
+     */
+    private function requestModule(Request $request, Organization $organization, User $user, OrganizationModuleEnum $module): JsonResponse
+    {
+        if ($organization->hasModule($module->value)) {
+            return response()->json(['message' => 'Organisasi Anda sudah berlangganan modul ' . $module->label() . '.'], 422);
+        }
+
+        $pendingExists = Subscription::where('organization_id', $organization->id)
+            ->where('module', $module->value)
+            ->where('status', SubscriptionStatus::PENDING)
+            ->exists();
+
+        if ($pendingExists) {
+            return response()->json(['message' => 'Anda sudah memiliki permintaan langganan modul ini yang sedang diproses.'], 422);
+        }
+
+        $subscription = Subscription::create([
+            'organization_id' => $organization->id,
+            'plan' => SubscriptionPlan::PREMIUM,
+            'module' => $module->value,
+            'status' => SubscriptionStatus::PENDING,
+            'amount' => $module->price(),
+            'requested_by' => $user->id,
+            'payment_proof_note' => $request->input('payment_proof_note'),
+            'requested_at' => now(),
+        ]);
+
+        return response()->json([
+            'data' => $subscription,
+            'message' => 'Permintaan langganan modul ' . $module->label() . ' berhasil dikirim. Silakan tunggu konfirmasi dari admin.',
         ], 201);
     }
 
@@ -126,6 +187,8 @@ class SubscriptionController extends Controller
                 'requester_phone' => $sub->requester?->phone,
                 'plan' => $sub->plan->value,
                 'plan_label' => $sub->plan->label(),
+                'module' => $sub->module instanceof OrganizationModuleEnum ? $sub->module->value : $sub->module,
+                'module_label' => $sub->module instanceof OrganizationModuleEnum ? $sub->module->label() : null,
                 'status' => $sub->status->value,
                 'status_label' => $sub->status->label(),
                 'status_color' => $sub->status->color(),
@@ -154,15 +217,45 @@ class SubscriptionController extends Controller
             return response()->json(['message' => 'Hanya permintaan dengan status pending yang dapat disetujui.'], 422);
         }
 
+        $startsAt = now();
+        $expiresAt = now()->addDays(30);
+
         $subscription->update([
             'status' => SubscriptionStatus::ACTIVE,
             'approved_by' => $request->user()->id,
-            'starts_at' => now(),
-            'expires_at' => now()->addDays(30),
+            'starts_at' => $startsAt,
+            'expires_at' => $expiresAt,
             'responded_at' => now(),
         ]);
 
-        // Update organization plan
+        // Module subscription → activate the add-on module, leave plan untouched.
+        if ($subscription->module) {
+            $moduleCode = $subscription->module instanceof OrganizationModuleEnum
+                ? $subscription->module->value
+                : $subscription->module;
+
+            OrganizationModule::updateOrCreate(
+                [
+                    'organization_id' => $subscription->organization_id,
+                    'module' => $moduleCode,
+                ],
+                [
+                    'status' => 'active',
+                    'starts_at' => $startsAt,
+                    'expires_at' => $expiresAt,
+                ]
+            );
+
+            $label = $subscription->module instanceof OrganizationModuleEnum
+                ? $subscription->module->label()
+                : $moduleCode;
+
+            return response()->json([
+                'message' => 'Langganan modul ' . $label . ' berhasil disetujui.',
+            ]);
+        }
+
+        // Plan upgrade → set organization to Premium.
         $subscription->organization->update([
             'plan' => SubscriptionPlan::PREMIUM,
         ]);

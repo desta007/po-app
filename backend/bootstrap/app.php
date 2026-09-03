@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'org.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
             'role' => \App\Http\Middleware\CheckRole::class,
+            'module' => \App\Http\Middleware\CheckModule::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
         ]);
     })

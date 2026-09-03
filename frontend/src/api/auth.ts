@@ -3,16 +3,16 @@ import type { User, LoginCredentials, RegisterData, MemberRole, SubscriptionPlan
 
 export const authApi = {
   login: (data: LoginCredentials) =>
-    apiClient.post<{ user: User; token: string; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; subscription?: SubscriptionInfo | null }>('/api/auth/login', data),
+    apiClient.post<{ user: User; token: string; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; modules?: string[]; subscription?: SubscriptionInfo | null }>('/api/auth/login', data),
 
   register: (data: RegisterData) =>
-    apiClient.post<{ user: User; token: string; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; subscription?: SubscriptionInfo | null }>('/api/auth/register', data),
+    apiClient.post<{ user: User; token: string; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; modules?: string[]; subscription?: SubscriptionInfo | null }>('/api/auth/register', data),
 
   logout: () =>
     apiClient.post('/api/auth/logout'),
 
   me: () =>
-    apiClient.get<{ user: User; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; subscription?: SubscriptionInfo | null }>('/api/auth/me'),
+    apiClient.get<{ user: User; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; modules?: string[]; subscription?: SubscriptionInfo | null }>('/api/auth/me'),
 
   forgotPassword: (email: string) =>
     apiClient.post('/api/auth/forgot-password', { email }),

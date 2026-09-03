@@ -5,9 +5,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { onlineStoreApi, type FlatRate } from '@/api/online-store';
+import { productsApi } from '@/api/products';
 import { useQuota } from '@/hooks/use-quota';
-import { formatRupiah } from '@/lib/utils';
-import { Crown, CreditCard, Truck, Plus, Trash2, CheckCircle2, ShieldCheck, Copy, Webhook } from 'lucide-react';
+import { formatRupiah, openBlankTab, fillPdfTab } from '@/lib/utils';
+import { Crown, CreditCard, Truck, Plus, Trash2, CheckCircle2, ShieldCheck, Copy, Webhook, FileText } from 'lucide-react';
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -46,6 +47,21 @@ export function OnlineStoreTab({ storeSlug }: { storeSlug?: string }) {
   const [allowPickup, setAllowPickup] = useState(false);
   const [allowTbd, setAllowTbd] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [downloadingCatalog, setDownloadingCatalog] = useState(false);
+
+  const handleDownloadCatalog = async () => {
+    const win = openBlankTab();
+    setDownloadingCatalog(true);
+    try {
+      const response = await productsApi.exportCatalogPdf() as any;
+      fillPdfTab(win, response.data, 'Katalog-Produk.pdf');
+    } catch (err: any) {
+      win?.close();
+      toast.error(err?.response?.data?.message || 'Gagal membuat katalog PDF');
+    } finally {
+      setDownloadingCatalog(false);
+    }
+  };
 
   useEffect(() => {
     if (config && !hydrated) {
@@ -133,6 +149,31 @@ export function OnlineStoreTab({ storeSlug }: { storeSlug?: string }) {
 
   return (
     <div className="space-y-4">
+      {/* Katalog PDF */}
+      <Card>
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <FileText size={18} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-[14px] font-bold text-gray-900">Katalog Produk PDF</h3>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              Unduh katalog produk (yang tampil di katalog online) lengkap dengan foto dan harga —
+              siap dibagikan ke pelanggan lewat WhatsApp atau dicetak.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            loading={downloadingCatalog}
+            onClick={handleDownloadCatalog}
+          >
+            <FileText size={14} className="mr-1.5" /> Unduh PDF
+          </Button>
+        </div>
+      </Card>
+
       {/* Midtrans */}
       <Card>
         <div className="flex items-start gap-3 mb-4">

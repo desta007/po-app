@@ -4,7 +4,7 @@ export const subscriptionApi = {
   status: () =>
     apiClient.get('/api/subscription/status'),
 
-  requestUpgrade: (data?: { payment_proof_note?: string }) =>
+  requestUpgrade: (data?: { payment_proof_note?: string; module?: string }) =>
     apiClient.post('/api/subscription/request', data),
 
   downloadInvoice: (id: string) =>

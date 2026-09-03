@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, TrendingUp, Settings, X, Shield, UsersRound, Building2, Crown, Database } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, Users, Package, BarChart3, TrendingUp, Settings, X, Shield, UsersRound, Building2, Crown, Database, Utensils, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/auth-context';
 import { useUpgradeModal } from '@/contexts/upgrade-modal-context';
+import { RestoModuleModal } from '@/components/resto-module-modal';
 
 const mainNav = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
@@ -58,9 +60,11 @@ function NavItem({ to, icon: Icon, label, onClose }: { to: string; icon: any; la
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { isSuperAdmin, organizationPlan, subscription } = useAuth();
+  const { isSuperAdmin, organizationPlan, subscription, hasModule } = useAuth();
   const { openModal } = useUpgradeModal();
+  const [restoModalOpen, setRestoModalOpen] = useState(false);
   const showUpgrade = !isSuperAdmin && organizationPlan !== 'premium' && subscription?.status !== 'pending';
+  const hasResto = hasModule('resto');
 
   return (
     <>
@@ -109,6 +113,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
 
           <div className="mt-5">
+            <div className="text-[11px] font-bold uppercase text-gray-400 tracking-[0.06em] px-3.5 mb-2">Resto</div>
+            <div className="space-y-1">
+              {hasResto ? (
+                <NavItem to={ROUTES.WAITLIST} icon={Utensils} label="Antrian Resto" onClose={onClose} />
+              ) : (
+                <button
+                  onClick={() => setRestoModalOpen(true)}
+                  className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-[10px] text-[14px] font-medium text-gray-700 hover:bg-gray-100 transition-all duration-150 cursor-pointer"
+                >
+                  <Utensils size={18} />
+                  <span className="flex-1 text-left">Antrian Resto</span>
+                  <Lock size={13} className="text-gray-400" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5">
             <div className="text-[11px] font-bold uppercase text-gray-400 tracking-[0.06em] px-3.5 mb-2">Pengaturan</div>
             <div className="space-y-1">
               {settingsNav.map((item) => (
@@ -150,6 +172,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           )}
         </nav>
       </aside>
+
+      <RestoModuleModal open={restoModalOpen} onClose={() => setRestoModalOpen(false)} />
     </>
   );
 }

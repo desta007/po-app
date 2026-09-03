@@ -22,6 +22,8 @@ import ProductListPage from '@/pages/products/ProductListPage';
 import ReportPage from '@/pages/reports/ReportPage';
 import ProfitReportPage from '@/pages/reports/ProfitReportPage';
 import SettingsPage from '@/pages/settings/SettingsPage';
+import WaitlistPage from '@/pages/waitlist/WaitlistPage';
+import WaitlistDisplayPage from '@/pages/waitlist/WaitlistDisplayPage';
 
 // Admin pages
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
@@ -41,6 +43,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function ModuleRoute({ module, children }: { module: string; children: React.ReactNode }) {
+  const { hasModule, isLoading } = useAuth();
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>;
+  if (!hasModule(module)) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -74,9 +83,13 @@ export default function App() {
       <Route path="/katalog/:slug/lacak" element={<TrackOrderPage />} />
       <Route path="/katalog/:slug/pesanan/:poNumber" element={<OrderStatusPage />} />
 
+      {/* Resto queue display — fullscreen, no app shell (for TV) */}
+      <Route path="antrian/display" element={<ProtectedRoute><ModuleRoute module="resto"><WaitlistDisplayPage /></ModuleRoute></ProtectedRoute>} />
+
       {/* Protected routes */}
       <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="antrian" element={<ModuleRoute module="resto"><WaitlistPage /></ModuleRoute>} />
         <Route path="kalender" element={<CalendarPage />} />
         <Route path="pesanan" element={<PurchaseOrderListPage />} />
         <Route path="pesanan/baru" element={<PurchaseOrderCreatePage />} />
