@@ -60,6 +60,27 @@ export default function PurchaseOrderListPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal mengubah status PO.'),
   });
 
+  const updatePayment = useMutation({
+    mutationFn: ({ id, payment_status, paid_amount, payment_method }: { id: string; payment_status: string; paid_amount: number; payment_method?: string | null }) =>
+      purchaseOrdersApi.updatePayment(id, { payment_status: payment_status as any, paid_amount, payment_method }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      toast.success('Status pembayaran berhasil diperbarui.');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal mengubah status pembayaran.'),
+  });
+
+  // Klik badge pada kolom "Bayar" untuk toggle cepat: Belum Bayar/DP -> Lunas,
+  // Lunas -> Belum Bayar. Untuk nominal DP yang presisi, gunakan halaman detail.
+  const togglePayment = (po: PurchaseOrder) => {
+    if (updatePayment.isPending) return;
+    if (po.payment_status === 'paid') {
+      updatePayment.mutate({ id: po.id, payment_status: 'unpaid', paid_amount: 0, payment_method: null });
+    } else {
+      updatePayment.mutate({ id: po.id, payment_status: 'paid', paid_amount: po.total, payment_method: po.payment_method || null });
+    }
+  };
+
   const deletePo = useMutation({
     mutationFn: (id: string) => purchaseOrdersApi.delete(id),
     onSuccess: () => {
@@ -550,11 +571,18 @@ export default function PurchaseOrderListPage() {
                         {sc.label}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: pc.bgColor, color: pc.color }}>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => togglePayment(po)}
+                        disabled={updatePayment.isPending}
+                        title={po.payment_status === 'paid' ? 'Klik untuk tandai Belum Bayar' : 'Klik untuk tandai Lunas'}
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50 cursor-pointer"
+                        style={{ backgroundColor: pc.bgColor, color: pc.color }}
+                      >
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pc.color }} />
                         {pc.label}
-                      </span>
+                      </button>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
