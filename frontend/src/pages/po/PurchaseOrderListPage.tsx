@@ -70,6 +70,20 @@ export default function PurchaseOrderListPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal mengubah status pembayaran.'),
   });
 
+  // Klik badge pada kolom "Status" untuk memajukan status PO secara berurutan:
+  // Baru (draft) -> Diproses (in_progress) -> Selesai (completed). Status "Selesai"
+  // dan "Dibatalkan" bersifat final. Untuk membatalkan, gunakan menu ⋯.
+  const NEXT_STATUS: Record<string, string> = {
+    draft: 'in_progress',
+    in_progress: 'completed',
+  };
+  const advanceStatus = (po: PurchaseOrder) => {
+    if (updateStatus.isPending) return;
+    const next = NEXT_STATUS[po.status];
+    if (!next) return;
+    updateStatus.mutate({ id: po.id, status: next });
+  };
+
   // Klik badge pada kolom "Bayar" untuk toggle cepat: Belum Bayar/DP -> Lunas,
   // Lunas -> Belum Bayar. Untuk nominal DP yang presisi, gunakan halaman detail.
   const togglePayment = (po: PurchaseOrder) => {
@@ -565,11 +579,25 @@ export default function PurchaseOrderListPage() {
                     <TableCell>{formatDate(po.delivery_date)}</TableCell>
                     <TableCell>{po.items?.length ?? 0} item</TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">{formatRupiah(po.total)}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: sc.bgColor, color: sc.color }}>
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.color }} />
-                        {sc.label}
-                      </span>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      {NEXT_STATUS[po.status] ? (
+                        <button
+                          type="button"
+                          onClick={() => advanceStatus(po)}
+                          disabled={updateStatus.isPending}
+                          title={`Klik untuk ubah status menjadi "${PO_STATUS_CONFIG[NEXT_STATUS[po.status] as keyof typeof PO_STATUS_CONFIG].label}"`}
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-50 cursor-pointer"
+                          style={{ backgroundColor: sc.bgColor, color: sc.color }}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.color }} />
+                          {sc.label}
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ backgroundColor: sc.bgColor, color: sc.color }}>
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: sc.color }} />
+                          {sc.label}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <button
