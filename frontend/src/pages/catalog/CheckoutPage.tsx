@@ -127,8 +127,9 @@ export default function CheckoutPage() {
   }, [catalog, onlinePaymentAvailable, deliveryAvailable, pickupAvailable, deliveryOptions]);
 
   // Auto-fill name & address for returning customers once they type their
-  // WhatsApp number. We only pre-fill fields the shopper hasn't touched, and
-  // remember the last phone we resolved so we don't re-fetch or clobber edits.
+  // WhatsApp number. We never overwrite what the shopper typed themselves, but
+  // a value WE auto-filled is replaced when they switch to a different number
+  // (so editing to another customer's phone updates the address too).
   const lastLookupPhone = useRef<string>('');
   const nameTouched = useRef(false);
   const addressTouched = useRef(false);
@@ -146,12 +147,17 @@ export default function CheckoutPage() {
         const res = await publicCatalogApi.customerLookup(slug, customerPhone.trim());
         const data = res.data.data;
         if (!data) return;
-        if (data.name && !nameTouched.current && !customerName.trim()) {
-          setCustomerName(data.name);
+        // Only touch fields the shopper hasn't manually edited. For those, we
+        // fully sync to the looked-up customer — including clearing a stale
+        // auto-filled value when the new number has nothing on file.
+        if (!nameTouched.current) {
+          setCustomerName(data.name ?? '');
         }
-        if (data.address && !addressTouched.current && !customerAddress.trim()) {
-          setCustomerAddress(data.address);
-          toast.success('Alamat otomatis terisi dari pesanan sebelumnya.', { duration: 3000 });
+        if (!addressTouched.current) {
+          setCustomerAddress(data.address ?? '');
+          if (data.address) {
+            toast.success('Alamat otomatis terisi dari pesanan sebelumnya.', { duration: 3000 });
+          }
         }
       } catch {
         /* lookup is best-effort; silently ignore failures */
@@ -159,7 +165,7 @@ export default function CheckoutPage() {
     }, 500);
 
     return () => clearTimeout(handle);
-  }, [customerPhone, slug, customerName, customerAddress]);
+  }, [customerPhone, slug]);
 
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
 
