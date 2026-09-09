@@ -83,4 +83,9 @@ export const publicCatalogApi = {
     apiClient.get<{ data: PublicOrderSummary[]; organization: { name: string } }>(`/api/catalog/${slug}/orders`, {
       params: { phone },
     }),
+
+  customerLookup: (slug: string, phone: string) =>
+    apiClient.get<{ data: { name: string | null; address: string | null } }>(`/api/catalog/${slug}/customer-lookup`, {
+      params: { phone },
+    }),
 };

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/api/client';
@@ -125,6 +125,41 @@ export default function CheckoutPage() {
     else if (deliveryAvailable && !pickupAvailable) setFulfillmentType('delivery');
     setDeliveryMethodId(prev => prev || (deliveryOptions[0]?.id ?? ''));
   }, [catalog, onlinePaymentAvailable, deliveryAvailable, pickupAvailable, deliveryOptions]);
+
+  // Auto-fill name & address for returning customers once they type their
+  // WhatsApp number. We only pre-fill fields the shopper hasn't touched, and
+  // remember the last phone we resolved so we don't re-fetch or clobber edits.
+  const lastLookupPhone = useRef<string>('');
+  const nameTouched = useRef(false);
+  const addressTouched = useRef(false);
+
+  useEffect(() => {
+    if (!slug) return;
+    const digits = customerPhone.replace(/\D+/g, '');
+    // Need enough digits to be a plausible number before hitting the API.
+    if (digits.length < 8) return;
+    if (digits === lastLookupPhone.current) return;
+
+    const handle = setTimeout(async () => {
+      lastLookupPhone.current = digits;
+      try {
+        const res = await publicCatalogApi.customerLookup(slug, customerPhone.trim());
+        const data = res.data.data;
+        if (!data) return;
+        if (data.name && !nameTouched.current && !customerName.trim()) {
+          setCustomerName(data.name);
+        }
+        if (data.address && !addressTouched.current && !customerAddress.trim()) {
+          setCustomerAddress(data.address);
+          toast.success('Alamat otomatis terisi dari pesanan sebelumnya.', { duration: 3000 });
+        }
+      } catch {
+        /* lookup is best-effort; silently ignore failures */
+      }
+    }, 500);
+
+    return () => clearTimeout(handle);
+  }, [customerPhone, slug, customerName, customerAddress]);
 
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
 
@@ -380,7 +415,7 @@ export default function CheckoutPage() {
             <User size={15} className="text-primary" />
             <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Data Penerima</h4>
           </div>
-          <Input label="Nama Lengkap" placeholder="Cth: Budi Santoso" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+          <Input label="Nama Lengkap" placeholder="Cth: Budi Santoso" value={customerName} onChange={(e) => { nameTouched.current = true; setCustomerName(e.target.value); }} />
           <Input label="No. WhatsApp" placeholder="Cth: 08123456789" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
           {addressRequired && (
             <div className="flex flex-col gap-1.5">
@@ -391,7 +426,7 @@ export default function CheckoutPage() {
                 className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
                 placeholder="Cth: Jl. Sudirman No. 12, RT 01/02, Jakarta"
                 value={customerAddress}
-                onChange={(e) => setCustomerAddress(e.target.value)}
+                onChange={(e) => { addressTouched.current = true; setCustomerAddress(e.target.value); }}
               />
             </div>
           )}

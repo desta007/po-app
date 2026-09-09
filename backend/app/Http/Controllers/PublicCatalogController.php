@@ -438,6 +438,47 @@ class PublicCatalogController extends Controller
     }
 
     /**
+     * Look up a returning customer by WhatsApp number so the checkout form can
+     * pre-fill their saved name & delivery address. Keyed only by phone — the
+     * same anti-enumeration reasoning as orderList (phone numbers aren't
+     * sequentially guessable) — and rate-limited. Returns nulls when unknown so
+     * the client can't distinguish "no customer" from "no address on file".
+     */
+    public function customerLookup(Request $request, string $slug): JsonResponse
+    {
+        $request->validate(['phone' => ['required', 'string', 'max:20']]);
+
+        $org = Organization::where('slug', $slug)->firstOrFail();
+
+        $empty = response()->json(['data' => ['name' => null, 'address' => null]]);
+
+        $canonical = $this->normalizePhone($request->input('phone'));
+        if ($canonical === '') {
+            return $empty;
+        }
+
+        // Narrow by the last significant digits at the DB level, then verify each
+        // precisely (handles the 0/62 prefix and stray formatting).
+        $suffix = substr($canonical, -8);
+        $customer = Customer::where('organization_id', $org->id)
+            ->where('phone', 'like', "%{$suffix}%")
+            ->orderByDesc('updated_at')
+            ->get()
+            ->first(fn (Customer $c) => $this->phonesMatch($request->input('phone'), $c->phone));
+
+        if (! $customer) {
+            return $empty;
+        }
+
+        return response()->json([
+            'data' => [
+                'name' => $customer->name,
+                'address' => $customer->address,
+            ],
+        ]);
+    }
+
+    /**
      * Public order-tracking endpoint. Requires the matching customer phone to
      * prevent order enumeration.
      */
