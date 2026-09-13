@@ -8,6 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\PrintController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
@@ -35,6 +36,13 @@ Route::post('catalog/{slug}/orders/{po_number}/pay', [PublicPaymentController::c
 
 // Midtrans server-to-server notification (authenticated by signature, not session)
 Route::post('webhooks/midtrans/{slug}', [PublicPaymentController::class, 'webhook']);
+
+// Render PDF cetak via URL bertanda-tangan sementara (untuk iOS/Bluefy yang tak
+// bisa merender blob:/data: PDF). Divalidasi oleh middleware `signed`; org difilter
+// manual di controller. URL diterbitkan oleh `POST print/sign` (terautentikasi).
+Route::get('print/render', [PrintController::class, 'render'])
+    ->middleware('signed')
+    ->name('print.render');
 
 // Authentication
 Route::prefix('auth')->group(function () {
@@ -69,6 +77,9 @@ Route::middleware(['auth:sanctum', 'org.access'])->group(function () {
 
     Route::get('products/catalog-pdf', [ProductController::class, 'exportCatalogPdf']);
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+
+    // Terbitkan URL bertanda-tangan untuk cetak PDF di iOS/Bluefy (lihat PrintController).
+    Route::post('print/sign', [PrintController::class, 'sign']);
 
     // Purchase order reads + exports (read-only, all members)
     Route::post('purchase-orders/bulk-export-pdf', [PurchaseOrderController::class, 'bulkExportPdf']);

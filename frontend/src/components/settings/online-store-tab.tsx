@@ -8,6 +8,7 @@ import { onlineStoreApi, type FlatRate } from '@/api/online-store';
 import { productsApi } from '@/api/products';
 import { useQuota } from '@/hooks/use-quota';
 import { formatRupiah, openBlankTab, fillPdfTab } from '@/lib/utils';
+import { tryOpenPdfViaSignedUrl } from '@/api/print';
 import { Crown, CreditCard, Truck, Plus, Trash2, CheckCircle2, ShieldCheck, Copy, Webhook, FileText } from 'lucide-react';
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
@@ -50,13 +51,19 @@ export function OnlineStoreTab({ storeSlug }: { storeSlug?: string }) {
   const [downloadingCatalog, setDownloadingCatalog] = useState(false);
 
   const handleDownloadCatalog = async () => {
-    const win = openBlankTab();
     setDownloadingCatalog(true);
     try {
-      const response = await productsApi.exportCatalogPdf() as any;
-      fillPdfTab(win, response.data, 'Katalog-Produk.pdf');
+      // iOS/Bluefy: buka lewat URL bertanda-tangan (blob/data tak dirender WKWebView).
+      if (await tryOpenPdfViaSignedUrl({ type: 'catalog' })) return;
+      const win = openBlankTab();
+      try {
+        const response = await productsApi.exportCatalogPdf() as any;
+        fillPdfTab(win, response.data, 'Katalog-Produk.pdf');
+      } catch (err: any) {
+        win?.close();
+        throw err;
+      }
     } catch (err: any) {
-      win?.close();
       toast.error(err?.response?.data?.message || 'Gagal membuat katalog PDF');
     } finally {
       setDownloadingCatalog(false);

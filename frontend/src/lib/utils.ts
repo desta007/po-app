@@ -72,7 +72,7 @@ export function storageUrl(path: string | null | undefined): string {
  * kasus ini kita navigasikan tab SAAT INI ke blob URL — jalur yang andal di
  * WebKit iOS. Safari biasa (tanpa Web Bluetooth) tetap pakai jalur tab baru.
  */
-function isBluefyLike(): boolean {
+export function isBluefyLike(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
   const iOS =
@@ -105,24 +105,14 @@ export function openBlankTab(): Window | null {
 /**
  * Arahkan tab yang sudah dibuka `openBlankTab` ke PDF hasil fetch. Kalau tab
  * ternyata diblokir/null, jatuh ke unduh file supaya user tetap dapat hasilnya.
+ *
+ * Ini jalur untuk browser desktop/Android/Safari biasa (blob: dirender dengan
+ * baik). iOS WebKit (Bluefy/WebBLE) TIDAK andal merender blob:/data: PDF, jadi
+ * di sana handler cetak memakai `tryOpenPdfViaSignedUrl` (URL https nyata dari
+ * server) SEBELUM sampai ke sini — lihat `@/api/print`.
  */
 export function fillPdfTab(win: Window | null, data: BlobPart, filename: string): void {
   const blob = new Blob([data], { type: 'application/pdf' });
-
-  // Bluefy / WebBLE (iOS WebKit): WKWebView TIDAK andal merender `blob:` PDF
-  // lewat navigasi tab (halaman jadi kosong / seolah tak terjadi apa-apa —
-  // inilah kenapa cetak Corporate/Label/Label Alamat gagal di iPhone padahal
-  // cetak thermal jalan). WKWebView bisa merender `data:` URL base64, jadi kita
-  // konversi blob → data URL lalu navigasikan tab SAAT INI ke sana.
-  if (isBluefyLike()) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      window.location.href = reader.result as string;
-    };
-    reader.readAsDataURL(blob);
-    return;
-  }
-
   const url = window.URL.createObjectURL(blob);
 
   if (win && !win.closed) {

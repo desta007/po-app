@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials, openBlankTab, fillPdfTab } from '@/lib/utils';
+import { tryOpenPdfViaSignedUrl } from '@/api/print';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -176,6 +177,13 @@ export default function PurchaseOrderDetailPage() {
   };
 
   const handlePrintAddressLabel = async (size: '100x150' | '100x100' | '80x50' | '60x50' | '50x50') => {
+    try {
+      // iOS/Bluefy: buka lewat URL bertanda-tangan (blob/data tak dirender WKWebView).
+      if (await tryOpenPdfViaSignedUrl({ type: 'po-address-labels', ids: [id!], size })) return;
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Gagal mencetak label alamat');
+      return;
+    }
     const win = openBlankTab();
     try {
       const response = await purchaseOrdersApi.bulkExportAddressLabels([id!], size) as any;
