@@ -108,15 +108,22 @@ export function openBlankTab(): Window | null {
  */
 export function fillPdfTab(win: Window | null, data: BlobPart, filename: string): void {
   const blob = new Blob([data], { type: 'application/pdf' });
-  const url = window.URL.createObjectURL(blob);
 
-  // Bluefy (iOS): navigasikan tab SAAT INI ke blob URL. Tab baru + blob sering
-  // gagal dirender di sini. Setelah navigasi, dokumen ini dibongkar sehingga
-  // revoke tak perlu (dan tak akan jalan) — blob dilepas saat tab ditutup.
+  // Bluefy / WebBLE (iOS WebKit): WKWebView TIDAK andal merender `blob:` PDF
+  // lewat navigasi tab (halaman jadi kosong / seolah tak terjadi apa-apa —
+  // inilah kenapa cetak Corporate/Label/Label Alamat gagal di iPhone padahal
+  // cetak thermal jalan). WKWebView bisa merender `data:` URL base64, jadi kita
+  // konversi blob → data URL lalu navigasikan tab SAAT INI ke sana.
   if (isBluefyLike()) {
-    window.location.href = url;
+    const reader = new FileReader();
+    reader.onload = () => {
+      window.location.href = reader.result as string;
+    };
+    reader.readAsDataURL(blob);
     return;
   }
+
+  const url = window.URL.createObjectURL(blob);
 
   if (win && !win.closed) {
     win.location.href = url;
