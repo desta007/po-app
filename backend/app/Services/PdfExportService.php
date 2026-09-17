@@ -6,6 +6,7 @@ use App\Models\Organization;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use setasign\Fpdi\Fpdi;
 
@@ -59,17 +60,17 @@ class PdfExportService
         $itemCount = $po->items->count();
 
         // Items with notes take extra space (additional <span> line)
-        $itemsWithNotes = $po->items->filter(fn($item) => !empty($item->notes))->count();
+        $itemsWithNotes = $po->items->filter(fn ($item) => ! empty($item->notes))->count();
 
         // Conditional sections
         $hasDiscount = $po->discount > 0;
         $hasTax = $po->tax > 0;
         $hasShipping = $po->shipping_cost > 0;
-        $hasNotes = !empty($po->notes);
-        $hasBankInfo = !empty($po->organization->settings['bank_info']['bank_name'] ?? null);
-        $hasLogo = !empty($po->organization->logo_url);
-        $hasPhone = !empty($po->customer->phone);
-        $hasPaymentMethod = !empty($po->payment_method);
+        $hasNotes = ! empty($po->notes);
+        $hasBankInfo = ! empty($po->organization->settings['bank_info']['bank_name'] ?? null);
+        $hasLogo = ! empty($po->organization->logo_url);
+        $hasPhone = ! empty($po->customer->phone);
+        $hasPaymentMethod = ! empty($po->payment_method);
 
         $totalMm = $margin
             + $header
@@ -112,8 +113,8 @@ class PdfExportService
     /**
      * Generate merged PDF from multiple POs.
      *
-     * @param Collection<int, PurchaseOrder> $purchaseOrders
-     * @param string $format 'receipt' or 'corporate'
+     * @param  Collection<int, PurchaseOrder>  $purchaseOrders
+     * @param  string  $format  'receipt' or 'corporate'
      * @return string PDF binary content
      */
     public function generateBulkPdf(Collection $purchaseOrders, string $format): string
@@ -133,7 +134,7 @@ class PdfExportService
             }
 
             // Merge all PDFs using FPDI
-            $merger = new Fpdi();
+            $merger = new Fpdi;
 
             foreach ($tempFiles as $file) {
                 $pageCount = $merger->setSourceFile($file);
@@ -159,11 +160,27 @@ class PdfExportService
     /**
      * Generate product labels PDF from multiple POs.
      *
-     * @param Collection<int, PurchaseOrder> $purchaseOrders
-     * @param string $size '40x20' or '50x20'
-     * @return \Barryvdh\DomPDF\PDF
+     * @param  Collection<int, PurchaseOrder>  $purchaseOrders
+     * @param  string  $size  '40x20' or '50x20'
      */
     public function generateLabels(Collection $purchaseOrders, string $size): \Barryvdh\DomPDF\PDF
+    {
+        $data = $this->labelsViewData($purchaseOrders, $size);
+
+        $mmToPt = 2.835;
+        $paperWidthPt = round($data['labelWidth'] * $mmToPt, 2);
+        $paperHeightPt = round($data['labelHeight'] * $mmToPt, 2);
+
+        return Pdf::loadView('pdf.labels', $data)
+            ->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
+    }
+
+    /**
+     * Bangun data view label produk (dipakai versi PDF & HTML).
+     *
+     * @param  Collection<int, PurchaseOrder>  $purchaseOrders
+     */
+    private function labelsViewData(Collection $purchaseOrders, string $size): array
     {
         $dimensionsMap = [
             '25x15' => ['width' => 25, 'height' => 15],
@@ -178,7 +195,7 @@ class PdfExportService
         $labels = [];
         foreach ($purchaseOrders as $po) {
             $po->load('items', 'customer');
-            $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M y') : '-';
+            $deliveryDate = $po->delivery_date ? Carbon::parse($po->delivery_date)->translatedFormat('d M y') : '-';
 
             // Total labels for this PO across all product items.
             $poTotal = 0;
@@ -207,30 +224,38 @@ class PdfExportService
             }
         }
 
-        $labelWidth = $dimensions['width'];
-        $labelHeight = $dimensions['height'];
-
-        // Convert mm to points (1mm = 2.835pt)
-        $mmToPt = 2.835;
-        $paperWidthPt = round($labelWidth * $mmToPt, 2);
-        $paperHeightPt = round($labelHeight * $mmToPt, 2);
-
-        return Pdf::loadView('pdf.labels', [
+        return [
             'labels' => $labels,
-            'labelWidth' => $labelWidth,
-            'labelHeight' => $labelHeight,
-        ])->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
+            'labelWidth' => $dimensions['width'],
+            'labelHeight' => $dimensions['height'],
+        ];
     }
 
     /**
      * Generate shipping address labels PDF from multiple POs.
      * One label per PO (recipient = customer address, sender = organization).
      *
-     * @param Collection<int, PurchaseOrder> $purchaseOrders
-     * @param string $size '100x150', '100x100', '80x50', '60x50', or '50x50'
-     * @return \Barryvdh\DomPDF\PDF
+     * @param  Collection<int, PurchaseOrder>  $purchaseOrders
+     * @param  string  $size  '100x150', '100x100', '80x50', '60x50', or '50x50'
      */
     public function generateAddressLabels(Collection $purchaseOrders, string $size): \Barryvdh\DomPDF\PDF
+    {
+        $data = $this->addressLabelsViewData($purchaseOrders, $size);
+
+        $mmToPt = 2.835;
+        $paperWidthPt = round($data['labelWidth'] * $mmToPt, 2);
+        $paperHeightPt = round($data['labelHeight'] * $mmToPt, 2);
+
+        return Pdf::loadView('pdf.address-labels', $data)
+            ->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
+    }
+
+    /**
+     * Bangun data view label alamat (dipakai versi PDF & HTML).
+     *
+     * @param  Collection<int, PurchaseOrder>  $purchaseOrders
+     */
+    private function addressLabelsViewData(Collection $purchaseOrders, string $size): array
     {
         $dimensionsMap = [
             '100x150' => ['width' => 100, 'height' => 150],
@@ -244,7 +269,7 @@ class PdfExportService
         $labels = [];
         foreach ($purchaseOrders as $po) {
             $po->load('customer', 'organization');
-            $deliveryDate = $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->translatedFormat('d M Y') : '-';
+            $deliveryDate = $po->delivery_date ? Carbon::parse($po->delivery_date)->translatedFormat('d M Y') : '-';
 
             // Show only the sequence part of the PO number (e.g. "001" from "PO-20260822-001").
             $poSeq = $po->po_number_seq;
@@ -261,19 +286,11 @@ class PdfExportService
             ];
         }
 
-        $labelWidth = $dimensions['width'];
-        $labelHeight = $dimensions['height'];
-
-        // Convert mm to points (1mm = 2.835pt)
-        $mmToPt = 2.835;
-        $paperWidthPt = round($labelWidth * $mmToPt, 2);
-        $paperHeightPt = round($labelHeight * $mmToPt, 2);
-
-        return Pdf::loadView('pdf.address-labels', [
+        return [
             'labels' => $labels,
-            'labelWidth' => $labelWidth,
-            'labelHeight' => $labelHeight,
-        ])->setPaper([0, 0, $paperWidthPt, $paperHeightPt], 'portrait');
+            'labelWidth' => $dimensions['width'],
+            'labelHeight' => $dimensions['height'],
+        ];
     }
 
     /**
@@ -287,6 +304,16 @@ class PdfExportService
      */
     public function generateCatalog(Organization $organization, Collection $products): \Barryvdh\DomPDF\PDF
     {
+        return Pdf::loadView('pdf.catalog', $this->catalogViewData($organization, $products, false))
+            ->setPaper('a4', 'portrait');
+    }
+
+    /**
+     * Data untuk view katalog. $isHtml=true memakai URL gambar (untuk cetak di
+     * browser); false memakai path lokal disk (untuk DomPDF).
+     */
+    private function catalogViewData(Organization $organization, Collection $products, bool $isHtml): array
+    {
         $groups = [];
         foreach ($products as $product) {
             $category = $product->category ?: 'Lainnya';
@@ -296,16 +323,145 @@ class PdfExportService
                 'unit' => $product->unit ?: 'pcs',
                 'description' => $product->description,
                 'out_of_stock' => $product->track_stock && (float) $product->stock_qty <= 0,
-                'image_path' => $this->resolveLocalImagePath($product->image_url),
+                'image_path' => $isHtml
+                    ? $this->resolveImageUrl($product->image_url)
+                    : $this->resolveLocalImagePath($product->image_url),
             ];
         }
 
-        return Pdf::loadView('pdf.catalog', [
+        return [
             'organization' => $organization,
             'groups' => $groups,
-            'logoPath' => $this->resolveLocalImagePath($organization->logo_url),
-            'generatedAt' => \Carbon\Carbon::now()->translatedFormat('d M Y'),
-        ])->setPaper('a4', 'portrait');
+            'logoPath' => $isHtml
+                ? $this->resolveImageUrl($organization->logo_url)
+                : $this->resolveLocalImagePath($organization->logo_url),
+            'generatedAt' => Carbon::now()->translatedFormat('d M Y'),
+        ];
+    }
+
+    /*
+     |-------------------------------------------------------------------------
+     | Render HTML (untuk cetak via window.print() di iOS/Bluefy — WKWebView
+     | tak bisa memberi opsi Print pada PDF, tapi window.print() halaman HTML
+     | memicu AirPrint). Blade PDF sudah berupa dokumen HTML lengkap; di sini
+     | kita render dengan is_html=true agar gambar memakai URL, bukan path disk.
+     |-------------------------------------------------------------------------
+     */
+
+    public function htmlInvoice(PurchaseOrder $po): string
+    {
+        $po->load('items', 'customer', 'organization');
+
+        return view('pdf.invoice', [
+            'po' => $po,
+            'organization' => $po->organization,
+            'customer' => $po->customer,
+            'items' => $po->items,
+            'is_html' => true,
+        ])->render();
+    }
+
+    public function htmlCorporateInvoice(PurchaseOrder $po): string
+    {
+        $po->load('items', 'customer', 'organization');
+
+        return view('pdf.invoice-corporate', [
+            'po' => $po,
+            'organization' => $po->organization,
+            'customer' => $po->customer,
+            'items' => $po->items,
+            'is_html' => true,
+        ])->render();
+    }
+
+    /** @param  Collection<int, PurchaseOrder>  $purchaseOrders */
+    public function htmlLabels(Collection $purchaseOrders, string $size): string
+    {
+        return view('pdf.labels', $this->labelsViewData($purchaseOrders, $size))->render();
+    }
+
+    /** @param  Collection<int, PurchaseOrder>  $purchaseOrders */
+    public function htmlAddressLabels(Collection $purchaseOrders, string $size): string
+    {
+        return view('pdf.address-labels', $this->addressLabelsViewData($purchaseOrders, $size))->render();
+    }
+
+    public function htmlCatalog(Organization $organization, Collection $products): string
+    {
+        return view('pdf.catalog', $this->catalogViewData($organization, $products, true))->render();
+    }
+
+    /**
+     * Gabungkan beberapa invoice jadi satu dokumen HTML dengan page-break antar-PO.
+     * Blade invoice adalah dokumen HTML utuh, jadi kita ekstrak <style> + isi <body>
+     * lalu susun ulang menjadi satu dokumen valid.
+     *
+     * @param  Collection<int, PurchaseOrder>  $purchaseOrders
+     */
+    public function htmlBulk(Collection $purchaseOrders, string $format): string
+    {
+        $styles = [];
+        $bodies = [];
+
+        foreach ($purchaseOrders as $po) {
+            $html = $format === 'corporate'
+                ? $this->htmlCorporateInvoice($po)
+                : $this->htmlInvoice($po);
+
+            [$style, $body] = $this->splitHtmlDocument($html);
+            if ($style !== '' && ! in_array($style, $styles, true)) {
+                $styles[] = $style;
+            }
+            $bodies[] = $body;
+        }
+
+        $break = '<div style="page-break-before: always;"></div>';
+        $inner = implode($break, $bodies);
+        $styleTag = '<style>'.implode("\n", $styles).'</style>';
+
+        return '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8">'
+            .'<meta name="viewport" content="width=device-width, initial-scale=1">'
+            .$styleTag.'</head><body>'.$inner.'</body></html>';
+    }
+
+    /**
+     * Pecah dokumen HTML utuh menjadi [gabungan isi <style>, isi <body>].
+     */
+    private function splitHtmlDocument(string $html): array
+    {
+        $styles = '';
+        if (preg_match_all('/<style\b[^>]*>(.*?)<\/style>/is', $html, $m)) {
+            $styles = implode("\n", $m[1]);
+        }
+
+        $body = $html;
+        if (preg_match('/<body\b[^>]*>(.*)<\/body>/is', $html, $bm)) {
+            $body = $bm[1];
+        }
+
+        return [trim($styles), $body];
+    }
+
+    /**
+     * Resolve URL gambar untuk cetak HTML di browser. Mengembalikan URL asset
+     * lokal (same-origin, lolos CSP img-src 'self') bila file ada; null untuk
+     * gambar remote/hilang (jatuh ke placeholder, konsisten dengan versi PDF).
+     */
+    private function resolveImageUrl(?string $imageUrl): ?string
+    {
+        if (! $imageUrl) {
+            return null;
+        }
+
+        if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
+            return null;
+        }
+
+        $relative = ltrim(str_replace('/storage/', '', $imageUrl), '/');
+
+        return is_file(storage_path('app/public/'.$relative))
+            ? asset('storage/'.$relative)
+            : null;
     }
 
     /**
@@ -326,7 +482,7 @@ class PdfExportService
         }
 
         $relative = ltrim(str_replace('/storage/', '', $imageUrl), '/');
-        $path = storage_path('app/public/' . $relative);
+        $path = storage_path('app/public/'.$relative);
 
         return is_file($path) ? $path : null;
     }
@@ -339,11 +495,11 @@ class PdfExportService
         $pdf = $this->generateInvoice($po);
         $pdfContent = $pdf->output();
 
-        if (!extension_loaded('imagick')) {
+        if (! extension_loaded('imagick')) {
             throw new \RuntimeException('Imagick extension is required for image export.');
         }
 
-        $imagick = new \Imagick();
+        $imagick = new \Imagick;
         $imagick->setResolution(200, 200);
         $imagick->readImageBlob($pdfContent);
         $imagick->setImageFormat('png');

@@ -193,7 +193,11 @@
     <div class="header">
         <div class="header-left">
             @if($organization->logo_url)
+            @if(isset($is_html) && $is_html)
+            <img src="{{ asset(str_replace('/storage/', 'storage/', $organization->logo_url)) }}" class="logo" alt="Logo"><br>
+            @else
             <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $organization->logo_url)) }}" class="logo" alt="Logo"><br>
+            @endif
             @endif
             <div class="invoice-title">INVOICE</div>
             <div class="po-number">{{ $po->po_number_seq }}</div>
