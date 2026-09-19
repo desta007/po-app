@@ -69,7 +69,7 @@ Map<String, dynamic> _$ProductInputToJson(_ProductInput instance) =>
       'price': instance.price,
       'cost': instance.cost,
       'category': instance.category,
-      'stock_qty': instance.stockQty,
+      'stock_qty': ?instance.stockQty,
       'is_active': instance.isActive,
       'show_in_catalog': instance.showInCatalog,
     };

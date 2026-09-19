@@ -36,13 +36,16 @@ class PoDetailScreen extends ConsumerWidget {
                   _onMenuAction(context, ref, action, async.value!),
               itemBuilder: (context) => [
                 if (!async.value!.status.isFinal)
-                  const PopupMenuItem(
-                      value: 'edit', child: Text('Edit PO')),
+                  const PopupMenuItem(value: 'edit', child: Text('Edit PO')),
                 const PopupMenuItem(
-                    value: 'duplicate', child: Text('Duplikat PO')),
+                  value: 'duplicate',
+                  child: Text('Duplikat PO'),
+                ),
                 if (!async.value!.status.isFinal)
                   const PopupMenuItem(
-                      value: 'cancel', child: Text('Batalkan PO')),
+                    value: 'cancel',
+                    child: Text('Batalkan PO'),
+                  ),
               ],
             ),
         ],
@@ -61,24 +64,31 @@ class PoDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _onMenuAction(BuildContext context, WidgetRef ref,
-      String action, PurchaseOrder po) async {
+  Future<void> _onMenuAction(
+    BuildContext context,
+    WidgetRef ref,
+    String action,
+    PurchaseOrder po,
+  ) async {
     switch (action) {
       case 'edit':
         context.push('/po/$poId/edit', extra: po);
       case 'duplicate':
         try {
-          final newPo =
-              await ref.read(poDetailProvider(poId).notifier).duplicate();
+          final newPo = await ref
+              .read(poDetailProvider(poId).notifier)
+              .duplicate();
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('PO diduplikat: ${newPo.poNumber}')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('PO diduplikat: ${newPo.poNumber}')),
+            );
             context.push('/po/${newPo.id}');
           }
         } on ApiException catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(e.message)));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(e.message)));
           }
         }
       case 'cancel':
@@ -99,15 +109,15 @@ class PoDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
-              decoration:
-                  const InputDecoration(labelText: 'Alasan (opsional)'),
+              decoration: const InputDecoration(labelText: 'Alasan (opsional)'),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Kembali')),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Kembali'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -123,13 +133,15 @@ class PoDetailScreen extends ConsumerWidget {
           .read(poDetailProvider(poId).notifier)
           .cancel(reason: reason.isEmpty ? null : reason);
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('PO dibatalkan.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('PO dibatalkan.')));
       }
     } on ApiException catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -159,19 +171,25 @@ class _PoDetailBody extends StatelessWidget {
                     const SizedBox(width: 8),
                     PaymentStatusBadge(status: po.paymentStatus),
                     const Spacer(),
-                    Text(formatRupiah(po.total),
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      formatRupiah(po.total),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const Divider(height: 20),
                 _KeyValue(label: 'Pelanggan', value: po.customer?.name ?? '-'),
                 _KeyValue(
-                    label: 'Tgl Order',
-                    value: formatDateString(po.orderDate)),
+                  label: 'Tgl Order',
+                  value: formatDateString(po.orderDate),
+                ),
                 _KeyValue(
-                    label: 'Tgl Kirim',
-                    value: formatDateString(po.deliveryDate)),
+                  label: 'Tgl Kirim',
+                  value: formatDateString(po.deliveryDate),
+                ),
                 if (po.customer?.phone?.isNotEmpty == true)
                   _KeyValue(label: 'Telepon', value: po.customer!.phone!),
                 if (po.notes?.isNotEmpty == true)
@@ -188,8 +206,10 @@ class _PoDetailBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Item Pesanan',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                const Text(
+                  'Item Pesanan',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
                 for (final item in po.items) ...[
                   Row(
@@ -204,8 +224,9 @@ class _PoDetailBody extends StatelessWidget {
                               '${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity} × ${formatRupiah(item.unitPrice)}'
                               '${item.notes?.isNotEmpty == true ? '\n${item.notes}' : ''}',
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary),
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -233,9 +254,13 @@ class _PoDetailBody extends StatelessWidget {
                 if (po.paymentMethod?.isNotEmpty == true)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text('Metode: ${po.paymentMethod}',
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textSecondary)),
+                    child: Text(
+                      'Metode: ${po.paymentMethod}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -253,16 +278,17 @@ class _PoDetailBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Riwayat Status',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Riwayat Status',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 8),
                   for (final h in po.statusHistory)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Icon(Icons.circle,
-                              size: 8, color: h.toStatus.color),
+                          Icon(Icons.circle, size: 8, color: h.toStatus.color),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -274,8 +300,9 @@ class _PoDetailBody extends StatelessWidget {
                           Text(
                             formatDateTimeString(h.changedAt),
                             style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary),
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -319,7 +346,8 @@ class _ActionBar extends ConsumerWidget {
               Expanded(
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent),
+                    backgroundColor: AppColors.accent,
+                  ),
                   onPressed: () => _showPaymentSheet(context, ref),
                   icon: const Icon(Icons.payments_outlined, size: 20),
                   label: const Text('Bayar'),
@@ -341,43 +369,52 @@ class _ActionBar extends ConsumerWidget {
   }
 
   Future<void> _showStatusSheet(BuildContext context, WidgetRef ref) async {
-    final transitions =
-        po.status.allowedTransitions.where((s) => s != PoStatus.cancelled);
+    final transitions = po.status.allowedTransitions.where(
+      (s) => s != PoStatus.cancelled,
+    );
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Ubah status dari "${po.status.label}" ke:',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            for (final target in transitions)
-              ListTile(
-                leading: Icon(Icons.arrow_forward, color: target.color),
-                title: Text(target.label),
-                onTap: () async {
-                  Navigator.of(ctx).pop();
-                  try {
-                    await ref
-                        .read(poDetailProvider(poId).notifier)
-                        .updateStatus(target);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content:
-                              Text('Status diubah ke ${target.label}.')));
-                    }
-                  } on ApiException catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.message)));
-                    }
-                  }
-                },
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Ubah status dari "${po.status.label}" ke:',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 8),
+              for (final target in transitions)
+                ListTile(
+                  leading: Icon(Icons.arrow_forward, color: target.color),
+                  title: Text(target.label),
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    try {
+                      await ref
+                          .read(poDetailProvider(poId).notifier)
+                          .updateStatus(target);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Status diubah ke ${target.label}.'),
+                          ),
+                        );
+                      }
+                    } on ApiException catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(e.message)));
+                      }
+                    }
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -395,66 +432,78 @@ class _ActionBar extends ConsumerWidget {
   Future<void> _showShareSheet(BuildContext context, WidgetRef ref) async {
     await showModalBottomSheet<void>(
       context: context,
+      // Isi sheet lebih tinggi dari batas default (9/16 layar), jadi sheet
+      // dibiarkan mengikuti tinggi konten dan bisa di-scroll bila perlu.
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Bagikan PO sebagai:',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            for (final kind in PoExportKind.values)
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Bagikan PO sebagai:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              for (final kind in PoExportKind.values)
+                ListTile(
+                  leading: Icon(
+                    kind == PoExportKind.image
+                        ? Icons.image_outlined
+                        : Icons.picture_as_pdf_outlined,
+                  ),
+                  title: Text(kind.label),
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.showSnackBar(
+                      const SnackBar(content: Text('Menyiapkan file…')),
+                    );
+                    try {
+                      await ref
+                          .read(poShareServiceProvider)
+                          .share(poId: poId, poNumber: po.poNumber, kind: kind);
+                      messenger.hideCurrentSnackBar();
+                    } on ApiException catch (e) {
+                      messenger.hideCurrentSnackBar();
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(e.message)),
+                      );
+                    }
+                  },
+                ),
+              const Divider(height: 8),
               ListTile(
-                leading: Icon(kind == PoExportKind.image
-                    ? Icons.image_outlined
-                    : Icons.picture_as_pdf_outlined),
-                title: Text(kind.label),
+                leading: const Icon(Icons.label_outline),
+                title: const Text('Cetak Label'),
+                subtitle: const Text('Label produk per item'),
                 onTap: () async {
                   Navigator.of(ctx).pop();
-                  final messenger = ScaffoldMessenger.of(context);
-                  messenger.showSnackBar(
-                      const SnackBar(content: Text('Menyiapkan file…')));
-                  try {
-                    await ref.read(poShareServiceProvider).share(
-                        poId: poId, poNumber: po.poNumber, kind: kind);
-                    messenger.hideCurrentSnackBar();
-                  } on ApiException catch (e) {
-                    messenger.hideCurrentSnackBar();
-                    messenger
-                        .showSnackBar(SnackBar(content: Text(e.message)));
-                  }
+                  await _printLabels(context, ref);
                 },
               ),
-            const Divider(height: 8),
-            ListTile(
-              leading: const Icon(Icons.label_outline),
-              title: const Text('Cetak Label'),
-              subtitle: const Text('Label produk per item'),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                await _printLabels(context, ref);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.local_shipping_outlined),
-              title: const Text('Cetak Label Alamat'),
-              subtitle: const Text('Label alamat pengiriman'),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                await _printAddressLabels(context, ref);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.print_outlined),
-              title: const Text('Cetak Struk (Thermal)'),
-              subtitle: const Text('Printer thermal Bluetooth'),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                await _printThermal(context, ref);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
+              ListTile(
+                leading: const Icon(Icons.local_shipping_outlined),
+                title: const Text('Cetak Label Alamat'),
+                subtitle: const Text('Label alamat pengiriman'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  await _printAddressLabels(context, ref);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.print_outlined),
+                title: const Text('Cetak Struk (Thermal)'),
+                subtitle: const Text('Printer thermal Bluetooth'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  await _printThermal(context, ref);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -484,7 +533,11 @@ class _ActionBar extends ConsumerWidget {
     try {
       await ref
           .read(poShareServiceProvider)
-          .shareLabels(ids: [poId], size: size, subject: 'Label ${po.poNumber}');
+          .shareLabels(
+            ids: [poId],
+            size: size,
+            subject: 'Label ${po.poNumber}',
+          );
       messenger.hideCurrentSnackBar();
     } on ApiException catch (e) {
       messenger.hideCurrentSnackBar();
@@ -498,8 +551,13 @@ class _ActionBar extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(const SnackBar(content: Text('Menyiapkan label…')));
     try {
-      await ref.read(poShareServiceProvider).shareAddressLabels(
-          ids: [poId], size: size, subject: 'Label Alamat ${po.poNumber}');
+      await ref
+          .read(poShareServiceProvider)
+          .shareAddressLabels(
+            ids: [poId],
+            size: size,
+            subject: 'Label Alamat ${po.poNumber}',
+          );
       messenger.hideCurrentSnackBar();
     } on ApiException catch (e) {
       messenger.hideCurrentSnackBar();
@@ -523,11 +581,13 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
       ? PaymentStatus.dp
       : PaymentStatus.paid;
   late final _amount = TextEditingController(
-      text: widget.po.paidAmount > 0
-          ? widget.po.paidAmount.toStringAsFixed(0)
-          : '');
-  late final _method =
-      TextEditingController(text: widget.po.paymentMethod ?? '');
+    text: widget.po.paidAmount > 0
+        ? widget.po.paidAmount.toStringAsFixed(0)
+        : '',
+  );
+  late final _method = TextEditingController(
+    text: widget.po.paymentMethod ?? '',
+  );
   bool _submitting = false;
 
   @override
@@ -545,22 +605,27 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
         : double.tryParse(_amount.text.replaceAll('.', '')) ?? 0;
     setState(() => _submitting = true);
     try {
-      await ref.read(poDetailProvider(widget.poId).notifier).updatePayment(
+      await ref
+          .read(poDetailProvider(widget.poId).notifier)
+          .updatePayment(
             paymentStatus: _status,
             paidAmount: amount,
-            paymentMethod:
-                _method.text.trim().isEmpty ? null : _method.text.trim(),
+            paymentMethod: _method.text.trim().isEmpty
+                ? null
+                : _method.text.trim(),
           );
       if (mounted) {
         Navigator.of(context).pop();
       }
       messenger.showSnackBar(
-          const SnackBar(content: Text('Pembayaran berhasil diperbarui.')));
+        const SnackBar(content: Text('Pembayaran berhasil diperbarui.')),
+      );
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _submitting = false);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -577,13 +642,17 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Perbarui Pembayaran',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          const Text(
+            'Perbarui Pembayaran',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
           const SizedBox(height: 4),
-          Text('Total: ${formatRupiah(widget.po.total)}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary)),
+          Text(
+            'Total: ${formatRupiah(widget.po.total)}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
           const SizedBox(height: 12),
           SegmentedButton<PaymentStatus>(
             segments: const [
@@ -599,14 +668,17 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
               controller: _amount,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                  labelText: 'Jumlah DP', prefixText: 'Rp '),
+                labelText: 'Jumlah DP',
+                prefixText: 'Rp ',
+              ),
             ),
           if (_status == PaymentStatus.dp) const SizedBox(height: 12),
           TextField(
             controller: _method,
             decoration: const InputDecoration(
-                labelText: 'Metode pembayaran',
-                hintText: 'Transfer BCA / Tunai / QRIS'),
+              labelText: 'Metode pembayaran',
+              hintText: 'Transfer BCA / Tunai / QRIS',
+            ),
           ),
           const SizedBox(height: 16),
           FilledButton(
@@ -616,7 +688,9 @@ class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: Colors.white),
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('Simpan Pembayaran'),
           ),
@@ -638,8 +712,9 @@ class _ShippingCard extends ConsumerStatefulWidget {
 }
 
 class _ShippingCardState extends ConsumerState<_ShippingCard> {
-  late final _tracking =
-      TextEditingController(text: widget.po.trackingNumber ?? '');
+  late final _tracking = TextEditingController(
+    text: widget.po.trackingNumber ?? '',
+  );
   bool _saving = false;
 
   @override
@@ -656,13 +731,15 @@ class _ShippingCardState extends ConsumerState<_ShippingCard> {
           .read(poDetailProvider(widget.po.id).notifier)
           .updateTracking(value);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Nomor resi disimpan.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Nomor resi disimpan.')));
       }
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -671,8 +748,7 @@ class _ShippingCardState extends ConsumerState<_ShippingCard> {
 
   @override
   Widget build(BuildContext context) {
-    final unchanged =
-        _tracking.text.trim() == (widget.po.trackingNumber ?? '');
+    final unchanged = _tracking.text.trim() == (widget.po.trackingNumber ?? '');
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -683,15 +759,21 @@ class _ShippingCardState extends ConsumerState<_ShippingCard> {
               children: const [
                 Icon(Icons.local_shipping_outlined, size: 18),
                 SizedBox(width: 6),
-                Text('Pengiriman',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  'Pengiriman',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ],
             ),
             if (widget.po.shippingMethod?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
-              Text('Metode: ${widget.po.shippingMethod}',
-                  style: const TextStyle(
-                      fontSize: 13, color: AppColors.textSecondary)),
+              Text(
+                'Metode: ${widget.po.shippingMethod}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
             const SizedBox(height: 12),
             Row(
@@ -712,13 +794,19 @@ class _ShippingCardState extends ConsumerState<_ShippingCard> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: FilledButton.tonal(
+                    // Tema global memakai minimumSize Size.fromHeight(48)
+                    // (lebar tak hingga). Di dalam Row lebar tidak terbatas,
+                    // jadi lebar minimum harus di-override agar tidak error.
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(88, 48),
+                    ),
                     onPressed: (_saving || unchanged) ? null : _save,
                     child: _saving
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2.5))
+                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                          )
                         : const Text('Simpan'),
                   ),
                 ),
@@ -751,9 +839,13 @@ class _KeyValue extends StatelessWidget {
         children: [
           SizedBox(
             width: 90,
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 13, color: AppColors.textSecondary)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
@@ -763,8 +855,11 @@ class _KeyValue extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow(
-      {required this.label, required this.value, this.bold = false});
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.bold = false,
+  });
 
   final String label;
   final double value;
@@ -780,7 +875,10 @@ class _SummaryRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(label, style: style), Text(formatRupiah(value), style: style)],
+        children: [
+          Text(label, style: style),
+          Text(formatRupiah(value), style: style),
+        ],
       ),
     );
   }

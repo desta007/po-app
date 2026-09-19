@@ -39,7 +39,9 @@ abstract class ProductInput with _$ProductInput {
     required double price,
     double? cost,
     String? category,
-    double? stockQty,
+    // Kolom NOT NULL di DB & tidak dikelola form ini — jangan kirim null,
+    // biarkan backend memakai default (create) / nilai lama (update).
+    @JsonKey(includeIfNull: false) double? stockQty,
     bool? isActive,
     bool? showInCatalog,
   }) = _ProductInput;

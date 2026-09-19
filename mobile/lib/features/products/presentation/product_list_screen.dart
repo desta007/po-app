@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/media_url.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../data/product_models.dart';
 import '../providers/products_provider.dart';
@@ -43,8 +44,9 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         content: Text('Yakin ingin menghapus "${product.name}"?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -57,13 +59,15 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     try {
       await ref.read(productListProvider.notifier).delete(product.id);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Produk dihapus.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Produk dihapus.')));
       }
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -119,59 +123,64 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ),
             ),
           Expanded(
-            child: Builder(builder: (context) {
-              if (state.isLoading) return const LoadingView();
-              if (state.error != null) {
-                return ErrorRetryView(
-                    message: state.error!, onRetry: notifier.refresh);
-              }
-              if (state.isEmpty) {
-                return const EmptyView(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Belum ada produk',
-                  subtitle: 'Tambahkan produk pertama Anda dengan tombol +',
-                );
-              }
-              return RefreshIndicator(
-                onRefresh: notifier.refresh,
-                child: InfiniteScrollListener(
-                  onLoadMore: notifier.loadMore,
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount:
-                        state.items.length + (state.isLoadingMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index >= state.items.length) {
-                        return const LoadMoreIndicator();
-                      }
-                      final product = state.items[index];
-                      return ListTile(
-                        leading: _ProductThumb(product: product),
-                        title: Text(
-                          product.name,
-                          style: TextStyle(
-                            color: product.isActive
-                                ? null
-                                : AppColors.textSecondary,
+            child: Builder(
+              builder: (context) {
+                if (state.isLoading) return const LoadingView();
+                if (state.error != null) {
+                  return ErrorRetryView(
+                    message: state.error!,
+                    onRetry: notifier.refresh,
+                  );
+                }
+                if (state.isEmpty) {
+                  return const EmptyView(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Belum ada produk',
+                    subtitle: 'Tambahkan produk pertama Anda dengan tombol +',
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: notifier.refresh,
+                  child: InfiniteScrollListener(
+                    onLoadMore: notifier.loadMore,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount:
+                          state.items.length + (state.isLoadingMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index >= state.items.length) {
+                          return const LoadMoreIndicator();
+                        }
+                        final product = state.items[index];
+                        return ListTile(
+                          leading: _ProductThumb(product: product),
+                          title: Text(
+                            product.name,
+                            style: TextStyle(
+                              color: product.isActive
+                                  ? null
+                                  : AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          '${formatRupiah(product.price)} / ${product.unit}'
-                          '${product.isActive ? '' : ' · Nonaktif'}',
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 20),
-                          onPressed: () => _confirmDelete(product),
-                        ),
-                        onTap: () => context.push(
+                          subtitle: Text(
+                            '${formatRupiah(product.price)} / ${product.unit}'
+                            '${product.isActive ? '' : ' · Nonaktif'}',
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, size: 20),
+                            onPressed: () => _confirmDelete(product),
+                          ),
+                          onTap: () => context.push(
                             '/products/${product.id}/edit',
-                            extra: product),
-                      );
-                    },
+                            extra: product,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -186,8 +195,8 @@ class _ProductThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = product.imageUrl;
-    if (url == null || url.isEmpty) {
+    final url = resolveMediaUrl(product.imageUrl);
+    if (url == null) {
       return Container(
         width: 44,
         height: 44,
@@ -195,8 +204,11 @@ class _ProductThumb extends StatelessWidget {
           color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(Icons.inventory_2_outlined,
-            color: AppColors.primary, size: 22),
+        child: const Icon(
+          Icons.inventory_2_outlined,
+          color: AppColors.primary,
+          size: 22,
+        ),
       );
     }
     return ClipRRect(

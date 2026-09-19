@@ -326,7 +326,7 @@ as String?,
 /// @nodoc
 mixin _$ProductInput {
 
- String get name; String? get sku; String? get description; String get unit; double get price; double? get cost; String? get category; double? get stockQty; bool? get isActive; bool? get showInCatalog;
+ String get name; String? get sku; String? get description; String get unit; double get price; double? get cost; String? get category;@JsonKey(includeIfNull: false) double? get stockQty; bool? get isActive; bool? get showInCatalog;
 /// Create a copy of ProductInput
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -359,7 +359,7 @@ abstract mixin class $ProductInputCopyWith<$Res>  {
   factory $ProductInputCopyWith(ProductInput value, $Res Function(ProductInput) _then) = _$ProductInputCopyWithImpl;
 @useResult
 $Res call({
- String name, String? sku, String? description, String unit, double price, double? cost, String? category, double? stockQty, bool? isActive, bool? showInCatalog
+ String name, String? sku, String? description, String unit, double price, double? cost, String? category,@JsonKey(includeIfNull: false) double? stockQty, bool? isActive, bool? showInCatalog
 });
 
 
@@ -473,7 +473,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? sku,  String? description,  String unit,  double price,  double? cost,  String? category,  double? stockQty,  bool? isActive,  bool? showInCatalog)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? sku,  String? description,  String unit,  double price,  double? cost,  String? category, @JsonKey(includeIfNull: false)  double? stockQty,  bool? isActive,  bool? showInCatalog)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProductInput() when $default != null:
 return $default(_that.name,_that.sku,_that.description,_that.unit,_that.price,_that.cost,_that.category,_that.stockQty,_that.isActive,_that.showInCatalog);case _:
@@ -494,7 +494,7 @@ return $default(_that.name,_that.sku,_that.description,_that.unit,_that.price,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? sku,  String? description,  String unit,  double price,  double? cost,  String? category,  double? stockQty,  bool? isActive,  bool? showInCatalog)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? sku,  String? description,  String unit,  double price,  double? cost,  String? category, @JsonKey(includeIfNull: false)  double? stockQty,  bool? isActive,  bool? showInCatalog)  $default,) {final _that = this;
 switch (_that) {
 case _ProductInput():
 return $default(_that.name,_that.sku,_that.description,_that.unit,_that.price,_that.cost,_that.category,_that.stockQty,_that.isActive,_that.showInCatalog);case _:
@@ -514,7 +514,7 @@ return $default(_that.name,_that.sku,_that.description,_that.unit,_that.price,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? sku,  String? description,  String unit,  double price,  double? cost,  String? category,  double? stockQty,  bool? isActive,  bool? showInCatalog)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? sku,  String? description,  String unit,  double price,  double? cost,  String? category, @JsonKey(includeIfNull: false)  double? stockQty,  bool? isActive,  bool? showInCatalog)?  $default,) {final _that = this;
 switch (_that) {
 case _ProductInput() when $default != null:
 return $default(_that.name,_that.sku,_that.description,_that.unit,_that.price,_that.cost,_that.category,_that.stockQty,_that.isActive,_that.showInCatalog);case _:
@@ -529,7 +529,7 @@ return $default(_that.name,_that.sku,_that.description,_that.unit,_that.price,_t
 @JsonSerializable()
 
 class _ProductInput implements ProductInput {
-  const _ProductInput({required this.name, this.sku, this.description, required this.unit, required this.price, this.cost, this.category, this.stockQty, this.isActive, this.showInCatalog});
+  const _ProductInput({required this.name, this.sku, this.description, required this.unit, required this.price, this.cost, this.category, @JsonKey(includeIfNull: false) this.stockQty, this.isActive, this.showInCatalog});
   factory _ProductInput.fromJson(Map<String, dynamic> json) => _$ProductInputFromJson(json);
 
 @override final  String name;
@@ -539,7 +539,7 @@ class _ProductInput implements ProductInput {
 @override final  double price;
 @override final  double? cost;
 @override final  String? category;
-@override final  double? stockQty;
+@override@JsonKey(includeIfNull: false) final  double? stockQty;
 @override final  bool? isActive;
 @override final  bool? showInCatalog;
 
@@ -576,7 +576,7 @@ abstract mixin class _$ProductInputCopyWith<$Res> implements $ProductInputCopyWi
   factory _$ProductInputCopyWith(_ProductInput value, $Res Function(_ProductInput) _then) = __$ProductInputCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? sku, String? description, String unit, double price, double? cost, String? category, double? stockQty, bool? isActive, bool? showInCatalog
+ String name, String? sku, String? description, String unit, double price, double? cost, String? category,@JsonKey(includeIfNull: false) double? stockQty, bool? isActive, bool? showInCatalog
 });
 
 

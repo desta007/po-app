@@ -34,7 +34,9 @@ abstract class CustomerInput with _$CustomerInput {
     String? email,
     String? address,
     String? notes,
-    List<String>? tags,
+    // Kolom NOT NULL di DB & tidak dikelola form ini — jangan kirim null,
+    // biarkan backend memakai default (create) / nilai lama (update).
+    @JsonKey(includeIfNull: false) List<String>? tags,
   }) = _CustomerInput;
 
   factory CustomerInput.fromJson(Map<String, dynamic> json) =>

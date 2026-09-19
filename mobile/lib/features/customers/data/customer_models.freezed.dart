@@ -314,7 +314,7 @@ as String?,
 /// @nodoc
 mixin _$CustomerInput {
 
- String get name; String? get phone; String? get email; String? get address; String? get notes; List<String>? get tags;
+ String get name; String? get phone; String? get email; String? get address; String? get notes;@JsonKey(includeIfNull: false) List<String>? get tags;
 /// Create a copy of CustomerInput
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -347,7 +347,7 @@ abstract mixin class $CustomerInputCopyWith<$Res>  {
   factory $CustomerInputCopyWith(CustomerInput value, $Res Function(CustomerInput) _then) = _$CustomerInputCopyWithImpl;
 @useResult
 $Res call({
- String name, String? phone, String? email, String? address, String? notes, List<String>? tags
+ String name, String? phone, String? email, String? address, String? notes,@JsonKey(includeIfNull: false) List<String>? tags
 });
 
 
@@ -457,7 +457,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? phone,  String? email,  String? address,  String? notes,  List<String>? tags)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? phone,  String? email,  String? address,  String? notes, @JsonKey(includeIfNull: false)  List<String>? tags)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CustomerInput() when $default != null:
 return $default(_that.name,_that.phone,_that.email,_that.address,_that.notes,_that.tags);case _:
@@ -478,7 +478,7 @@ return $default(_that.name,_that.phone,_that.email,_that.address,_that.notes,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? phone,  String? email,  String? address,  String? notes,  List<String>? tags)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? phone,  String? email,  String? address,  String? notes, @JsonKey(includeIfNull: false)  List<String>? tags)  $default,) {final _that = this;
 switch (_that) {
 case _CustomerInput():
 return $default(_that.name,_that.phone,_that.email,_that.address,_that.notes,_that.tags);case _:
@@ -498,7 +498,7 @@ return $default(_that.name,_that.phone,_that.email,_that.address,_that.notes,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? phone,  String? email,  String? address,  String? notes,  List<String>? tags)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? phone,  String? email,  String? address,  String? notes, @JsonKey(includeIfNull: false)  List<String>? tags)?  $default,) {final _that = this;
 switch (_that) {
 case _CustomerInput() when $default != null:
 return $default(_that.name,_that.phone,_that.email,_that.address,_that.notes,_that.tags);case _:
@@ -513,7 +513,7 @@ return $default(_that.name,_that.phone,_that.email,_that.address,_that.notes,_th
 @JsonSerializable()
 
 class _CustomerInput implements CustomerInput {
-  const _CustomerInput({required this.name, this.phone, this.email, this.address, this.notes, final  List<String>? tags}): _tags = tags;
+  const _CustomerInput({required this.name, this.phone, this.email, this.address, this.notes, @JsonKey(includeIfNull: false) final  List<String>? tags}): _tags = tags;
   factory _CustomerInput.fromJson(Map<String, dynamic> json) => _$CustomerInputFromJson(json);
 
 @override final  String name;
@@ -522,7 +522,7 @@ class _CustomerInput implements CustomerInput {
 @override final  String? address;
 @override final  String? notes;
  final  List<String>? _tags;
-@override List<String>? get tags {
+@override@JsonKey(includeIfNull: false) List<String>? get tags {
   final value = _tags;
   if (value == null) return null;
   if (_tags is EqualUnmodifiableListView) return _tags;
@@ -564,7 +564,7 @@ abstract mixin class _$CustomerInputCopyWith<$Res> implements $CustomerInputCopy
   factory _$CustomerInputCopyWith(_CustomerInput value, $Res Function(_CustomerInput) _then) = __$CustomerInputCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? phone, String? email, String? address, String? notes, List<String>? tags
+ String name, String? phone, String? email, String? address, String? notes,@JsonKey(includeIfNull: false) List<String>? tags
 });
 
 

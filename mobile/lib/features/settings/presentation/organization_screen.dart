@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/media_url.dart';
 import '../../../shared/widgets/async_states.dart';
 import '../data/settings_api.dart';
 import '../data/settings_models.dart';
@@ -15,8 +16,7 @@ class OrganizationScreen extends ConsumerStatefulWidget {
   const OrganizationScreen({super.key});
 
   @override
-  ConsumerState<OrganizationScreen> createState() =>
-      _OrganizationScreenState();
+  ConsumerState<OrganizationScreen> createState() => _OrganizationScreenState();
 }
 
 class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
@@ -47,21 +47,24 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
-      await ref.read(settingsApiProvider).updateOrganization(
+      await ref
+          .read(settingsApiProvider)
+          .updateOrganization(
             name: _name.text.trim(),
             phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-            address:
-                _address.text.trim().isEmpty ? null : _address.text.trim(),
+            address: _address.text.trim().isEmpty ? null : _address.text.trim(),
           );
       ref.invalidate(organizationProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Data organisasi disimpan.')));
+          const SnackBar(content: Text('Data organisasi disimpan.')),
+        );
       }
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -70,19 +73,24 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
 
   Future<void> _uploadLogo() async {
     final picked = await ImagePicker().pickImage(
-        source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
     if (picked == null) return;
     try {
       await ref.read(settingsApiProvider).uploadLogo(picked.path);
       ref.invalidate(organizationProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Logo diperbarui.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logo diperbarui.')));
       }
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -93,8 +101,9 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
       ref.invalidate(organizationProvider);
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -115,10 +124,9 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
           _fill(org);
           // Route katalog publik di web: `/katalog/{slug}`. Buang trailing
           // slash dari base agar tidak jadi `//katalog`.
-          final catalogBase =
-              Env.catalogBaseUrl.replaceAll(RegExp(r'/+$'), '');
-          final catalogUrl = (catalogBase.isNotEmpty &&
-                  (org.slug?.isNotEmpty ?? false))
+          final catalogBase = Env.catalogBaseUrl.replaceAll(RegExp(r'/+$'), '');
+          final catalogUrl =
+              (catalogBase.isNotEmpty && (org.slug?.isNotEmpty ?? false))
               ? '$catalogBase/katalog/${org.slug}'
               : null;
           return Form(
@@ -135,26 +143,36 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
                           borderRadius: BorderRadius.circular(12),
                           child: org.logoUrl?.isNotEmpty == true
                               ? CachedNetworkImage(
-                                  imageUrl: org.logoUrl!,
+                                  imageUrl: resolveMediaUrl(org.logoUrl) ?? '',
                                   width: 110,
                                   height: 110,
-                                  fit: BoxFit.cover)
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, _, _) => const Icon(
+                                    Icons.broken_image_outlined,
+                                    color: AppColors.primary,
+                                  ),
+                                )
                               : Container(
                                   width: 110,
                                   height: 110,
-                                  color: AppColors.primary
-                                      .withValues(alpha: 0.08),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   child: const Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.add_photo_alternate_outlined,
-                                          color: AppColors.primary),
+                                      Icon(
+                                        Icons.add_photo_alternate_outlined,
+                                        color: AppColors.primary,
+                                      ),
                                       SizedBox(height: 4),
-                                      Text('Logo',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.primary)),
+                                      Text(
+                                        'Logo',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -163,8 +181,10 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
                       if (org.logoUrl?.isNotEmpty == true)
                         TextButton(
                           onPressed: _deleteLogo,
-                          child: const Text('Hapus logo',
-                              style: TextStyle(color: AppColors.danger)),
+                          child: const Text(
+                            'Hapus logo',
+                            style: TextStyle(color: AppColors.danger),
+                          ),
                         ),
                     ],
                   ),
@@ -172,8 +192,7 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _name,
-                  decoration:
-                      const InputDecoration(labelText: 'Nama Usaha *'),
+                  decoration: const InputDecoration(labelText: 'Nama Usaha *'),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Nama usaha wajib diisi'
                       : null,
@@ -198,16 +217,20 @@ class _OrganizationScreenState extends ConsumerState<OrganizationScreen> {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2.5, color: Colors.white),
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Simpan'),
                 ),
                 if (catalogUrl != null) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: () => SharePlus.instance.share(ShareParams(
-                        text:
-                            'Lihat katalog ${org.name}: $catalogUrl')),
+                    onPressed: () => SharePlus.instance.share(
+                      ShareParams(
+                        text: 'Lihat katalog ${org.name}: $catalogUrl',
+                      ),
+                    ),
                     icon: const Icon(Icons.share_outlined, size: 18),
                     label: const Text('Share Link Katalog Online'),
                   ),

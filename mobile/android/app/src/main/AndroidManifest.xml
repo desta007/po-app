@@ -15,8 +15,9 @@
         android:maxSdkVersion="30"/>
 
     <application
-        android:label="PO Scheduler"
+        android:label="PO Desta App"
         android:name="${applicationName}"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

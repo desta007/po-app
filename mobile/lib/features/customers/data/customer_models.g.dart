@@ -55,5 +55,5 @@ Map<String, dynamic> _$CustomerInputToJson(_CustomerInput instance) =>
       'email': instance.email,
       'address': instance.address,
       'notes': instance.notes,
-      'tags': instance.tags,
+      'tags': ?instance.tags,
     };

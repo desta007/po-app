@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/media_url.dart';
 import '../data/product_models.dart';
 import '../data/products_api.dart';
 import '../providers/products_provider.dart';
@@ -27,22 +28,25 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   late final _sku = TextEditingController(text: widget.product?.sku);
   late final _unit = TextEditingController(text: widget.product?.unit ?? 'pcs');
   late final _price = TextEditingController(
-      text: widget.product == null
-          ? ''
-          : widget.product!.price.toStringAsFixed(0));
+    text: widget.product == null
+        ? ''
+        : widget.product!.price.toStringAsFixed(0),
+  );
   late final _cost = TextEditingController(
-      text: widget.product?.cost == null
-          ? ''
-          : widget.product!.cost!.toStringAsFixed(0));
-  late final _category =
-      TextEditingController(text: widget.product?.category);
-  late final _description =
-      TextEditingController(text: widget.product?.description);
+    text: widget.product?.cost == null
+        ? ''
+        : widget.product!.cost!.toStringAsFixed(0),
+  );
+  late final _category = TextEditingController(text: widget.product?.category);
+  late final _description = TextEditingController(
+    text: widget.product?.description,
+  );
   late bool _isActive = widget.product?.isActive ?? true;
   late bool _showInCatalog = widget.product?.showInCatalog ?? false;
 
   /// Gambar yang sudah tersimpan di server (mode edit). Bisa dihapus per item.
   late final List<String> _existingImages = _initialExistingImages();
+
   /// Gambar baru dari galeri yang belum diupload (path lokal).
   final List<String> _pickedImagePaths = [];
   bool _submitting = false;
@@ -83,13 +87,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Future<void> _removeExistingImage(String url) async {
     // Di mode edit hapus langsung di server; galeri mengikuti respons berikutnya.
     try {
-      await ref.read(productsApiProvider).deleteImage(widget.product!.id,
-          imageUrl: url);
+      await ref
+          .read(productsApiProvider)
+          .deleteImage(widget.product!.id, imageUrl: url);
       if (mounted) setState(() => _existingImages.remove(url));
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
   }
@@ -108,33 +114,41 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       cost: _cost.text.trim().isEmpty
           ? null
           : double.tryParse(_cost.text.replaceAll('.', '')),
-      category:
-          _category.text.trim().isEmpty ? null : _category.text.trim(),
-      description:
-          _description.text.trim().isEmpty ? null : _description.text.trim(),
+      category: _category.text.trim().isEmpty ? null : _category.text.trim(),
+      description: _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
       isActive: _isActive,
       showInCatalog: _showInCatalog,
     );
     try {
       final notifier = ref.read(productListProvider.notifier);
       if (_isEdit) {
-        await notifier.update(widget.product!.id, input,
-            imagePaths: _pickedImagePaths);
+        await notifier.update(
+          widget.product!.id,
+          input,
+          imagePaths: _pickedImagePaths,
+        );
       } else {
         await notifier.create(input, imagePaths: _pickedImagePaths);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(_isEdit
-            ? 'Produk berhasil diperbarui.'
-            : 'Produk berhasil ditambahkan.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isEdit
+                ? 'Produk berhasil diperbarui.'
+                : 'Produk berhasil ditambahkan.',
+          ),
+        ),
+      );
       context.pop();
     } on ApiException catch (e) {
       setState(() => _fieldErrors = e.fieldErrors);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -189,7 +203,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     controller: _unit,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                        labelText: 'Satuan *', hintText: 'pcs / kg / box'),
+                      labelText: 'Satuan *',
+                      hintText: 'pcs / kg / box',
+                    ),
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'Satuan wajib diisi'
                         : null,
@@ -228,7 +244,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                        labelText: 'HPP / Modal', prefixText: 'Rp '),
+                      labelText: 'HPP / Modal',
+                      prefixText: 'Rp ',
+                    ),
                   ),
                 ),
               ],
@@ -238,7 +256,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               controller: _category,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
-                  labelText: 'Kategori', hintText: 'Cth: Makanan, Minuman'),
+                labelText: 'Kategori',
+                hintText: 'Cth: Makanan, Minuman',
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -268,7 +288,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2.5, color: Colors.white),
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(_isEdit ? 'Simpan Perubahan' : 'Simpan'),
             ),
@@ -302,8 +324,10 @@ class _ImageGallery extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Gambar Produk',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        const Text(
+          'Gambar Produk',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 2),
         const Text(
           'Bisa upload lebih dari 1 gambar. Gambar pertama menjadi gambar utama.',
@@ -317,15 +341,25 @@ class _ImageGallery extends StatelessWidget {
             for (final url in existingImages)
               _Thumb(
                 image: CachedNetworkImage(
-                    imageUrl: url, width: 72, height: 72, fit: BoxFit.cover),
+                  imageUrl: resolveMediaUrl(url) ?? '',
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, _, _) =>
+                      const Icon(Icons.broken_image_outlined),
+                ),
                 onRemove: onRemoveExisting == null
                     ? null
                     : () => onRemoveExisting!(url),
               ),
             for (final path in pickedPaths)
               _Thumb(
-                image: Image.file(File(path),
-                    width: 72, height: 72, fit: BoxFit.cover),
+                image: Image.file(
+                  File(path),
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                ),
                 onRemove: () => onRemovePicked(path),
               ),
             _AddImageButton(onTap: onAdd),
@@ -356,7 +390,9 @@ class _Thumb extends StatelessWidget {
               onTap: onRemove,
               child: Container(
                 decoration: const BoxDecoration(
-                    color: AppColors.danger, shape: BoxShape.circle),
+                  color: AppColors.danger,
+                  shape: BoxShape.circle,
+                ),
                 padding: const EdgeInsets.all(2),
                 child: const Icon(Icons.close, size: 14, color: Colors.white),
               ),
@@ -382,16 +418,21 @@ class _AddImageButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_a_photo_outlined, color: AppColors.primary, size: 22),
+            Icon(
+              Icons.add_a_photo_outlined,
+              color: AppColors.primary,
+              size: 22,
+            ),
             SizedBox(height: 4),
-            Text('Tambah',
-                style: TextStyle(fontSize: 10, color: AppColors.primary)),
+            Text(
+              'Tambah',
+              style: TextStyle(fontSize: 10, color: AppColors.primary),
+            ),
           ],
         ),
       ),

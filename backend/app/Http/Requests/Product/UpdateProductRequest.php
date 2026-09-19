@@ -18,6 +18,17 @@ class UpdateProductRequest extends FormRequest
         if ($this->has('sku') && trim((string) $this->input('sku')) === '') {
             $this->merge(['sku' => null]);
         }
+
+        // These columns are NOT NULL in the database. Some clients (the mobile
+        // app) always include them in the payload even when the form does not
+        // manage them, sending an explicit null. Drop the key so the existing
+        // value is preserved on update instead of a null-write that fails with
+        // a 500 "Server Error".
+        foreach (['stock_qty', 'track_stock', 'is_active', 'show_in_catalog'] as $key) {
+            if ($this->has($key) && $this->input($key) === null) {
+                $this->getInputSource()->remove($key);
+            }
+        }
     }
 
     public function rules(): array

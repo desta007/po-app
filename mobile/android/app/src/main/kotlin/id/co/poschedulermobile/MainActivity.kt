@@ -1,4 +1,4 @@
-package id.co.nindyakarya.po_scheduler_mobile
+package id.co.poschedulermobile
 
 import io.flutter.embedding.android.FlutterActivity
 
