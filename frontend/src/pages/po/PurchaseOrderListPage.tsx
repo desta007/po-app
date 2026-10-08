@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check, MapPin, Stethoscope, Copy } from 'lucide-react';
+import { Download, Search, FileText, Eye, MessageCircle, Pencil, XCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Printer, X, Loader2, Tag, Bluetooth, Usb, Check, MapPin, Stethoscope, Copy, ListChecks } from 'lucide-react';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { tryOpenPdfViaSignedUrl } from '@/api/print';
@@ -420,6 +420,34 @@ export default function PurchaseOrderListPage() {
   const pos: PurchaseOrder[] = data?.data?.data || [];
   const meta: any = data?.data?.meta;
 
+  // Rekap produk dari PO yang diceklis: jumlahkan qty per nama produk.
+  // Item sudah ikut di response list, dan pilihan direset tiap ganti halaman,
+  // jadi semua PO terpilih pasti ada di `pos`.
+  const [recapOpen, setRecapOpen] = useState(false);
+  const productRecap = (() => {
+    const map = new Map<string, { name: string; qty: number }>();
+    for (const po of pos) {
+      if (!selectedIds.has(po.id)) continue;
+      for (const item of po.items ?? []) {
+        const key = item.product_name.trim().toLowerCase();
+        const entry = map.get(key) ?? { name: item.product_name.trim(), qty: 0 };
+        entry.qty += Number(item.quantity) || 0;
+        map.set(key, entry);
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'id'));
+  })();
+  const recapTotalQty = productRecap.reduce((s, r) => s + r.qty, 0);
+  const copyRecap = async () => {
+    const text = productRecap.map((r) => `${r.name} ${r.qty}`).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Rekap produk disalin.');
+    } catch {
+      toast.error('Gagal menyalin — salin manual dari daftar.');
+    }
+  };
+
   // Build pagination page numbers with ellipsis
   const buildPageNumbers = () => {
     if (!meta || meta.last_page <= 1) return [];
@@ -776,6 +804,15 @@ export default function PurchaseOrderListPage() {
             variant="secondary"
             size="sm"
             className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
+            onClick={() => setRecapOpen(true)}
+          >
+            <ListChecks size={14} />
+            Rekap Produk
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="bg-white/10 hover:bg-white/20 text-white border-0 w-full justify-start sm:w-auto sm:justify-center"
             disabled={bulkPrinting}
             onClick={() => handleBulkPrint('receipt')}
           >
@@ -901,7 +938,50 @@ export default function PurchaseOrderListPage() {
         </div>
       )}
 
-      <Dialog open={diagOpen} onClose={() => setDiagOpen(false)} size="lg">
+      <Dialog open={recapOpen} onClose={() => setRecapOpen(false)}>
+        <DialogHeader onClose={() => setRecapOpen(false)}>Rekap Produk Dipesan</DialogHeader>
+        <DialogBody>
+          <p className="text-[13px] text-gray-500 mb-3">
+            Total produk dari {selectedIds.size} PO yang dipilih.
+          </p>
+          {productRecap.length === 0 ? (
+            <p className="text-[13px] text-gray-500">Tidak ada item pada PO yang dipilih.</p>
+          ) : (
+            <div className="border border-gray-200 rounded-lg overflow-hidden max-h-[55vh] overflow-y-auto">
+              <table className="w-full text-[14px]">
+                <thead className="bg-gray-50 text-[11px] uppercase tracking-wider text-gray-500 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-semibold">Produk</th>
+                    <th className="text-right px-3 py-2 font-semibold w-24">Qty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productRecap.map((r) => (
+                    <tr key={r.name} className="border-t border-gray-100">
+                      <td className="px-3 py-2 text-gray-900">{r.name}</td>
+                      <td className="px-3 py-2 text-right font-semibold tabular-nums">{r.qty}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                  <tr>
+                    <td className="px-3 py-2 font-bold text-gray-700">Total</td>
+                    <td className="px-3 py-2 text-right font-extrabold tabular-nums">{recapTotalQty}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={copyRecap} disabled={productRecap.length === 0}>
+            <Copy size={14} className="mr-1.5" /> Salin
+          </Button>
+          <Button size="sm" onClick={() => setRecapOpen(false)}>Tutup</Button>
+        </DialogFooter>
+      </Dialog>
+
+      <Dialog open={diagOpen}onClose={() => setDiagOpen(false)} size="lg">
         <DialogHeader onClose={() => setDiagOpen(false)}>Diagnosa Printer Thermal</DialogHeader>
         <DialogBody>
           <p className="text-[13px] text-gray-500 mb-3">
