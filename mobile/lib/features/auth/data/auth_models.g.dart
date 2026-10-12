@@ -14,6 +14,7 @@ _User _$UserFromJson(Map<String, dynamic> json) => _User(
   avatarUrl: json['avatar_url'] as String?,
   currentOrgId: json['current_org_id'] as String?,
   isSuperAdmin: json['is_super_admin'] as bool? ?? false,
+  mustChangePassword: json['must_change_password'] as bool? ?? false,
   role: $enumDecodeNullable(
     _$MemberRoleEnumMap,
     json['role'],
@@ -31,6 +32,7 @@ Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
   'avatar_url': instance.avatarUrl,
   'current_org_id': instance.currentOrgId,
   'is_super_admin': instance.isSuperAdmin,
+  'must_change_password': instance.mustChangePassword,
   'role': _$MemberRoleEnumMap[instance.role],
   'last_login_at': instance.lastLoginAt,
   'created_at': instance.createdAt,

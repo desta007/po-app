@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -55,6 +56,7 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [LoginController::class, 'logout']);
         Route::post('/refresh', [LoginController::class, 'refresh']);
         Route::get('/me', [LoginController::class, 'me']);
+        Route::put('/password', [ChangePasswordController::class, 'update'])->middleware('throttle:change-password');
     });
 });
 
@@ -193,6 +195,7 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::get('users', [SuperAdminController::class, 'users']);
     Route::get('users/{id}', [SuperAdminController::class, 'userDetail']);
     Route::patch('users/{id}/toggle-status', [SuperAdminController::class, 'toggleUserStatus']);
+    Route::post('users/{id}/reset-password', [SuperAdminController::class, 'resetUserPassword']);
     Route::get('organizations', [SuperAdminController::class, 'organizations']);
     Route::get('database/backup', [SuperAdminController::class, 'downloadDatabaseBackup']);
 

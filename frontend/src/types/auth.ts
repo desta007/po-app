@@ -9,6 +9,8 @@ export interface User {
   avatar_url: string | null;
   current_org_id: string | null;
   is_super_admin?: boolean;
+  /** True setelah super admin mereset password — user wajib ganti password dulu. */
+  must_change_password?: boolean;
   role?: MemberRole;
   last_login_at: string | null;
   created_at: string;

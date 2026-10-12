@@ -37,7 +37,10 @@ const _authPaths = {'/login', '/register', '/forgot-password', '/reset-password'
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = ValueNotifier(0);
-  ref.listen(authProvider.select((s) => s.status), (prev, next) => refreshNotifier.value++);
+  ref.listen(
+    authProvider.select((s) => (s.status, s.user?.mustChangePassword ?? false)),
+    (prev, next) => refreshNotifier.value++,
+  );
   ref.onDispose(refreshNotifier.dispose);
 
   return GoRouter(
@@ -55,7 +58,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (status == AuthStatus.unauthenticated) {
         return onAuthPage ? null : '/login';
       }
-      // Authenticated
+      // Authenticated — password direset admin: kunci ke layar profil
+      // (mode wajib ganti password) sampai password diganti.
+      if (ref.read(authProvider).user?.mustChangePassword ?? false) {
+        return location == '/settings/profile' ? null : '/settings/profile';
+      }
       if (onAuthPage || location == '/splash') return '/dashboard';
       return null;
     },

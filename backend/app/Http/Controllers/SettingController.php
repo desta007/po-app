@@ -55,11 +55,16 @@ class SettingController extends Controller
                 return response()->json(['message' => 'Password lama salah.'], 422);
             }
             $user->password = $request->new_password;
+            $user->must_change_password = false;
         }
 
         $user->fill($request->only('full_name', 'phone', 'avatar_url'));
         $user->name = $request->input('full_name', $user->name);
         $user->save();
+
+        if ($request->filled('new_password')) {
+            $user->revokeOtherTokens();
+        }
 
         return response()->json(['data' => $user, 'message' => 'Profil berhasil diperbarui.']);
     }

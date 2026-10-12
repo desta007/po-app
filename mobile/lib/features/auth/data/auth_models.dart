@@ -32,6 +32,8 @@ abstract class User with _$User {
     String? avatarUrl,
     String? currentOrgId,
     @Default(false) bool isSuperAdmin,
+    /// True setelah super admin mereset password — wajib ganti password dulu.
+    @Default(false) bool mustChangePassword,
     @JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role,
     String? lastLoginAt,
     String? createdAt,

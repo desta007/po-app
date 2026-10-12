@@ -47,6 +47,15 @@ class AppServiceProvider extends ServiceProvider
             });
         });
 
+        // Batasi tebakan password lama memakai token curian: per user, bukan per IP.
+        RateLimiter::for('change-password', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip())->response(function () {
+                return response()->json([
+                    'message' => 'Terlalu banyak percobaan ganti password. Silakan coba lagi dalam 1 menit.',
+                ], 429);
+            });
+        });
+
         RateLimiter::for('catalog-checkout', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip())->response(function () {
                 return response()->json([

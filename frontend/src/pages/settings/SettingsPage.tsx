@@ -14,6 +14,7 @@ import { useQuota } from '@/hooks/use-quota';
 import { useRef } from 'react';
 import type { MemberRole, TeamMember } from '@/types/auth';
 import { OnlineStoreTab } from '@/components/settings/online-store-tab';
+import { ChangePasswordForm } from '@/components/settings/change-password-form';
 
 interface PaymentMethod {
   name: string;
@@ -285,6 +286,10 @@ export default function SettingsPage() {
                 <Input label="Email" value={user?.email || ''} disabled />
                 <Button type="submit" loading={updateProfile.isPending}>Simpan Profil</Button>
               </form>
+            </Card>
+            <Card>
+              <h3 className="text-[14px] font-bold text-gray-900 mb-4">Ubah Password</h3>
+              <ChangePasswordForm />
             </Card>
           </div>
         )}

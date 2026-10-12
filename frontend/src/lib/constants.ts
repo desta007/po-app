@@ -18,6 +18,7 @@ export const ROUTES = {
   REGISTER: '/register',
   FORGOT_PASSWORD: '/lupa-password',
   RESET_PASSWORD: '/reset-password',
+  CHANGE_PASSWORD: '/ubah-password',
   ONBOARDING: '/onboarding',
   DASHBOARD: '/dashboard',
   CALENDAR: '/kalender',

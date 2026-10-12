@@ -13,6 +13,9 @@ export const adminApi = {
   toggleUserStatus: (id: string) =>
     apiClient.patch(`/api/admin/users/${id}/toggle-status`),
 
+  resetUserPassword: (id: string) =>
+    apiClient.post<{ message: string; temporary_password: string; is_active: boolean }>(`/api/admin/users/${id}/reset-password`),
+
   organizations: (params?: { search?: string; page?: number; per_page?: number }) =>
     apiClient.get('/api/admin/organizations', { params }),
 

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class User extends Authenticatable
 {
@@ -25,6 +26,7 @@ class User extends Authenticatable
         'current_org_id',
         'is_super_admin',
         'is_active',
+        'must_change_password',
         'last_login_at',
     ];
 
@@ -40,8 +42,25 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Hapus semua token Sanctum milik user kecuali token yang sedang dipakai
+     * (dipanggil setelah ganti password agar sesi di perangkat lain berakhir).
+     */
+    public function revokeOtherTokens(): void
+    {
+        $query = $this->tokens();
+
+        $current = $this->currentAccessToken();
+        if ($current instanceof PersonalAccessToken) {
+            $query->whereKeyNot($current->getKey());
+        }
+
+        $query->delete();
     }
 
     public function currentOrganization(): BelongsTo

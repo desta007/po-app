@@ -23,7 +23,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   final _newPasswordConfirmation = TextEditingController();
-  bool _changePassword = false;
+  /// Password direset admin — form ganti password wajib & tak bisa ditutup.
+  late final bool _forced =
+      ref.read(authProvider).user?.mustChangePassword ?? false;
+  late bool _changePassword = _forced;
   bool _obscure = true;
   bool _submitting = false;
   Map<String, List<String>> _fieldErrors = const {};
@@ -59,7 +62,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profil berhasil diperbarui.')));
-      context.pop();
+      // Pada mode wajib ganti password layar ini dibuka lewat redirect
+      // (tanpa riwayat), jadi tidak ada yang bisa di-pop.
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/dashboard');
+      }
     } on ApiException catch (e) {
       setState(() => _fieldErrors = e.fieldErrors);
       if (mounted) {
@@ -74,12 +83,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Saya')),
+      appBar: AppBar(
+        title: Text(_forced ? 'Buat Password Baru' : 'Profil Saya'),
+        automaticallyImplyLeading: !_forced,
+        actions: [
+          if (_forced)
+            TextButton(
+              onPressed: () => ref.read(authProvider.notifier).logout(),
+              child: const Text('Keluar'),
+            ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (_forced) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: const Text(
+                  'Password Anda telah direset oleh admin. Demi keamanan, '
+                  'ganti password sementara sebelum melanjutkan.',
+                  style: TextStyle(fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _fullName,
               textInputAction: TextInputAction.next,
@@ -100,18 +135,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Ganti password'),
-              value: _changePassword,
-              onChanged: (v) => setState(() => _changePassword = v),
-            ),
+            if (!_forced)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Ganti password'),
+                value: _changePassword,
+                onChanged: (v) => setState(() => _changePassword = v),
+              )
+            else
+              const SizedBox(height: 8),
             if (_changePassword) ...[
               TextFormField(
                 controller: _currentPassword,
                 obscureText: _obscure,
                 decoration: InputDecoration(
-                  labelText: 'Password Saat Ini *',
+                  labelText:
+                      _forced ? 'Password Sementara *' : 'Password Saat Ini *',
                   errorText: _fieldErrors['current_password']?.first,
                   suffixIcon: IconButton(
                     icon: Icon(

@@ -8,6 +8,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+import ChangePasswordPage from '@/pages/auth/ChangePasswordPage';
+import { ROUTES } from '@/lib/constants';
 
 // App pages
 import DashboardPage from '@/pages/DashboardPage';
@@ -40,9 +42,19 @@ const OrderStatusPage = lazy(() => import('@/pages/catalog/OrderStatusPage'));
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return <div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Password direset admin → wajib ganti dulu sebelum membuka halaman lain.
+  if (user?.must_change_password) return <Navigate to={ROUTES.CHANGE_PASSWORD} replace />;
+  return <>{children}</>;
+}
+
+function MustChangePasswordRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!user?.must_change_password) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -75,7 +87,8 @@ export default function App() {
       <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
       <Route path="/lupa-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
-      
+      <Route path={ROUTES.CHANGE_PASSWORD} element={<MustChangePasswordRoute><ChangePasswordPage /></MustChangePasswordRoute>} />
+
       {/* Public routes */}
       <Route path="/" element={<LandingRoute />} />
       <Route path="/katalog/:slug" element={<CatalogPage />} />

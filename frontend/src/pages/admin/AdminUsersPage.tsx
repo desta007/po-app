@@ -3,7 +3,9 @@ import { adminApi } from '@/api/admin';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, ArrowLeft, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogHeader, DialogBody, DialogFooter } from '@/components/ui/dialog';
+import { Search, ArrowLeft, ShieldCheck, ShieldOff, KeyRound, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { formatDate, getInitials } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -47,6 +49,35 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Password sementara hanya ditampilkan sekali, setelah reset berhasil.
+  const [resetResult, setResetResult] = useState<{ name: string; email: string; password: string; isActive: boolean } | null>(null);
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (u: { id: string; name: string; email: string }) => adminApi.resetUserPassword(u.id),
+    onSuccess: (res, u) => {
+      setResetResult({ name: u.name, email: u.email, password: res.data.temporary_password, isActive: res.data.is_active });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Gagal mereset password user.');
+    },
+  });
+
+  const handleResetPassword = (u: { id: string; name: string; email: string }) => {
+    if (window.confirm(`Reset password user "${u.name}" (${u.email})?\n\nPassword lama tidak berlaku lagi, user akan logout dari semua perangkat, dan wajib mengganti password sementara saat login berikutnya.`)) {
+      resetPasswordMutation.mutate(u);
+    }
+  };
+
+  const copyResetInfo = async () => {
+    if (!resetResult) return;
+    try {
+      await navigator.clipboard.writeText(`Email: ${resetResult.email}\nPassword sementara: ${resetResult.password}`);
+      toast.success('Disalin ke clipboard.');
+    } catch {
+      toast.error('Gagal menyalin. Salin password secara manual.');
+    }
+  };
+
   const users = data?.data?.data || [];
   const meta = data?.data?.meta || data?.data;
   const lastPage = meta?.last_page ?? 1;
@@ -83,7 +114,7 @@ export default function AdminUsersPage() {
       ) : (
         <Card padding="none">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_80px_100px_110px_80px] gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 rounded-t-[10px]">
+          <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_80px_100px_110px_190px] gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 rounded-t-[10px]">
             <span className="text-[11px] font-bold text-gray-500 uppercase">User</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Organisasi</span>
             <span className="text-[11px] font-bold text-gray-500 uppercase">Email</span>
@@ -97,7 +128,7 @@ export default function AdminUsersPage() {
             {users.map((u: any, i: number) => {
               const roleStyle = ROLE_COLORS[u.role] ?? { color: '#9CA3AF', bgColor: '#F9FAFB' };
               return (
-                <div key={u.id} className="grid md:grid-cols-[1fr_1fr_1fr_80px_100px_110px_80px] gap-2 md:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
+                <div key={u.id} className="grid md:grid-cols-[1fr_1fr_1fr_80px_100px_110px_190px] gap-2 md:gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors items-center">
                   {/* User */}
                   <div className="flex items-center gap-3">
                     <div
@@ -151,7 +182,16 @@ export default function AdminUsersPage() {
                   </div>
 
                   {/* Action */}
-                  <div className="flex justify-center">
+                  <div className="flex justify-center gap-1.5">
+                    <button
+                      onClick={() => handleResetPassword(u)}
+                      disabled={resetPasswordMutation.isPending}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors disabled:opacity-50 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                      title="Reset password ke password sementara"
+                    >
+                      <KeyRound size={11} />
+                      Reset Password
+                    </button>
                     <button
                       onClick={() => handleToggleStatus(u.id, u.name, u.is_active)}
                       disabled={toggleStatusMutation.isPending}
@@ -194,6 +234,30 @@ export default function AdminUsersPage() {
           )}
         </Card>
       )}
+
+      <Dialog open={!!resetResult} onClose={() => setResetResult(null)}>
+        <DialogHeader onClose={() => setResetResult(null)}>Password Berhasil Direset</DialogHeader>
+        <DialogBody className="space-y-3">
+          <p className="text-[13px] text-gray-600">
+            Berikan password sementara ini kepada <span className="font-semibold">{resetResult?.name}</span> lewat
+            jalur yang aman (mis. WhatsApp pribadi). User wajib menggantinya saat login.
+          </p>
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-[13px]">
+            <p className="text-gray-500">Email</p>
+            <p className="font-medium text-gray-900 break-all">{resetResult?.email}</p>
+            <p className="text-gray-500 mt-2">Password sementara</p>
+            <p className="font-mono text-[16px] font-bold text-gray-900 select-all break-all">{resetResult?.password}</p>
+          </div>
+          <p className="text-[11px] text-amber-700">Password ini hanya ditampilkan sekali dan tidak dapat dilihat lagi setelah dialog ditutup.</p>
+          {resetResult && !resetResult.isActive && (
+            <p className="text-[11px] text-red-600">Akun ini sedang nonaktif — aktifkan dulu agar user bisa login.</p>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="secondary" leftIcon={<Copy size={14} />} onClick={copyResetInfo}>Salin</Button>
+          <Button onClick={() => setResetResult(null)}>Selesai</Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 }

@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$User {
 
-@FlexString() String get id; String get email; String get fullName; String? get phone; String? get avatarUrl; String? get currentOrgId; bool get isSuperAdmin;@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? get role; String? get lastLoginAt; String? get createdAt;
+@FlexString() String get id; String get email; String get fullName; String? get phone; String? get avatarUrl; String? get currentOrgId; bool get isSuperAdmin;/// True setelah super admin mereset password — wajib ganti password dulu.
+ bool get mustChangePassword;@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? get role; String? get lastLoginAt; String? get createdAt;
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.currentOrgId, currentOrgId) || other.currentOrgId == currentOrgId)&&(identical(other.isSuperAdmin, isSuperAdmin) || other.isSuperAdmin == isSuperAdmin)&&(identical(other.role, role) || other.role == role)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.currentOrgId, currentOrgId) || other.currentOrgId == currentOrgId)&&(identical(other.isSuperAdmin, isSuperAdmin) || other.isSuperAdmin == isSuperAdmin)&&(identical(other.mustChangePassword, mustChangePassword) || other.mustChangePassword == mustChangePassword)&&(identical(other.role, role) || other.role == role)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,currentOrgId,isSuperAdmin,role,lastLoginAt,createdAt);
+int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,currentOrgId,isSuperAdmin,mustChangePassword,role,lastLoginAt,createdAt);
 
 @override
 String toString() {
-  return 'User(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, currentOrgId: $currentOrgId, isSuperAdmin: $isSuperAdmin, role: $role, lastLoginAt: $lastLoginAt, createdAt: $createdAt)';
+  return 'User(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, currentOrgId: $currentOrgId, isSuperAdmin: $isSuperAdmin, mustChangePassword: $mustChangePassword, role: $role, lastLoginAt: $lastLoginAt, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $UserCopyWith<$Res>  {
   factory $UserCopyWith(User value, $Res Function(User) _then) = _$UserCopyWithImpl;
 @useResult
 $Res call({
-@FlexString() String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
+@FlexString() String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin, bool mustChangePassword,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
 });
 
 
@@ -65,7 +66,7 @@ class _$UserCopyWithImpl<$Res>
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? fullName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? currentOrgId = freezed,Object? isSuperAdmin = null,Object? role = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? fullName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? currentOrgId = freezed,Object? isSuperAdmin = null,Object? mustChangePassword = null,Object? role = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -74,6 +75,7 @@ as String,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,currentOrgId: freezed == currentOrgId ? _self.currentOrgId : currentOrgId // ignore: cast_nullable_to_non_nullable
 as String?,isSuperAdmin: null == isSuperAdmin ? _self.isSuperAdmin : isSuperAdmin // ignore: cast_nullable_to_non_nullable
+as bool,mustChangePassword: null == mustChangePassword ? _self.mustChangePassword : mustChangePassword // ignore: cast_nullable_to_non_nullable
 as bool,role: freezed == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MemberRole?,lastLoginAt: freezed == lastLoginAt ? _self.lastLoginAt : lastLoginAt // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -162,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin,  bool mustChangePassword, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
-return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.role,_that.lastLoginAt,_that.createdAt);case _:
+return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.mustChangePassword,_that.role,_that.lastLoginAt,_that.createdAt);case _:
   return orElse();
 
 }
@@ -183,10 +185,10 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin,  bool mustChangePassword, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _User():
-return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.role,_that.lastLoginAt,_that.createdAt);case _:
+return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.mustChangePassword,_that.role,_that.lastLoginAt,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +205,10 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@FlexString()  String id,  String email,  String fullName,  String? phone,  String? avatarUrl,  String? currentOrgId,  bool isSuperAdmin,  bool mustChangePassword, @JsonKey(unknownEnumValue: MemberRole.viewer)  MemberRole? role,  String? lastLoginAt,  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
-return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.role,_that.lastLoginAt,_that.createdAt);case _:
+return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,_that.currentOrgId,_that.isSuperAdmin,_that.mustChangePassword,_that.role,_that.lastLoginAt,_that.createdAt);case _:
   return null;
 
 }
@@ -218,7 +220,7 @@ return $default(_that.id,_that.email,_that.fullName,_that.phone,_that.avatarUrl,
 @JsonSerializable()
 
 class _User implements User {
-  const _User({@FlexString() required this.id, required this.email, required this.fullName, this.phone, this.avatarUrl, this.currentOrgId, this.isSuperAdmin = false, @JsonKey(unknownEnumValue: MemberRole.viewer) this.role, this.lastLoginAt, this.createdAt});
+  const _User({@FlexString() required this.id, required this.email, required this.fullName, this.phone, this.avatarUrl, this.currentOrgId, this.isSuperAdmin = false, this.mustChangePassword = false, @JsonKey(unknownEnumValue: MemberRole.viewer) this.role, this.lastLoginAt, this.createdAt});
   factory _User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
 @override@FlexString() final  String id;
@@ -228,6 +230,8 @@ class _User implements User {
 @override final  String? avatarUrl;
 @override final  String? currentOrgId;
 @override@JsonKey() final  bool isSuperAdmin;
+/// True setelah super admin mereset password — wajib ganti password dulu.
+@override@JsonKey() final  bool mustChangePassword;
 @override@JsonKey(unknownEnumValue: MemberRole.viewer) final  MemberRole? role;
 @override final  String? lastLoginAt;
 @override final  String? createdAt;
@@ -245,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.currentOrgId, currentOrgId) || other.currentOrgId == currentOrgId)&&(identical(other.isSuperAdmin, isSuperAdmin) || other.isSuperAdmin == isSuperAdmin)&&(identical(other.role, role) || other.role == role)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.currentOrgId, currentOrgId) || other.currentOrgId == currentOrgId)&&(identical(other.isSuperAdmin, isSuperAdmin) || other.isSuperAdmin == isSuperAdmin)&&(identical(other.mustChangePassword, mustChangePassword) || other.mustChangePassword == mustChangePassword)&&(identical(other.role, role) || other.role == role)&&(identical(other.lastLoginAt, lastLoginAt) || other.lastLoginAt == lastLoginAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,currentOrgId,isSuperAdmin,role,lastLoginAt,createdAt);
+int get hashCode => Object.hash(runtimeType,id,email,fullName,phone,avatarUrl,currentOrgId,isSuperAdmin,mustChangePassword,role,lastLoginAt,createdAt);
 
 @override
 String toString() {
-  return 'User(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, currentOrgId: $currentOrgId, isSuperAdmin: $isSuperAdmin, role: $role, lastLoginAt: $lastLoginAt, createdAt: $createdAt)';
+  return 'User(id: $id, email: $email, fullName: $fullName, phone: $phone, avatarUrl: $avatarUrl, currentOrgId: $currentOrgId, isSuperAdmin: $isSuperAdmin, mustChangePassword: $mustChangePassword, role: $role, lastLoginAt: $lastLoginAt, createdAt: $createdAt)';
 }
 
 
@@ -265,7 +269,7 @@ abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$UserCopyWith(_User value, $Res Function(_User) _then) = __$UserCopyWithImpl;
 @override @useResult
 $Res call({
-@FlexString() String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
+@FlexString() String id, String email, String fullName, String? phone, String? avatarUrl, String? currentOrgId, bool isSuperAdmin, bool mustChangePassword,@JsonKey(unknownEnumValue: MemberRole.viewer) MemberRole? role, String? lastLoginAt, String? createdAt
 });
 
 
@@ -282,7 +286,7 @@ class __$UserCopyWithImpl<$Res>
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? fullName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? currentOrgId = freezed,Object? isSuperAdmin = null,Object? role = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? fullName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? currentOrgId = freezed,Object? isSuperAdmin = null,Object? mustChangePassword = null,Object? role = freezed,Object? lastLoginAt = freezed,Object? createdAt = freezed,}) {
   return _then(_User(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -291,6 +295,7 @@ as String,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,currentOrgId: freezed == currentOrgId ? _self.currentOrgId : currentOrgId // ignore: cast_nullable_to_non_nullable
 as String?,isSuperAdmin: null == isSuperAdmin ? _self.isSuperAdmin : isSuperAdmin // ignore: cast_nullable_to_non_nullable
+as bool,mustChangePassword: null == mustChangePassword ? _self.mustChangePassword : mustChangePassword // ignore: cast_nullable_to_non_nullable
 as bool,role: freezed == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MemberRole?,lastLoginAt: freezed == lastLoginAt ? _self.lastLoginAt : lastLoginAt // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable

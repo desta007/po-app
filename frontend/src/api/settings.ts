@@ -6,12 +6,6 @@ export interface UpdateProfileData {
   phone?: string;
 }
 
-export interface UpdatePasswordData {
-  current_password: string;
-  new_password: string;
-  new_password_confirmation: string;
-}
-
 export interface UpdateOrganizationData {
   name: string;
   phone?: string;
@@ -29,9 +23,6 @@ export interface NotificationPreferences {
 export const settingsApi = {
   updateProfile: (data: UpdateProfileData) =>
     apiClient.put<{ data: User }>('/api/settings/profile', data),
-
-  updatePassword: (data: UpdatePasswordData) =>
-    apiClient.put('/api/settings/password', data),
 
   getOrganization: () =>
     apiClient.get<{ data: Organization }>('/api/settings/organization'),

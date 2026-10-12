@@ -14,6 +14,12 @@ export const authApi = {
   me: () =>
     apiClient.get<{ user: User; role?: MemberRole; is_super_admin?: boolean; organization_plan?: SubscriptionPlan; modules?: string[]; subscription?: SubscriptionInfo | null }>('/api/auth/me'),
 
+  changePassword: (data: {
+    current_password: string;
+    password: string;
+    password_confirmation: string;
+  }) => apiClient.put<{ message: string; user: User }>('/api/auth/password', data),
+
   forgotPassword: (email: string) =>
     apiClient.post('/api/auth/forgot-password', { email }),
 

@@ -9,6 +9,8 @@ use App\Services\DatabaseBackupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SuperAdminController extends Controller
@@ -152,6 +154,39 @@ class SuperAdminController extends Controller
             'message' => $user->is_active
                 ? 'User berhasil diaktifkan.'
                 : 'User berhasil dinonaktifkan.',
+            'is_active' => (bool) $user->is_active,
+        ]);
+    }
+
+    /**
+     * Reset password user ke password sementara acak (app belum punya mail server,
+     * jadi link reset via email tidak bisa dipakai). Password sementara hanya
+     * ditampilkan sekali ke super admin untuk diteruskan ke user; user wajib
+     * menggantinya saat login berikutnya. Super admin lain tidak bisa direset
+     * dari sini — gunakan `php artisan user:reset-password`.
+     */
+    public function resetUserPassword(Request $request, int $id): JsonResponse
+    {
+        $user = User::where('is_super_admin', false)->findOrFail($id);
+
+        $temporaryPassword = Str::password(10, symbols: false);
+
+        $user->forceFill([
+            'password' => $temporaryPassword,
+            'must_change_password' => true,
+        ])->save();
+
+        // Paksa logout dari semua perangkat.
+        $user->tokens()->delete();
+
+        Log::info('Super admin mereset password user.', [
+            'admin_id' => $request->user()->id,
+            'user_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'message' => "Password {$user->email} berhasil direset.",
+            'temporary_password' => $temporaryPassword,
             'is_active' => (bool) $user->is_active,
         ]);
     }
