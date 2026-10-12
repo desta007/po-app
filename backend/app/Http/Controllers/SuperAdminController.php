@@ -6,21 +6,31 @@ use App\Models\Organization;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use App\Services\DatabaseBackupService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SuperAdminController extends Controller
 {
+    /**
+     * PO lintas organisasi. Super admin tak punya current_org_id sehingga scope
+     * `organization` fail-closed (WHERE 1=0) dan semua agregat jadi 0 — lepas
+     * hanya scope itu, SoftDeletes tetap berlaku.
+     */
+    private function allPurchaseOrders(): Builder
+    {
+        return PurchaseOrder::withoutGlobalScope('organization');
+    }
+
     public function dashboard(): JsonResponse
     {
         $totalUsers = User::where('is_super_admin', false)->count();
         $totalOrgs = Organization::count();
-        $totalPOs = PurchaseOrder::count();
-        $totalRevenue = PurchaseOrder::where('status', 'completed')->sum('total');
+        $totalPOs = $this->allPurchaseOrders()->count();
+        $totalRevenue = $this->allPurchaseOrders()->where('status', 'completed')->sum('total');
 
         $newUsersThisMonth = User::where('is_super_admin', false)
             ->where('created_at', '>=', now()->startOfMonth())
@@ -43,8 +53,8 @@ class SuperAdminController extends Controller
                 'users' => User::where('is_super_admin', false)
                     ->whereBetween('created_at', [$start, $end])->count(),
                 'orgs' => Organization::whereBetween('created_at', [$start, $end])->count(),
-                'pos' => PurchaseOrder::whereBetween('created_at', [$start, $end])->count(),
-                'revenue' => (float) PurchaseOrder::where('status', 'completed')
+                'pos' => $this->allPurchaseOrders()->whereBetween('created_at', [$start, $end])->count(),
+                'revenue' => (float) $this->allPurchaseOrders()->where('status', 'completed')
                     ->whereBetween('created_at', [$start, $end])->sum('total'),
             ];
         })->values();
@@ -53,7 +63,8 @@ class SuperAdminController extends Controller
         $topOrganizations = Organization::select('organizations.id', 'organizations.name')
             ->leftJoin('purchase_orders', function ($join) {
                 $join->on('organizations.id', '=', 'purchase_orders.organization_id')
-                    ->where('purchase_orders.status', '=', 'completed');
+                    ->where('purchase_orders.status', '=', 'completed')
+                    ->whereNull('purchase_orders.deleted_at');
             })
             ->selectRaw('COUNT(purchase_orders.id) as total_pos')
             ->selectRaw('COALESCE(SUM(purchase_orders.total), 0) as total_revenue')
@@ -85,8 +96,8 @@ class SuperAdminController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('full_name', 'ilike', "%{$search}%")
-                  ->orWhere('email', 'ilike', "%{$search}%");
+                    ->orWhere('full_name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
 
@@ -143,10 +154,10 @@ class SuperAdminController extends Controller
     {
         $user = User::where('is_super_admin', false)->findOrFail($id);
 
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
 
         // Revoke all tokens when deactivating user
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             $user->tokens()->delete();
         }
 
@@ -202,8 +213,11 @@ class SuperAdminController extends Controller
 
     public function organizations(Request $request): JsonResponse
     {
+        $allOrgs = fn ($q) => $q->withoutGlobalScope('organization');
+
         $query = Organization::withCount('members')
-            ->withCount('purchaseOrders');
+            ->withCount(['purchaseOrders' => $allOrgs])
+            ->withSum(['purchaseOrders as total_revenue' => fn ($q) => $allOrgs($q)->where('status', 'completed')], 'total');
 
         if ($search = $request->input('search')) {
             $query->where('name', 'ilike', "%{$search}%");
@@ -216,9 +230,6 @@ class SuperAdminController extends Controller
             // Get owner
             $owner = $org->members()->where('role', 'owner')->with('user:id,full_name,name,email')->first();
 
-            // Get total revenue
-            $totalRevenue = $org->purchaseOrders()->where('status', 'completed')->sum('total');
-
             return [
                 'id' => $org->id,
                 'name' => $org->name,
@@ -228,7 +239,7 @@ class SuperAdminController extends Controller
                 'owner_email' => $owner?->user->email,
                 'members_count' => $org->members_count,
                 'purchase_orders_count' => $org->purchase_orders_count,
-                'total_revenue' => (float) $totalRevenue,
+                'total_revenue' => (float) $org->total_revenue,
                 'created_at' => $org->created_at,
             ];
         });
