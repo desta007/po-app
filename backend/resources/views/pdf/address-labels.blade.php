@@ -5,10 +5,6 @@
     $nameFs = $isSmall ? 10 : 15;
     $labelFs = $isSmall ? 6 : 8;
     $pad = $isSmall ? 2 : 4; // mm
-    // Space kept free at the bottom for the absolutely-positioned .po-ref footer.
-    $footerReserve = $isSmall ? 5 : 8; // mm
-    // .label-content height excludes its top padding (no border-box in DomPDF).
-    $contentHeight = $labelHeight - 1 - $footerReserve - $pad;
 @endphp
 <!DOCTYPE html>
 <html>
@@ -47,17 +43,6 @@
         }
         .label-content {
             padding: {{ $pad }}mm {{ $pad }}mm 0 {{ $pad }}mm;
-            /* Clip long content (e.g. long notes) so it never runs under the footer. */
-            height: {{ $contentHeight }}mm;
-            overflow: hidden;
-        }
-        .notes {
-            font-size: {{ $baseFs - 1 }}pt;
-            line-height: 1.2;
-            margin-top: {{ $isSmall ? '1mm' : '2mm' }};
-            padding: {{ $isSmall ? '0.5mm 1mm' : '1mm 1.5mm' }};
-            border: 1px dashed #000;
-            word-wrap: break-word;
         }
         .section-label {
             font-size: {{ $labelFs }}pt;
@@ -123,13 +108,6 @@
                     <div class="recipient-phone">{{ $label['recipient_phone'] }}</div>
                 @endif
                 <div class="recipient-address">{{ $label['recipient_address'] ?: '-' }}</div>
-
-                @if($label['notes'] !== '')
-                    <div class="notes">
-                        <span class="section-label">Catatan:</span>
-                        {!! nl2br(e($label['notes'])) !!}
-                    </div>
-                @endif
             </div>
 
             <div class="po-ref">

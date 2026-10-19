@@ -47,6 +47,11 @@
         .label-row.product {
             white-space: normal;
         }
+        /* Internal PO notes (e.g. packing instructions); may wrap, clipped by .label. */
+        .label-row.notes {
+            white-space: normal;
+            font-style: italic;
+        }
         /* Pinned to the bottom-right corner of the label. */
         .label-page {
             position: absolute;
@@ -66,6 +71,9 @@
                 <div class="label-row">{{ $label['delivery_date'] }}</div>
                 <div class="label-row">{{ $label['customer'] }}</div>
                 <div class="label-row product bold">{{ $label['product'] }}</div>
+                @if($label['notes'] !== '')
+                    <div class="label-row notes">{{ $label['notes'] }}</div>
+                @endif
             </div>
             @if($label['page_total'] > 1)
                 <div class="label-page">{{ $label['page_index'] }}/{{ $label['page_total'] }}</div>

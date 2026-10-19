@@ -207,6 +207,9 @@ class PdfExportService
             // "PO-20260822-001"), matching the address labels.
             $poSeq = $po->po_number_seq;
 
+            // Catatan internal PO (mis. "di vakum per 2 pcs") untuk petugas packing.
+            $notes = trim((string) $po->notes);
+
             $pageIndex = 0;
             foreach ($po->items as $item) {
                 $qty = max(1, (int) $item->quantity);
@@ -217,6 +220,7 @@ class PdfExportService
                         'delivery_date' => $deliveryDate,
                         'customer' => $po->customer->name ?? '-',
                         'product' => $item->product_name,
+                        'notes' => $notes,
                         'page_index' => $pageIndex,
                         'page_total' => $poTotal,
                     ];
@@ -283,8 +287,6 @@ class PdfExportService
                 'recipient_name' => $po->customer->name ?? '-',
                 'recipient_phone' => $po->customer->phone ?? '',
                 'recipient_address' => $po->customer->address ?? '',
-                // Catatan internal PO (mis. "di vakum per 2 pcs") untuk petugas packing.
-                'notes' => trim((string) $po->notes),
             ];
         }
 
