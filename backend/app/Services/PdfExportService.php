@@ -283,6 +283,8 @@ class PdfExportService
                 'recipient_name' => $po->customer->name ?? '-',
                 'recipient_phone' => $po->customer->phone ?? '',
                 'recipient_address' => $po->customer->address ?? '',
+                // Catatan internal PO (mis. "di vakum per 2 pcs") untuk petugas packing.
+                'notes' => trim((string) $po->notes),
             ];
         }
 
