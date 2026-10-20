@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { AppShell } from '@/components/layout/app-shell';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ScrollToTop } from '@/components/scroll-to-top';
 
 // Auth pages
 import LoginPage from '@/pages/auth/LoginPage';
@@ -82,6 +83,7 @@ function LandingRoute() {
 export default function App() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>}>
+    <ScrollToTop />
     <Routes>
       {/* Guest routes */}
       <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
