@@ -134,6 +134,18 @@ export default function CheckoutPage() {
   const nameTouched = useRef(false);
   const addressTouched = useRef(false);
 
+  // Used to bring a missing field into view when the shopper taps the submit
+  // button — the form sits above the fold, so a silent failure looks like a
+  // dead button on mobile.
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLTextAreaElement>(null);
+  const focusField = (el: HTMLInputElement | HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus({ preventScroll: true });
+  };
+
   useEffect(() => {
     if (!slug) return;
     const digits = customerPhone.replace(/\D+/g, '');
@@ -207,12 +219,19 @@ export default function CheckoutPage() {
   };
 
   const handleSubmitOrder = async () => {
-    if (!customerName.trim() || !customerPhone.trim()) {
-      toast.error('Mohon lengkapi Nama dan No. HP.');
+    if (!customerName.trim()) {
+      toast.error('Mohon isi Nama Lengkap.');
+      focusField(nameInputRef.current);
+      return;
+    }
+    if (!customerPhone.trim()) {
+      toast.error('Mohon isi No. WhatsApp.');
+      focusField(phoneInputRef.current);
       return;
     }
     if (addressRequired && !customerAddress.trim()) {
       toast.error('Mohon isi Alamat Pengiriman untuk pesanan yang dikirim.');
+      focusField(addressInputRef.current);
       return;
     }
     if (!deliveryDate) {
@@ -421,14 +440,15 @@ export default function CheckoutPage() {
             <User size={15} className="text-primary" />
             <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-700">Data Penerima</h4>
           </div>
-          <Input label="Nama Lengkap" placeholder="Cth: Budi Santoso" value={customerName} onChange={(e) => { nameTouched.current = true; setCustomerName(e.target.value); }} />
-          <Input label="No. WhatsApp" placeholder="Cth: 08123456789" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+          <Input ref={nameInputRef} label="Nama Lengkap" placeholder="Cth: Budi Santoso" value={customerName} onChange={(e) => { nameTouched.current = true; setCustomerName(e.target.value); }} />
+          <Input ref={phoneInputRef} type="tel" inputMode="tel" label="No. WhatsApp" placeholder="Cth: 08123456789" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
           {addressRequired && (
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                 <MapPin size={13} className="text-gray-400" /> Alamat Pengiriman
               </label>
               <textarea
+                ref={addressInputRef}
                 className="w-full border border-gray-300 rounded-[6px] px-3 py-2.5 text-[14px] min-h-[80px] focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-50"
                 placeholder="Cth: Jl. Sudirman No. 12, RT 01/02, Jakarta"
                 value={customerAddress}
@@ -573,7 +593,7 @@ export default function CheckoutPage() {
           <Button
             onClick={handleSubmitOrder}
             className={`flex-1 rounded-full h-12 ${paymentPref === 'online' ? '' : 'bg-green-500 hover:bg-green-600 text-white border-0'}`}
-            disabled={!customerName.trim() || !customerPhone.trim() || (addressRequired && !customerAddress.trim()) || isSubmitting}
+            disabled={isSubmitting}
             loading={isSubmitting}
           >
             {paymentPref === 'online' ? 'Lanjut ke Pembayaran' : 'Kirim ke WhatsApp'}
