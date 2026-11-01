@@ -108,6 +108,19 @@ class FreeTierLimitService
         ];
     }
 
+    /**
+     * Respons 403 untuk fitur yang khusus Premium (bukan kuota). Format sama
+     * dengan limitExceededResponse agar interceptor frontend membuka modal upgrade.
+     */
+    public function premiumFeatureResponse(string $message, string $feature): JsonResponse
+    {
+        return response()->json([
+            'message' => $message,
+            'upgrade_required' => true,
+            'resource' => $feature,
+        ], 403);
+    }
+
     private function limitExceededResponse(string $message, string $resource, int $current, int $limit): JsonResponse
     {
         return response()->json([

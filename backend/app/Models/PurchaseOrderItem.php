@@ -20,6 +20,8 @@ class PurchaseOrderItem extends Model
         'product_name',
         'quantity',
         'unit_price',
+        'original_price',
+        'discount_amount',
         'subtotal',
         'notes',
         'sort_order',
@@ -30,6 +32,8 @@ class PurchaseOrderItem extends Model
         return [
             'quantity' => 'decimal:2',
             'unit_price' => 'decimal:2',
+            'original_price' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
     }

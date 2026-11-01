@@ -45,6 +45,8 @@ class PublicCatalogController extends Controller
         }
 
         $products = $query->orderBy('category')->orderBy('name')->get();
+        // Relasi organization dipakai untuk cek Premium saat menghitung diskon.
+        $products->each->setRelation('organization', $org);
 
         $categories = Product::where('organization_id', $org->id)
             ->where('is_active', true)
@@ -117,6 +119,7 @@ class PublicCatalogController extends Controller
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+            $products->each->setRelation('organization', $org);
 
             // Total quantity per product (guards against the same product on multiple lines).
             $quantities = [];
@@ -167,12 +170,14 @@ class PublicCatalogController extends Controller
             }
 
             // Build server-authoritative line items using prices from the database.
+            // unit_price = harga setelah diskon produk; harga normal disimpan sebagai snapshot.
             $subtotal = 0;
             $lineItems = [];
             foreach ($items as $index => $item) {
                 $product = $products->get($item['product_id']);
                 $quantity = $item['quantity'];
-                $unitPrice = $product->price;
+                $unitPrice = $product->finalPrice();
+                $discountAmount = $product->discountAmount();
                 $lineSubtotal = round($quantity * $unitPrice, 2);
                 $subtotal += $lineSubtotal;
 
@@ -181,6 +186,8 @@ class PublicCatalogController extends Controller
                     'product_name' => $product->name,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
+                    'original_price' => $discountAmount > 0 ? (float) $product->price : null,
+                    'discount_amount' => $discountAmount,
                     'subtotal' => $lineSubtotal,
                     'sort_order' => $index,
                 ];
@@ -326,6 +333,10 @@ class PublicCatalogController extends Controller
             $lineTotal = 'Rp' . number_format((float) $item['subtotal'], 0, ',', '.');
             $qty = rtrim(rtrim(number_format((float) $item['quantity'], 2, '.', ''), '0'), '.');
             $text .= ($i + 1) . ". {$item['product_name']} (x{$qty}) - {$lineTotal}\n";
+            if (($item['discount_amount'] ?? 0) > 0) {
+                $text .= '   Diskon: ~Rp' . number_format((float) $item['original_price'], 0, ',', '.') . '~'
+                    . ' → Rp' . number_format((float) $item['unit_price'], 0, ',', '.') . "/item\n";
+            }
         }
         if ($shippingLabel) {
             $text .= "Pengiriman: {$shippingLabel}";
@@ -515,6 +526,8 @@ class PublicCatalogController extends Controller
                     'product_name' => $item->product_name,
                     'quantity' => (float) $item->quantity,
                     'unit_price' => (float) $item->unit_price,
+                    'original_price' => $item->original_price !== null ? (float) $item->original_price : null,
+                    'discount_amount' => (float) $item->discount_amount,
                     'subtotal' => (float) $item->subtotal,
                 ]),
                 'organization' => ['name' => $org->name, 'phone' => $org->phone],

@@ -35,15 +35,7 @@ class PurchaseOrderService
             $po = PurchaseOrder::create($data);
 
             foreach ($items as $index => $item) {
-                $po->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
-                    'product_name' => $item['product_name'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => round($item['quantity'] * $item['unit_price'], 2),
-                    'notes' => $item['notes'] ?? null,
-                    'sort_order' => $index,
-                ]);
+                $po->items()->create($this->buildItemRow($item, $index));
             }
 
             // Log initial status
@@ -71,15 +63,7 @@ class PurchaseOrderService
             $po->items()->delete();
 
             foreach ($items as $index => $item) {
-                $po->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
-                    'product_name' => $item['product_name'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'subtotal' => round($item['quantity'] * $item['unit_price'], 2),
-                    'notes' => $item['notes'] ?? null,
-                    'sort_order' => $index,
-                ]);
+                $po->items()->create($this->buildItemRow($item, $index));
             }
 
             return $po->load('items', 'customer');
@@ -137,6 +121,7 @@ class PurchaseOrderService
             'product_name' => $item->product_name,
             'quantity' => $item->quantity,
             'unit_price' => $item->unit_price,
+            'original_price' => $item->original_price,
             'notes' => $item->notes,
         ])->toArray();
 
@@ -148,6 +133,30 @@ class PurchaseOrderService
             'tax' => $po->tax,
             'notes' => $po->notes,
         ], $items);
+    }
+
+    /**
+     * Baris item PO. unit_price adalah harga NET (setelah diskon produk);
+     * original_price opsional = harga normal. Potongan per unit diturunkan di
+     * server dari selisih keduanya, sehingga snapshot selalu konsisten.
+     */
+    private function buildItemRow(array $item, int $index): array
+    {
+        $unitPrice = (float) $item['unit_price'];
+        $originalPrice = isset($item['original_price']) ? (float) $item['original_price'] : null;
+        $hasDiscount = $originalPrice !== null && $originalPrice > $unitPrice;
+
+        return [
+            'product_id' => $item['product_id'] ?? null,
+            'product_name' => $item['product_name'],
+            'quantity' => $item['quantity'],
+            'unit_price' => $unitPrice,
+            'original_price' => $hasDiscount ? round($originalPrice, 2) : null,
+            'discount_amount' => $hasDiscount ? round($originalPrice - $unitPrice, 2) : 0,
+            'subtotal' => round($item['quantity'] * $unitPrice, 2),
+            'notes' => $item['notes'] ?? null,
+            'sort_order' => $index,
+        ];
     }
 
     public function calculateTotals(array $items, float $discount = 0, float $tax = 0, float $shippingCost = 0): array

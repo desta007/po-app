@@ -24,6 +24,13 @@ class ProductResource extends JsonResource
             'unit' => $this->unit,
             'price' => (float) $this->price,
             'cost' => $this->cost ? (float) $this->cost : null,
+            'discount_enabled' => (bool) $this->discount_enabled,
+            'discount_type' => $this->discount_type?->value,
+            'discount_value' => (float) $this->discount_value,
+            // Computed: memperhitungkan status Premium organisasi.
+            'has_active_discount' => $this->hasActiveDiscount(),
+            'discount_amount' => $this->discountAmount(),
+            'final_price' => $this->finalPrice(),
             'category' => $this->category,
             'image_url' => $this->image_url,
             'images' => $images,

@@ -251,7 +251,10 @@
                     @endif
                 </td>
                 <td class="text-center">{{ number_format($item->quantity, 0) }}</td>
-                <td class="text-right">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                <td class="text-right">
+                    @if($item->discount_amount > 0)<span style="font-size:10px;color:#999;text-decoration:line-through;">Rp {{ number_format($item->original_price, 0, ',', '.') }}</span><br>@endif
+                    Rp {{ number_format($item->unit_price, 0, ',', '.') }}
+                </td>
                 <td class="text-right">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
             </tr>
             @endforeach

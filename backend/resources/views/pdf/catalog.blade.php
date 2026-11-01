@@ -40,6 +40,7 @@
 
         .p-name { font-size: 11px; font-weight: bold; color: #111827; margin-bottom: 2px; }
         .p-price { font-size: 12px; font-weight: bold; color: #059669; }
+        .p-strike { font-size: 10px; color: #9ca3af; text-decoration: line-through; margin-right: 3px; }
         .p-unit { font-size: 9px; color: #6b7280; }
         .p-oos { font-size: 9px; color: #dc2626; font-weight: bold; margin-top: 2px; }
         .p-desc { font-size: 9px; color: #6b7280; margin-top: 3px; line-height: 1.3; }
@@ -93,6 +94,9 @@
                                     @endif
                                 </div>
                                 <div class="p-name">{{ $p['name'] }}</div>
+                                @if($p['original_price'])
+                                    <span class="p-strike">Rp{{ number_format($p['original_price'], 0, ',', '.') }}</span>
+                                @endif
                                 <span class="p-price">Rp{{ number_format($p['price'], 0, ',', '.') }}</span>
                                 <span class="p-unit">/ {{ $p['unit'] }}</span>
                                 @if($p['out_of_stock'])

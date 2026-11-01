@@ -62,6 +62,9 @@ class PdfExportService
         // Items with notes take extra space (additional <span> line)
         $itemsWithNotes = $po->items->filter(fn ($item) => ! empty($item->notes))->count();
 
+        // Items with a product discount show the struck-through normal price on an extra line
+        $itemsWithDiscount = $po->items->filter(fn ($item) => $item->discount_amount > 0)->count();
+
         // Conditional sections
         $hasDiscount = $po->discount > 0;
         $hasTax = $po->tax > 0;
@@ -81,6 +84,7 @@ class PdfExportService
             + $tableHeader
             + ($itemCount * $itemHeight)
             + ($itemsWithNotes * 5)
+            + ($itemsWithDiscount * 4)
             + $summary
             + ($hasDiscount ? 5 : 0)
             + ($hasTax ? 5 : 0)
@@ -320,10 +324,12 @@ class PdfExportService
     {
         $groups = [];
         foreach ($products as $product) {
+            $product->setRelation('organization', $organization);
             $category = $product->category ?: 'Lainnya';
             $groups[$category][] = [
                 'name' => $product->name,
-                'price' => (float) $product->price,
+                'price' => $product->finalPrice(),
+                'original_price' => $product->hasActiveDiscount() ? (float) $product->price : null,
                 'unit' => $product->unit ?: 'pcs',
                 'description' => $product->description,
                 'out_of_stock' => $product->track_stock && (float) $product->stock_qty <= 0,

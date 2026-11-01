@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductRequest extends FormRequest
 {
+    use ValidatesProductDiscount;
+
     public function authorize(): bool { return true; }
 
     /**
@@ -24,7 +26,7 @@ class StoreProductRequest extends FormRequest
         // manage them, sending an explicit null. Drop the key so the DB default
         // applies on create and the existing value is preserved on update,
         // instead of a null-insert that fails with a 500 "Server Error".
-        foreach (['stock_qty', 'track_stock', 'is_active', 'show_in_catalog'] as $key) {
+        foreach (['stock_qty', 'track_stock', 'is_active', 'show_in_catalog', 'discount_enabled', 'discount_value'] as $key) {
             if ($this->has($key) && $this->input($key) === null) {
                 $this->getInputSource()->remove($key);
             }
@@ -46,6 +48,7 @@ class StoreProductRequest extends FormRequest
             'track_stock' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'show_in_catalog' => ['nullable', 'boolean'],
+            ...$this->discountRules(),
         ];
     }
 

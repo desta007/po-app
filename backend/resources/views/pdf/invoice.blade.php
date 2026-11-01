@@ -83,7 +83,10 @@
                     @if($item->notes)<span class="item-meta">{{ $item->notes }}</span>@endif
                 </td>
                 <td class="text-right col-qty">{{ number_format($item->quantity, 0) }}</td>
-                <td class="text-right col-price">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                <td class="text-right col-price">
+                    @if($item->discount_amount > 0)<span class="item-meta" style="text-decoration: line-through;">{{ number_format($item->original_price, 0, ',', '.') }}</span><br>@endif
+                    {{ number_format($item->unit_price, 0, ',', '.') }}
+                </td>
                 <td class="text-right col-total">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
             </tr>
             @endforeach
