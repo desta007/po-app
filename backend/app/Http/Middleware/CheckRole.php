@@ -12,9 +12,13 @@ class CheckRole
      * Handle an incoming request.
      * Usage: middleware('role:owner,admin')
      *
-     * @param string $roles Comma-separated list of allowed roles
+     * Laravel memecah parameter middleware berdasarkan koma, sehingga
+     * 'role:owner,admin' tiba sebagai argumen terpisah ('owner', 'admin') —
+     * karena itu wajib variadic, bukan satu string.
+     *
+     * @param string ...$roles Allowed roles
      */
-    public function handle(Request $request, Closure $next, string $roles): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
@@ -29,7 +33,7 @@ class CheckRole
             return $next($request);
         }
 
-        $allowedRoles = explode(',', $roles);
+        $allowedRoles = $roles;
 
         $membership = $user->organizationMemberships()
             ->where('organization_id', $user->current_org_id)
