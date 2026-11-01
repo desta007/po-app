@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatRupiah } from '@/lib/utils';
+import { itemHasDiscount } from '@/lib/discount';
 import { Store, CheckCircle2, Clock, Package, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -130,7 +131,15 @@ export default function OrderStatusPage() {
               <div key={i} className="flex justify-between text-[13px]">
                 <div className="flex gap-2">
                   <span className="font-medium text-gray-500">{item.quantity}x</span>
-                  <span className="text-gray-900">{item.product_name}</span>
+                  <div>
+                    <span className="text-gray-900">{item.product_name}</span>
+                    {itemHasDiscount(item) && (
+                      <div className="text-[11px] text-gray-500">
+                        <span className="line-through text-gray-400 mr-1">{formatRupiah(item.original_price)}</span>
+                        {formatRupiah(item.unit_price)} / item
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <span className="font-semibold">{formatRupiah(item.subtotal)}</span>
               </div>

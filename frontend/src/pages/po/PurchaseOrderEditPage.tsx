@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ROUTES } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
+import { itemPricingFromProduct, itemHasDiscount } from '@/lib/discount';
 import { toast } from 'sonner';
 import { Trash2, Check } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -17,7 +18,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CustomerSelect } from '@/components/ui/customer-select';
 import { DeliveryDatePicker, OrderDateDisplay, formatTanggal } from '@/components/ui/delivery-date-picker';
 
-interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
+interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; original_price: number | null; notes: string; }
 
 export default function PurchaseOrderEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -62,6 +63,8 @@ export default function PurchaseOrderEditPage() {
           product_name: it.product_name,
           quantity: Number(it.quantity),
           unit_price: Number(it.unit_price),
+          // Pertahankan snapshot harga normal agar diskon tidak hilang saat PO disimpan ulang.
+          original_price: it.original_price != null ? Number(it.original_price) : null,
           notes: it.notes || ''
         })));
       }
@@ -82,7 +85,7 @@ export default function PurchaseOrderEditPage() {
   const updateItem = (i: number, field: keyof ItemRow, value: any) => {
     const next = [...items];
     (next[i] as any)[field] = value;
-    if (field === 'product_id' && value) { const p = (products as any[]).find((p: any) => p.id === value); if (p) { (next[i] as any).product_name = p.name; (next[i] as any).unit_price = p.price; } }
+    if (field === 'product_id' && value) { const p = (products as any[]).find((p: any) => p.id === value); const row = next[i]; if (p && row) { next[i] = { ...row, product_name: p.name, ...itemPricingFromProduct(p) }; } }
     setItems(next);
   };
 
@@ -146,7 +149,7 @@ export default function PurchaseOrderEditPage() {
                       )}
                     </td>
                     <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.quantity} onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))} min={1} /></td>
-                    <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} /></td>
+                    <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} />{itemHasDiscount(item) && <div className="text-[11px] text-gray-400 mt-0.5">Normal <span className="line-through">{formatRupiah(item.original_price)}</span></div>}</td>
                     <td className="px-3 py-2 text-right font-semibold text-[13px] tabular-nums">{formatRupiah(item.quantity * item.unit_price)}</td>
                     <td className="px-2"><button onClick={() => removeItem(i)} className="text-danger p-1 hover:bg-red-50 rounded-md"><Trash2 size={14} /></button></td>
                   </tr>
@@ -162,7 +165,7 @@ export default function PurchaseOrderEditPage() {
                 if (!val) return;
                 const p = products.find((x: any) => x.id === val);
                 if (p) {
-                  setItems([...items, { product_id: p.id, product_name: p.name, quantity: 1, unit_price: p.price, notes: '' }]);
+                  setItems([...items, { product_id: p.id, product_name: p.name, quantity: 1, ...itemPricingFromProduct(p), notes: '' }]);
                 }
               }}
               placeholder="+ Tambah Produk dari Katalog"
@@ -203,7 +206,7 @@ export default function PurchaseOrderEditPage() {
           <p className="text-[13px] mb-3"><strong>Kirim:</strong> {formatTanggal(deliveryDate)}</p>
           <div className="rounded-[10px] border border-gray-200 overflow-hidden mb-4">
             <table className="w-full border-collapse"><thead className="bg-gray-50 border-b border-gray-200"><tr><th className="p-2.5 text-left text-[11px] font-bold text-gray-500 uppercase">Produk</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Qty</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Harga</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Subtotal</th></tr></thead>
-            <tbody>{items.filter(it => it.product_name).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>
+            <tbody>{items.filter(it => it.product_name).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{itemHasDiscount(it) && <div className="text-[11px] text-gray-400 line-through">{formatRupiah(it.original_price)}</div>}{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>
           </div>
           <div className="bg-primary-50 p-4 rounded-[10px] mb-4 space-y-1">
             <div className="flex justify-between text-[13px]"><span>Subtotal</span><span className="font-semibold">{formatRupiah(subtotal)}</span></div>

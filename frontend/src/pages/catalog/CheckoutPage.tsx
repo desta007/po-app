@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DeliveryDatePicker, toLocalISO } from '@/components/ui/delivery-date-picker';
 import { formatRupiah } from '@/lib/utils';
+import { effectivePrice, refreshCartProducts } from '@/lib/discount';
 import { ArrowLeft, Store, User, Truck, Wallet, Receipt, Check, MapPin, CalendarDays, CreditCard, MessageCircle, Minus, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -90,6 +91,11 @@ export default function CheckoutPage() {
     queryFn: () => apiClient.get<CatalogData>(`/api/catalog/${slug}`).then(res => res.data),
     retry: false,
   });
+
+  // Segarkan harga/diskon produk di keranjang (snapshot localStorage bisa basi).
+  useEffect(() => {
+    if (catalog?.products) setCart(prev => refreshCartProducts(prev, catalog.products));
+  }, [catalog?.products]);
 
   const onlinePaymentAvailable = catalog?.store?.online_payment_available ?? false;
 
@@ -179,7 +185,7 @@ export default function CheckoutPage() {
     return () => clearTimeout(handle);
   }, [customerPhone, slug]);
 
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (effectivePrice(item.product) * item.quantity), 0), [cart]);
 
   // The shipping_method value the backend expects: 'pickup' or a delivery option id.
   const effectiveShippingId = fulfillmentType === 'pickup' ? 'pickup' : deliveryMethodId;
@@ -204,7 +210,7 @@ export default function CheckoutPage() {
     text += `*Tanggal ${fulfillmentType === 'pickup' ? 'Ambil' : 'Kirim'}:* ${deliveryDate}\n\n`;
     text += `*Detail Pesanan*\n`;
     cart.forEach((item, i) => {
-      text += `${i + 1}. ${item.product.name} (x${item.quantity}) - ${formatRupiah(item.product.price * item.quantity)}\n`;
+      text += `${i + 1}. ${item.product.name} (x${item.quantity}) - ${formatRupiah(effectivePrice(item.product) * item.quantity)}\n`;
     });
     if (shippingLabel) text += `\nPengiriman: ${shippingLabel}${shippingCost > 0 ? ` (${formatRupiah(shippingCost)})` : ''}`;
     text += `\nTotal: *${formatRupiah(grandTotal)}*\n\nMohon info ketersediaannya. Terima kasih.`;
@@ -256,7 +262,7 @@ export default function CheckoutPage() {
           product_id: item.product.id,
           product_name: item.product.name,
           quantity: item.quantity,
-          unit_price: item.product.price,
+          unit_price: effectivePrice(item.product), // informatif saja — server memakai harga dari DB
         })),
       });
 
@@ -531,7 +537,7 @@ export default function CheckoutPage() {
               <div key={idx} className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-semibold text-gray-800 line-clamp-1">{item.product.name}</p>
-                  <p className="text-[12px] text-gray-500">{formatRupiah(item.product.price)} × {item.quantity} = <span className="font-semibold text-gray-700">{formatRupiah(item.product.price * item.quantity)}</span></p>
+                  <p className="text-[12px] text-gray-500">{item.product.has_active_discount && <span className="line-through text-gray-400 mr-1">{formatRupiah(item.product.price)}</span>}{formatRupiah(effectivePrice(item.product))} × {item.quantity} = <span className="font-semibold text-gray-700">{formatRupiah(effectivePrice(item.product) * item.quantity)}</span></p>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <div className="flex items-center border border-gray-200 rounded-full overflow-hidden">

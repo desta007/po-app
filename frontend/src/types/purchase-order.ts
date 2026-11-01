@@ -10,6 +10,10 @@ export interface PurchaseOrderItem {
   product_name: string;
   quantity: number;
   unit_price: number;
+  /** Harga normal sebelum diskon produk (null jika tanpa diskon). */
+  original_price: number | null;
+  /** Potongan per unit. */
+  discount_amount: number;
   subtotal: number;
   notes: string | null;
   sort_order: number;

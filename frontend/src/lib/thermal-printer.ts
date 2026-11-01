@@ -485,6 +485,10 @@ export function buildReceipt(
     if (item.notes) for (const l of wrap(item.notes, cols)) e.line(l);
     const qtyPrice = `  ${fmt(item.quantity)} x ${fmt(item.unit_price)}`;
     e.line(twoCol(qtyPrice, fmt(item.subtotal), cols));
+    // Struk tak bisa mencoret teks — tampilkan harga normal & potongan sebagai baris info.
+    if (item.original_price != null && item.discount_amount > 0) {
+      e.line(`  (Normal ${fmt(item.original_price)}, disc -${fmt(item.discount_amount)})`);
+    }
   }
   e.line(divider(cols));
 

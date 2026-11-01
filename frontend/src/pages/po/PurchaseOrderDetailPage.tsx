@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PO_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants';
 import { formatRupiah, formatDate, getInitials, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { tryOpenPdfViaSignedUrl } from '@/api/print';
+import { itemHasDiscount } from '@/lib/discount';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -307,7 +308,7 @@ export default function PurchaseOrderDetailPage() {
             <div className="overflow-x-auto rounded-[10px] border border-gray-200">
               <table className="w-full border-collapse">
                 <thead className="bg-gray-50 border-b border-gray-200"><tr><th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Produk</th><th className="px-3.5 py-2.5 text-right text-[11px] font-bold text-gray-500 uppercase tracking-wider">Qty</th><th className="px-3.5 py-2.5 text-right text-[11px] font-bold text-gray-500 uppercase tracking-wider">Harga</th><th className="px-3.5 py-2.5 text-right text-[11px] font-bold text-gray-500 uppercase tracking-wider">Subtotal</th></tr></thead>
-                <tbody>{po.items?.map((item: any) => (<tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"><td className="px-3.5 py-3.5 text-[13px]"><strong>{item.product_name}</strong>{item.notes && <div className="text-[11px] text-gray-500">{item.notes}</div>}</td><td className="px-3.5 py-3.5 text-right text-[13px]">{item.quantity}</td><td className="px-3.5 py-3.5 text-right text-[13px] font-semibold tabular-nums">{formatRupiah(item.unit_price)}</td><td className="px-3.5 py-3.5 text-right text-[13px] font-semibold tabular-nums">{formatRupiah(item.subtotal)}</td></tr>))}</tbody>
+                <tbody>{po.items?.map((item: any) => (<tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"><td className="px-3.5 py-3.5 text-[13px]"><strong>{item.product_name}</strong>{item.notes && <div className="text-[11px] text-gray-500">{item.notes}</div>}</td><td className="px-3.5 py-3.5 text-right text-[13px]">{item.quantity}</td><td className="px-3.5 py-3.5 text-right text-[13px] font-semibold tabular-nums">{itemHasDiscount(item) && <div className="text-[11px] font-normal text-gray-400 line-through">{formatRupiah(item.original_price)}</div>}{formatRupiah(item.unit_price)}</td><td className="px-3.5 py-3.5 text-right text-[13px] font-semibold tabular-nums">{formatRupiah(item.subtotal)}</td></tr>))}</tbody>
               </table>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-200 space-y-1">

@@ -11,13 +11,16 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ROUTES } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils';
+import { itemPricingFromProduct, itemHasDiscount } from '@/lib/discount';
 import { toast } from 'sonner';
 import { Plus, Trash2, Check } from 'lucide-react';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CustomerSelect } from '@/components/ui/customer-select';
 import { DeliveryDatePicker, OrderDateDisplay, toLocalISO, formatTanggal } from '@/components/ui/delivery-date-picker';
 
-interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; notes: string; }
+interface ItemRow { product_id: string | null; product_name: string; quantity: number; unit_price: number; original_price: number | null; notes: string; }
+
+const EMPTY_ITEM: ItemRow = { product_id: null, product_name: '', quantity: 1, unit_price: 0, original_price: null, notes: '' };
 
 export default function PurchaseOrderCreatePage() {
   const navigate = useNavigate();
@@ -31,7 +34,7 @@ export default function PurchaseOrderCreatePage() {
   const [shippingCost, setShippingCost] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [notes, setNotes] = useState('');
-  const [items, setItems] = useState<ItemRow[]>([{ product_id: null, product_name: '', quantity: 1, unit_price: 0, notes: '' }]);
+  const [items, setItems] = useState<ItemRow[]>([{ ...EMPTY_ITEM }]);
 
   const { data: productsData } = useQuery({ queryKey: ['products-all'], queryFn: () => productsApi.list({ per_page: 100 }) });
   const products = productsData?.data?.data || [];
@@ -45,12 +48,12 @@ export default function PurchaseOrderCreatePage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Gagal.'),
   });
 
-  const addItem = () => setItems([...items, { product_id: null, product_name: '', quantity: 1, unit_price: 0, notes: '' }]);
+  const addItem = () => setItems([...items, { ...EMPTY_ITEM }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: keyof ItemRow, value: any) => {
     const next = [...items];
     (next[i] as any)[field] = value;
-    if (field === 'product_id' && value) { const p = (products as any[]).find((p: any) => p.id === value); if (p) { (next[i] as any).product_name = p.name; (next[i] as any).unit_price = p.price; } }
+    if (field === 'product_id' && value) { const p = (products as any[]).find((p: any) => p.id === value); const row = next[i]; if (p && row) { next[i] = { ...row, product_name: p.name, ...itemPricingFromProduct(p) }; } }
     setItems(next);
   };
 
@@ -105,7 +108,7 @@ export default function PurchaseOrderCreatePage() {
                   <tr key={i} className="border-b border-gray-100">
                     <td className="px-3 py-2"><SearchableSelect options={products.map((p: any) => ({ value: p.id, label: p.name }))} value={item.product_id || ''} onChange={(val) => updateItem(i, 'product_id', val || null)} placeholder="-- Pilih Produk --" /></td>
                     <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.quantity} onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))} min={1} /></td>
-                    <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} /></td>
+                    <td className="px-3 py-2"><input type="number" className="w-full border border-gray-300 rounded-[6px] px-2 py-2 text-[13px]" value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))} />{itemHasDiscount(item) && <div className="text-[11px] text-gray-400 mt-0.5">Normal <span className="line-through">{formatRupiah(item.original_price)}</span></div>}</td>
                     <td className="px-3 py-2 text-right font-semibold text-[13px] tabular-nums">{formatRupiah(item.quantity * item.unit_price)}</td>
                     <td className="px-2">{items.length > 1 && <button onClick={() => removeItem(i)} className="text-danger p-1"><Trash2 size={14} /></button>}</td>
                   </tr>
@@ -153,7 +156,7 @@ export default function PurchaseOrderCreatePage() {
           <p className="text-[13px] mb-3"><strong>Kirim:</strong> {formatTanggal(deliveryDate)}</p>
           <div className="rounded-[10px] border border-gray-200 overflow-hidden mb-4">
             <table className="w-full border-collapse"><thead className="bg-gray-50 border-b border-gray-200"><tr><th className="p-2.5 text-left text-[11px] font-bold text-gray-500 uppercase">Produk</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Qty</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Harga</th><th className="p-2.5 text-right text-[11px] font-bold text-gray-500 uppercase">Subtotal</th></tr></thead>
-            <tbody>{items.filter(it => it.product_name || it.product_id).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>
+            <tbody>{items.filter(it => it.product_name || it.product_id).map((it, i) => (<tr key={i} className="border-b border-gray-100"><td className="p-2.5 text-[13px]">{it.product_name}</td><td className="p-2.5 text-right text-[13px]">{it.quantity}</td><td className="p-2.5 text-right text-[13px]">{itemHasDiscount(it) && <div className="text-[11px] text-gray-400 line-through">{formatRupiah(it.original_price)}</div>}{formatRupiah(it.unit_price)}</td><td className="p-2.5 text-right text-[13px] font-semibold">{formatRupiah(it.quantity * it.unit_price)}</td></tr>))}</tbody></table>
           </div>
           <div className="bg-primary-50 p-4 rounded-[10px] mb-4 space-y-1">
             <div className="flex justify-between text-[13px]"><span>Subtotal</span><span className="font-semibold">{formatRupiah(subtotal)}</span></div>

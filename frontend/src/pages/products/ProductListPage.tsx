@@ -7,14 +7,16 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X, Boxes, FileText } from 'lucide-react';
+import { Plus, Search, Package, Download, Trash2, Image as ImageIcon, Upload, Globe, X, Boxes, FileText, Tag } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { formatRupiah, storageUrl, openBlankTab, fillPdfTab } from '@/lib/utils';
 import { tryOpenPdfViaSignedUrl } from '@/api/print';
 import { toast } from 'sonner';
 import { useQuota } from '@/hooks/use-quota';
+import { useAuth } from '@/contexts/auth-context';
 import { Crown } from 'lucide-react';
 import type { Product } from '@/types/product';
+import { discountBadgeLabel, type DiscountType } from '@/lib/discount';
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
   'Kue': 'linear-gradient(135deg, #FFEEC7 0%, #F4C57B 100%)',
@@ -38,11 +40,22 @@ function getStockBadge(qty: number) {
   return <Badge variant="success" dot>Stock {qty}</Badge>;
 }
 
-const EMPTY_FORM = { name: '', sku: '', description: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, track_stock: true, show_in_catalog: true };
+const EMPTY_FORM = {
+  name: '', sku: '', description: '', price: 0, cost: 0, unit: 'pcs', category: '', stock_qty: 0, track_stock: true, show_in_catalog: true,
+  discount_enabled: false, discount_type: 'percent' as DiscountType, discount_value: 0,
+};
+
+/** Preview potongan per unit di form (server tetap sumber kebenaran). */
+function previewDiscount(price: number, type: DiscountType, value: number): number {
+  const amount = type === 'percent' ? (price * value) / 100 : value;
+  return Math.max(0, Math.min(amount, price));
+}
 
 export default function ProductListPage() {
   const queryClient = useQueryClient();
   const { productUsage, isPremiumOrAdmin } = useQuota();
+  const { role, isSuperAdmin } = useAuth();
+  const canManageDiscount = isSuperAdmin || role === 'owner' || role === 'admin';
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -172,8 +185,24 @@ export default function ProductListPage() {
       stock_qty: product.stock_qty ?? 0,
       track_stock: product.track_stock ?? true,
       show_in_catalog: product.show_in_catalog ?? true,
+      discount_enabled: product.discount_enabled ?? false,
+      discount_type: product.discount_type ?? 'percent',
+      discount_value: product.discount_value ?? 0,
     });
     setDialogOpen(true);
+  }
+
+  function toggleDiscount() {
+    if (!form.discount_enabled && !isPremiumOrAdmin) {
+      window.dispatchEvent(new CustomEvent('upgrade-required', {
+        detail: {
+          message: 'Diskon produk hanya tersedia untuk paket Premium. Upgrade ke Premium untuk menggunakan fitur ini.',
+          resource: 'product_discount',
+        },
+      }));
+      return;
+    }
+    setForm({ ...form, discount_enabled: !form.discount_enabled });
   }
 
   function closeDialog() {
@@ -284,6 +313,7 @@ export default function ProductListPage() {
               const cat = p.category || 'default';
               const gradient = CATEGORY_GRADIENTS[cat] || CATEGORY_GRADIENTS['default'];
               const emoji = CATEGORY_EMOJIS[cat] || CATEGORY_EMOJIS['default'];
+              const badge = discountBadgeLabel(p);
               return (
                 <Card key={p.id} padding="none" className="group overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => openEdit(p)}>
                   <div
@@ -294,6 +324,11 @@ export default function ProductListPage() {
                       <img src={storageUrl(p.image_url)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <span className="text-5xl">{emoji}</span>
+                    )}
+                    {badge && (
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
+                        {badge}
+                      </div>
                     )}
                     {!p.show_in_catalog && (
                       <div className="absolute top-2 right-2 bg-gray-800/75 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded flex items-center gap-1">
@@ -314,7 +349,10 @@ export default function ProductListPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-[10px] text-gray-400 font-medium">Harga Jual</div>
-                        <span className="font-bold text-primary">{formatRupiah(p.price)}</span>
+                        {p.has_active_discount && (
+                          <div className="text-[11px] text-gray-400 line-through leading-tight">{formatRupiah(p.price)}</div>
+                        )}
+                        <span className="font-bold text-primary">{formatRupiah(p.has_active_discount ? p.final_price : p.price)}</span>
                       </div>
                       {getStockBadge(p.stock_qty ?? 0)}
                     </div>
@@ -353,6 +391,85 @@ export default function ProductListPage() {
             </div>
             <Input label="Harga Pokok" type="number" value={form.cost} onChange={(e) => setForm({...form, cost: Number(e.target.value)})} />
             <Input label="Harga Jual *" type="number" value={form.price} onChange={(e) => setForm({...form, price: Number(e.target.value)})} required />
+
+            <div className="py-2 px-3 rounded-[6px] bg-gray-50 border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Tag size={15} className="text-gray-500" />
+                  <div>
+                    <div className="text-[13px] font-semibold text-gray-700 flex items-center gap-1.5">
+                      Diskon Produk
+                      {!isPremiumOrAdmin && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-primary bg-primary-50 px-1.5 py-0.5 rounded">
+                          <Crown size={10} /> Premium
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-gray-500">Harga diskon dipakai otomatis di PO & katalog online</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleDiscount}
+                  disabled={!canManageDiscount}
+                  title={canManageDiscount ? undefined : 'Hanya owner/admin yang dapat mengubah diskon'}
+                  className={`relative rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${form.discount_enabled ? 'bg-primary' : 'bg-gray-300'}`}
+                  style={{ width: 40, height: 22 }}
+                >
+                  <span
+                    className="absolute top-0.5 left-0.5 rounded-full bg-white shadow transition-transform"
+                    style={{ width: 18, height: 18, transform: form.discount_enabled ? 'translateX(18px)' : 'translateX(0)' }}
+                  />
+                </button>
+              </div>
+
+              {form.discount_enabled && (
+                <div className="mt-3 space-y-2.5">
+                  <div className="flex gap-2">
+                    {(['percent', 'nominal'] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        disabled={!canManageDiscount}
+                        onClick={() => setForm({ ...form, discount_type: t })}
+                        className={`flex-1 py-1.5 rounded-[6px] text-[13px] font-semibold border transition-colors disabled:opacity-60 ${form.discount_type === t ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'}`}
+                      >
+                        {t === 'percent' ? 'Persen (%)' : 'Nominal (Rp)'}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    label={form.discount_type === 'percent' ? 'Diskon (%) *' : 'Potongan per item (Rp) *'}
+                    type="number"
+                    min={0}
+                    max={form.discount_type === 'percent' ? 100 : form.price}
+                    step="any"
+                    value={form.discount_value}
+                    onChange={(e) => setForm({ ...form, discount_value: Number(e.target.value) })}
+                    disabled={!canManageDiscount}
+                    required
+                  />
+                  {(() => {
+                    const cut = previewDiscount(form.price, form.discount_type, form.discount_value);
+                    return (
+                      <div className="text-[12px] text-gray-600">
+                        Harga setelah diskon:{' '}
+                        <span className="line-through text-gray-400 mr-1">{formatRupiah(form.price)}</span>
+                        <strong className="text-primary">{formatRupiah(form.price - cut)}</strong>
+                        {cut > 0 && <span className="text-gray-500"> (hemat {formatRupiah(cut)})</span>}
+                      </div>
+                    );
+                  })()}
+                  {!isPremiumOrAdmin && (
+                    <div className="text-[11px] text-amber-700">Paket Anda bukan Premium — diskon ini tidak diterapkan sampai Anda upgrade.</div>
+                  )}
+                </div>
+              )}
+
+              {!canManageDiscount && (
+                <div className="mt-2 text-[11px] text-gray-500">Hanya owner/admin yang dapat mengubah diskon.</div>
+              )}
+            </div>
             <Input label="Kategori" value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} />
             <Input label="Stok" type="number" value={form.stock_qty} onChange={(e) => setForm({...form, stock_qty: Number(e.target.value)})} disabled={!form.track_stock} />
 

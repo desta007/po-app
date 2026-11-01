@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { formatRupiah, storageUrl } from '@/lib/utils';
+import { effectivePrice, discountBadgeLabel, refreshCartProducts } from '@/lib/discount';
 import { Package, Store, ShoppingCart, Minus, Plus, PackageSearch } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -80,7 +81,7 @@ export default function CatalogPage() {
     });
   };
 
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (effectivePrice(item.product) * item.quantity), 0), [cart]);
   const cartItemsCount = cart.length;
 
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
@@ -105,6 +106,11 @@ export default function CatalogPage() {
     retry: false,
   });
   const catalog = data;
+
+  // Segarkan harga/diskon produk di keranjang yang tersimpan dari kunjungan sebelumnya.
+  useEffect(() => {
+    if (catalog?.products) setCart(prev => refreshCartProducts(prev, catalog.products));
+  }, [catalog?.products]);
 
   const handleOpenCheckout = () => {
     const onlinePaymentAvailable = catalog?.store?.online_payment_available ?? false;
@@ -210,6 +216,7 @@ export default function CatalogPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {filteredProducts.map(product => {
               const isOutOfStock = (product.stock_qty ?? 0) <= 0;
+              const badge = discountBadgeLabel(product);
               return (
                 <Card key={product.id} onClick={() => openDetail(product)} className="overflow-hidden hover:shadow-md transition-shadow group border-gray-200 cursor-pointer">
                   <div className="aspect-square bg-gray-100 flex items-center justify-center relative overflow-hidden">
@@ -221,6 +228,11 @@ export default function CatalogPage() {
                     {product.category && (
                       <div className="absolute top-2 left-2">
                         <Badge variant="secondary" className="bg-white/90 backdrop-blur text-xs">{product.category}</Badge>
+                      </div>
+                    )}
+                    {badge && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
+                        {badge}
                       </div>
                     )}
                     {isOutOfStock && (
@@ -235,7 +247,10 @@ export default function CatalogPage() {
                     <div className="flex flex-col gap-3 mt-1">
                       <div>
                         <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider block mb-0.5">Harga Jual / {product.unit}</span>
-                        <span className="font-extrabold text-primary text-[15px]">{formatRupiah(product.price)}</span>
+                        {product.has_active_discount && (
+                          <span className="text-[12px] text-gray-400 line-through mr-1.5">{formatRupiah(product.price)}</span>
+                        )}
+                        <span className="font-extrabold text-primary text-[15px]">{formatRupiah(effectivePrice(product))}</span>
                       </div>
                       {isOutOfStock ? (
                         <Button size="sm" variant="secondary" className="w-full text-[12px] h-8 opacity-60 cursor-not-allowed" disabled>Stok Habis</Button>
@@ -335,7 +350,15 @@ export default function CatalogPage() {
                   <div>
                     {detailProduct.category && <Badge variant="secondary" className="mb-2">{detailProduct.category}</Badge>}
                     <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Harga / {detailProduct.unit}</div>
-                    <div className="text-[22px] font-extrabold text-primary">{formatRupiah(detailProduct.price)}</div>
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-[22px] font-extrabold text-primary">{formatRupiah(effectivePrice(detailProduct))}</span>
+                      {detailProduct.has_active_discount && (
+                        <>
+                          <span className="text-[14px] text-gray-400 line-through">{formatRupiah(detailProduct.price)}</span>
+                          <span className="text-[11px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">{discountBadgeLabel(detailProduct)}</span>
+                        </>
+                      )}
+                    </div>
                     {!isOut && <div className="text-[12px] text-gray-500 mt-0.5">Stok tersedia: {detailProduct.stock_qty}</div>}
                   </div>
 
