@@ -98,10 +98,32 @@ class DashboardController extends Controller
     {
         $orgId = auth()->user()->current_org_id;
 
-        $customers = Customer::where('organization_id', $orgId)
+        // Dihitung langsung dari PO bulan berjalan (bukan counter kumulatif
+        // customers.total_revenue yang all-time & bisa basi).
+        $customers = PurchaseOrder::join('customers', 'purchase_orders.customer_id', '=', 'customers.id')
+            ->where('purchase_orders.organization_id', $orgId)
+            ->whereNull('customers.deleted_at')
+            ->where('purchase_orders.status', '!=', 'cancelled')
+            ->whereBetween('purchase_orders.delivery_date', [
+                now()->startOfMonth()->toDateString(),
+                now()->endOfMonth()->toDateString(),
+            ])
+            ->select(
+                'customers.id',
+                'customers.name',
+                DB::raw('SUM(purchase_orders.total) as total_revenue'),
+                DB::raw('COUNT(purchase_orders.id) as total_orders')
+            )
+            ->groupBy('customers.id', 'customers.name')
             ->orderByDesc('total_revenue')
             ->limit(5)
-            ->get(['id', 'name', 'total_revenue', 'total_orders']);
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'total_revenue' => (float) $c->total_revenue,
+                'total_orders' => (int) $c->total_orders,
+            ]);
 
         return response()->json($customers);
     }

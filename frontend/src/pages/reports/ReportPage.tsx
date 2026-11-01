@@ -107,7 +107,7 @@ export default function ReportPage() {
       {/* Top 5 Tables */}
       <div className="grid lg:grid-cols-2 gap-5">
         <Card>
-          <CardHeader><CardTitle>Top 5 Customer</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Top 5 Customer Bulan Ini</CardTitle></CardHeader>
           <CardContent>
             <div className="overflow-x-auto rounded-[10px] border border-gray-200">
               <table className="w-full border-collapse">

@@ -174,7 +174,7 @@ class DashboardScreen extends ConsumerWidget {
               loading: () => const _CardLoading(height: 100),
               error: (e, _) => const SizedBox.shrink(),
               data: (customers) => _TopListCard(
-                title: 'Top Pelanggan',
+                title: 'Top Pelanggan Bulan Ini',
                 icon: Icons.people_outline,
                 rows: [
                   for (final c in customers)
