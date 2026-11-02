@@ -62,7 +62,7 @@ class PdfExportService
         // Items with notes take extra space (additional <span> line)
         $itemsWithNotes = $po->items->filter(fn ($item) => ! empty($item->notes))->count();
 
-        // Items with a product discount show the struck-through normal price on an extra line
+        // Items with a product discount get an extra "Diskon" row below the item
         $itemsWithDiscount = $po->items->filter(fn ($item) => $item->discount_amount > 0)->count();
 
         // Conditional sections
@@ -84,7 +84,7 @@ class PdfExportService
             + $tableHeader
             + ($itemCount * $itemHeight)
             + ($itemsWithNotes * 5)
-            + ($itemsWithDiscount * 4)
+            + ($itemsWithDiscount * 6)
             + $summary
             + ($hasDiscount ? 5 : 0)
             + ($hasTax ? 5 : 0)

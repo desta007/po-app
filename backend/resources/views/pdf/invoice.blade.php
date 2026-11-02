@@ -31,6 +31,10 @@
         table.items td.col-qty, table.items td.col-price, table.items td.col-total { white-space: nowrap; }
         table.items .item-name { display: block; }
         table.items .item-meta { color: #555; font-size: 9px; }
+        table.items td.has-discount { padding-bottom: 1px; }
+        table.items .price-original { color: #555; text-decoration: line-through; }
+        table.items tr.discount-row td { padding: 0 0 5px; }
+        table.items td.discount-label { padding-left: 10px; font-style: italic; }
 
         .summary { width: 100%; margin-top: 10px; border-top: 1px dashed #000; padding-top: 5px; }
         .summary table { width: 100%; font-size: 10px; }
@@ -77,18 +81,31 @@
         </thead>
         <tbody>
             @foreach($items as $item)
+            @php $hasItemDiscount = $item->discount_amount > 0 && $item->original_price !== null; @endphp
             <tr>
-                <td>
+                <td @if($hasItemDiscount) class="has-discount" @endif>
                     <span class="item-name">{{ $item->product_name }}</span>
                     @if($item->notes)<span class="item-meta">{{ $item->notes }}</span>@endif
                 </td>
-                <td class="text-right col-qty">{{ number_format($item->quantity, 0) }}</td>
-                <td class="text-right col-price">
-                    @if($item->discount_amount > 0)<span class="item-meta" style="text-decoration: line-through;">{{ number_format($item->original_price, 0, ',', '.') }}</span><br>@endif
+                <td class="text-right col-qty @if($hasItemDiscount) has-discount @endif">{{ number_format($item->quantity, 0) }}</td>
+                <td class="text-right col-price @if($hasItemDiscount) has-discount @endif">
+                    @if($hasItemDiscount)
+                    <span class="price-original">{{ number_format($item->original_price, 0, ',', '.') }}</span>
+                    @else
                     {{ number_format($item->unit_price, 0, ',', '.') }}
+                    @endif
                 </td>
-                <td class="text-right col-total">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                <td class="text-right col-total @if($hasItemDiscount) has-discount @endif">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
             </tr>
+            @if($hasItemDiscount)
+            {{-- Baris diskon produk (potongan per unit dari master produk) --}}
+            <tr class="discount-row">
+                <td class="discount-label">Diskon</td>
+                <td></td>
+                <td class="text-right col-price">-{{ number_format($item->discount_amount, 0, ',', '.') }}</td>
+                <td></td>
+            </tr>
+            @endif
             @endforeach
         </tbody>
     </table>
