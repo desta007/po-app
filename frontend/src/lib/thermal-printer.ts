@@ -485,9 +485,11 @@ export function buildReceipt(
     if (item.notes) for (const l of wrap(item.notes, cols)) e.line(l);
     if (item.original_price != null && item.discount_amount > 0) {
       // Sama dengan invoice: harga normal, lalu baris "Diskon" (potongan per unit dari master produk).
-      e.line(`  ${fmt(item.quantity)} x ${fmt(item.original_price)}`);
+      // Total baris = harga normal × qty, lalu total potongan = potongan per unit × qty.
+      const qtyPrice = `  ${fmt(item.quantity)} x ${fmt(item.original_price)}`;
+      e.line(twoCol(qtyPrice, fmt(item.original_price * item.quantity), cols));
       const discLine = `  Diskon ${fmt(item.quantity)} x -${fmt(item.discount_amount)}`;
-      e.line(twoCol(discLine, fmt(item.subtotal), cols));
+      e.line(twoCol(discLine, '-' + fmt(item.discount_amount * item.quantity), cols));
     } else {
       const qtyPrice = `  ${fmt(item.quantity)} x ${fmt(item.unit_price)}`;
       e.line(twoCol(qtyPrice, fmt(item.subtotal), cols));

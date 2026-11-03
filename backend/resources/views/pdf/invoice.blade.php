@@ -95,15 +95,17 @@
                     {{ number_format($item->unit_price, 0, ',', '.') }}
                     @endif
                 </td>
-                <td class="text-right col-total @if($hasItemDiscount) has-discount @endif">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                <td class="text-right col-total @if($hasItemDiscount) has-discount @endif">
+                    {{ number_format($hasItemDiscount ? $item->original_price * $item->quantity : $item->subtotal, 0, ',', '.') }}
+                </td>
             </tr>
             @if($hasItemDiscount)
-            {{-- Baris diskon produk (potongan per unit dari master produk) --}}
+            {{-- Baris diskon produk: potongan per unit (Unit Price) & total potongan = per unit × qty (Total) --}}
             <tr class="discount-row">
                 <td class="discount-label">Diskon</td>
                 <td></td>
                 <td class="text-right col-price">-{{ number_format($item->discount_amount, 0, ',', '.') }}</td>
-                <td></td>
+                <td class="text-right col-total">-{{ number_format($item->discount_amount * $item->quantity, 0, ',', '.') }}</td>
             </tr>
             @endif
             @endforeach
